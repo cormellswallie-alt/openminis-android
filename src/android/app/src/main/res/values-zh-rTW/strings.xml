@@ -2117,7 +2117,7 @@
     <string name="appearance_refresh_rate_60">60 Hz（省電）</string>
     <string name="chat_import_section">匯入聊天記錄</string>
     <string name="chat_import_row">從其他應用匯入…</string>
-    <string name="chat_import_footer">從 ChatGPT、Claude 的資料匯出（conversations.json 或匯出的 .zip）、OpenAI 格式 JSON / JSONL、Gemini JSON，或帶有 User / Assistant（使用者 / 助手）標題的 Markdown / 文字對話記錄中遷移聊天。匯入的對話會出現在聊天列表中，可直接繼續聊天。重複匯入同一檔案會自動略過已存在的對話。</string>
+    <string name="chat_import_footer">從 ChatGPT、Claude 的資料匯出（conversations.json 或匯出的 .zip）、OpenAI 格式 JSON / JSONL、Gemini JSON、帶有 User / Assistant（使用者 / 助手）標題的 Markdown / 文字對話記錄，或 SQLite 資料庫（.db）中遷移聊天。資料庫可直接識別 RikkaHub、Open WebUI、AnythingLLM、ChatterUI 和 Minis/OpenMinis，其他聊天應用的資料庫會自動偵測表結構；不支援加密資料庫。匯入的對話會出現在聊天列表中，可直接繼續聊天。重複匯入同一檔案會自動略過已存在的對話。</string>
     <string name="chat_import_reading">正在讀取檔案…</string>
     <string name="chat_import_writing">正在匯入 %1$d / %2$d…</string>
     <string name="chat_import_done_title">匯入完成</string>

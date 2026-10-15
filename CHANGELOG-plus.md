@@ -22,6 +22,7 @@ Based on OpenMinis v1.14 (`b4c0661`). Package: `com.openminis.plus` (installs al
 ## 5. Chat history import (data migration)
 - Settings › Backup & Restore › Restore › Import chat history.
 - Formats: ChatGPT export (conversations.json / .zip), Claude.ai export (.json / .zip), OpenAI-style JSON / JSONL, Gemini `contents` JSON, Markdown / text transcripts (User/Assistant, 用户/助手 headers).
+- **SQLite databases (.db / .sqlite, also inside .zip)**: exact adapters for RikkaHub (both schemas), Open WebUI (`webui.db`, main branch only), AnythingLLM (`anythingllm.db`, grouped by workspace/thread), ChatterUI (selected swipe), and Minis/OpenMinis's own `chat.db` (sub-agent sessions excluded); any other chat app's database is detected heuristically (role + content columns grouped by a conversation id, titles from a sibling conversations table, or whole conversations stored as JSON). Opened read-only from a temporary copy. Encrypted (SQLCipher) databases are not supported.
 - Re-importing the same file skips existing chats.
 
 ## Other

@@ -66,6 +66,7 @@ object ChatHistoryImporter {
         }
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             ?: throw java.io.IOException("Cannot open the selected file")
+        installSqliteOpener(context)
         val parsed = ChatImportParser.parse(bytes, name)
         AppLogger.info(TAG, "parsed file=$name bytes=${bytes.size} conversations=${parsed.conversations.size}")
         val app = context.applicationContext as MinisApp
@@ -151,6 +152,72 @@ object ChatHistoryImporter {
             formats = parsed.conversations.map { it.source }.toSet(),
             warnings = parsed.warnings,
         )
+    }
+
+    /**
+     * [chat-import-db] SQLite files are copied to the cache dir and opened
+     * READ-ONLY with the platform SQLiteDatabase (no extra dependency). The
+     * copy is deleted afterwards along with any -journal / -wal side files.
+     */
+    private fun installSqliteOpener(context: Context) {
+        val cacheDir = context.cacheDir
+        ChatImportParser.sqliteOpener = { bytes ->
+            val f = java.io.File(cacheDir, "chat-import-${System.nanoTime()}.db")
+            try {
+                f.writeBytes(bytes)
+                val db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                    f.path, null,
+                    android.database.sqlite.SQLiteDatabase.OPEN_READONLY or
+                        android.database.sqlite.SQLiteDatabase.NO_LOCALIZED_COLLATORS,
+                )
+                try {
+                    SqliteChatImport.parse(AndroidDb(db))
+                } finally {
+                    db.close()
+                }
+            } catch (e: android.database.sqlite.SQLiteException) {
+                throw ChatImportParser.UnsupportedFormatException(
+                    "Cannot read this database (${e.message ?: e.javaClass.simpleName}). " +
+                        "Encrypted databases (e.g. SQLCipher) are not supported.",
+                )
+            } finally {
+                for (suffix in listOf("", "-journal", "-wal", "-shm")) {
+                    java.io.File(f.path + suffix).delete()
+                }
+            }
+        }
+    }
+
+    private class AndroidDb(private val db: android.database.sqlite.SQLiteDatabase) : SqliteChatImport.Db {
+        override fun tables(): List<String> =
+            query("SELECT name FROM sqlite_master WHERE type='table'").mapNotNull { it["name"] as? String }
+
+        override fun columns(table: String): List<String> =
+            query("PRAGMA table_info(\"" + table.replace("\"", "\"\"") + "\")").mapNotNull { it["name"] as? String }
+
+        override fun query(sql: String, args: List<Any?>): List<Map<String, Any?>> {
+            val out = ArrayList<Map<String, Any?>>()
+            db.rawQuery(sql, args.map { it?.toString() }.toTypedArray()).use { c ->
+                val names = c.columnNames
+                while (c.moveToNext()) {
+                    val row = HashMap<String, Any?>(names.size * 2)
+                    for (i in names.indices) {
+                        val v: Any? = when (c.getType(i)) {
+                            android.database.Cursor.FIELD_TYPE_NULL -> null
+                            android.database.Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
+                            android.database.Cursor.FIELD_TYPE_FLOAT -> c.getDouble(i)
+                            android.database.Cursor.FIELD_TYPE_BLOB -> c.getBlob(i)
+                            else -> c.getString(i)
+                        }
+                        // Both exact and lower-case keys, so adapters can use either.
+                        row[names[i]] = v
+                        row[names[i].lowercase()] = v
+                    }
+                    out.add(row)
+                }
+            }
+            return out
+        }
     }
 
     /** Same content → same id, so re-importing a file does not duplicate chats. */

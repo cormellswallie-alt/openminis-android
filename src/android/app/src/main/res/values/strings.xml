@@ -2321,7 +2321,7 @@
     <string name="appearance_refresh_rate_60">60 Hz (save battery)</string>
     <string name="chat_import_section">Import chat history</string>
     <string name="chat_import_row">Import from another app…</string>
-    <string name="chat_import_footer">Migrate conversations from ChatGPT or Claude data exports (conversations.json or the export .zip), OpenAI-style JSON / JSONL, Gemini JSON, or Markdown / text transcripts with User / Assistant headers. Imported chats appear in your chat list and can be continued. Importing the same file again skips chats that already exist.</string>
+    <string name="chat_import_footer">Migrate conversations from ChatGPT or Claude data exports (conversations.json or the export .zip), OpenAI-style JSON / JSONL, Gemini JSON, Markdown / text transcripts with User / Assistant headers, or SQLite databases (.db) — RikkaHub, Open WebUI, AnythingLLM, ChatterUI and Minis/OpenMinis are recognised directly, other chat apps\' databases are detected automatically. Encrypted databases are not supported. Imported chats appear in your chat list and can be continued. Importing the same file again skips chats that already exist.</string>
     <string name="chat_import_reading">Reading file…</string>
     <string name="chat_import_writing">Importing %1$d / %2$d…</string>
     <string name="chat_import_done_title">Import complete</string>

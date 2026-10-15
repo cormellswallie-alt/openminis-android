@@ -104,6 +104,9 @@ internal fun ChatImportSection(enabled: Boolean = true) {
                         "text/*",
                         "application/octet-stream",
                         "application/x-ndjson",
+                        // [chat-import-db] SQLite databases
+                        "application/vnd.sqlite3",
+                        "application/x-sqlite3",
                         "*/*",
                     ),
                 )

@@ -17,6 +17,7 @@ import java.util.zip.ZipInputStream
  *  - Gemini / generic `{"contents":[{role,parts:[{text}]}]}`
  *  - JSONL: one message object per line (or one conversation object per line)
  *  - Markdown / plain-text transcripts with role headers
+ *  - SQLite databases (.db / .sqlite) — see [SqliteChatImport]
  *  - ZIP archives containing any of the above (e.g. the ChatGPT / Claude export zip)
  */
 object ChatImportParser {
@@ -51,7 +52,26 @@ object ChatImportParser {
 
     private const val ATTACHMENT_NOTE = "[attachment omitted during import]"
 
+    /**
+     * [chat-import-db] Opens a SQLite file and parses it. Installed by the
+     * Android importer (SQLiteDatabase); unit tests may install a JDBC one.
+     * Null = SQLite unsupported in this environment.
+     */
+    @Volatile
+    var sqliteOpener: ((ByteArray) -> ParseResult)? = null
+
+    fun isSqlite(b: ByteArray): Boolean {
+        val magic = "SQLite format 3\u0000".toByteArray(Charsets.ISO_8859_1)
+        if (b.size < magic.size) return false
+        for (i in magic.indices) if (b[i] != magic[i]) return false
+        return true
+    }
+
+    private fun parseSqlite(bytes: ByteArray): ParseResult =
+        (sqliteOpener ?: throw UnsupportedFormatException("SQLite databases are not supported here"))(bytes)
+
     fun parse(bytes: ByteArray, fileName: String? = null): ParseResult {
+        if (isSqlite(bytes)) return parseSqlite(bytes)
         if (isZip(bytes)) return parseZip(bytes)
         val text = decodeText(bytes)
         return parseText(text, fileName)
@@ -72,7 +92,8 @@ object ChatImportParser {
                 if (e.isDirectory) continue
                 val name = e.name
                 val lower = name.lowercase()
-                val interesting = lower.endsWith(".json") || lower.endsWith(".jsonl") ||
+                val isDbEntry = lower.endsWith(".db") || lower.endsWith(".sqlite") || lower.endsWith(".sqlite3")
+                val interesting = isDbEntry || lower.endsWith(".json") || lower.endsWith(".jsonl") ||
                     lower.endsWith(".md") || lower.endsWith(".markdown") || lower.endsWith(".txt")
                 if (!interesting || lower.contains("__macosx/")) continue
                 // Skip export side-files that are not conversations.
@@ -87,7 +108,7 @@ object ChatImportParser {
                     break
                 }
                 try {
-                    val r = parseText(decodeText(data), name)
+                    val r = if (isSqlite(data)) parseSqlite(data) else parseText(decodeText(data), name)
                     convs.addAll(r.conversations)
                     warnings.addAll(r.warnings)
                 } catch (ex: UnsupportedFormatException) {
@@ -415,7 +436,7 @@ object ChatImportParser {
         if (msgs.size < 2 || msgs.none { it.role == Role.ASSISTANT }) {
             throw UnsupportedFormatException(
                 "Unrecognised format. Supported: ChatGPT / Claude exports (.json or .zip), " +
-                    "OpenAI-style JSON / JSONL, or a Markdown transcript with User/Assistant headers.",
+                    "OpenAI-style JSON / JSONL, SQLite databases (.db), or a Markdown transcript with User/Assistant headers.",
             )
         }
         return ParseResult(listOf(ImportedConversation(title ?: titleFromFile(fileName), null, mergeAdjacent(msgs), "Transcript")))
