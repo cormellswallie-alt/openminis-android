@@ -25,5 +25,8 @@ Based on OpenMinis v1.14 (`b4c0661`). Package: `com.openminis.plus` (installs al
 - **SQLite databases (.db / .sqlite, also inside .zip)**: exact adapters for RikkaHub (both schemas), Open WebUI (`webui.db`, main branch only), AnythingLLM (`anythingllm.db`, grouped by workspace/thread), ChatterUI (selected swipe), and Minis/OpenMinis's own `chat.db` (sub-agent sessions excluded); any other chat app's database is detected heuristically (role + content columns grouped by a conversation id, titles from a sibling conversations table, or whole conversations stored as JSON). Opened read-only from a temporary copy. Encrypted (SQLCipher) databases are not supported.
 - Re-importing the same file skips existing chats.
 
+## Fixes
+- **White-screen crash on launch when installed next to the official Minis** (`failed to bind abstract socket 'native-offload'`). Linux abstract unix sockets are device-wide, so the fork could not bind the shell-offload socket while the official app was running. The socket name is now per-package (`native-offload.com.openminis.plus`; the official package keeps the original name), and a bind failure no longer aborts app start-up.
+
 ## Other
 - In-app updater checks this fork's releases (`UPDATE_REPO`).

@@ -728,7 +728,18 @@ class MinisApp : Application(), ImageLoaderFactory {
             )
         }
 
-        NativeOffloadServer.start(RootfsManager.getInstance(this).rootfsDir)
+        // [coexist-socket-fix] Per-package abstract socket name, and never let
+        // a bind failure take the whole app down: without the offload server
+        // only the minis-* / android-* shell CLIs are unavailable, whereas a
+        // throw here is a white-screen crash loop on every launch.
+        try {
+            NativeOffloadServer.start(RootfsManager.getInstance(this).rootfsDir, packageName)
+        } catch (e: Exception) {
+            AppLogger.error(
+                "NativeOffloadServer",
+                "start failed — continuing without shell offload: ${e.message}",
+            )
+        }
 
         // Initialize session activity tracker for foreground service management
         SessionActivityTracker.init(this)

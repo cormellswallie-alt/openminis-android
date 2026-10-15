@@ -52,7 +52,34 @@ fun interface NativeOffloadHandler {
 
 object NativeOffloadServer {
     private const val TAG = "NativeOffloadServer"
-    private const val SOCKET_NAME = "native-offload"
+    /**
+     * [coexist-socket-fix] Linux ABSTRACT unix sockets live in a namespace
+     * shared by every app on the device (per network namespace), not per app.
+     * Upstream used the fixed name "native-offload", so a second build with a
+     * different applicationId (this fork, com.openminis.plus) installed next to
+     * the official app could never bind while the official app's process was
+     * alive: bindWithRetry() exhausted, onCreate threw, and the app
+     * white-screen-crashed on every launch.
+     *
+     * The name is now derived from the package name: the official package
+     * keeps exactly "native-offload" (byte-compatible with upstream), any
+     * other package gets "native-offload.<applicationId>". Set by [start]
+     * before the first proot command line is built; all four command
+     * builders read [socketName].
+     */
+    private const val BASE_SOCKET_NAME = "native-offload"
+    private const val UPSTREAM_PACKAGE = "com.openminis.app"
+
+    @Volatile
+    private var resolvedSocketName: String = BASE_SOCKET_NAME
+
+    /** Max abstract name length: sun_path (108) minus the leading NUL. */
+    private const val MAX_ABSTRACT_NAME = 100
+
+    fun socketNameFor(packageName: String?): String {
+        if (packageName.isNullOrEmpty() || packageName == UPSTREAM_PACKAGE) return BASE_SOCKET_NAME
+        return "$BASE_SOCKET_NAME.$packageName".take(MAX_ABSTRACT_NAME)
+    }
     private const val MAGIC_REQ = 0x46464F4E  // 'N' 'O' 'F' 'F' little-endian
     private const val MAGIC_RSP = 0x52464F4E  // 'N' 'O' 'F' 'R'
     private const val VERSION = 1
@@ -72,7 +99,7 @@ object NativeOffloadServer {
     /** Run the opportunistic sweep every N replies, not on every single one. */
     private const val SWEEP_EVERY_N_REPLIES = 50L
 
-    const val socketName: String = SOCKET_NAME
+    val socketName: String get() = resolvedSocketName
 
     private val handlers = ConcurrentHashMap<String, NativeOffloadHandler>()
     private val counter = AtomicLong(0)
@@ -91,9 +118,10 @@ object NativeOffloadServer {
     }
 
     @Synchronized
-    fun start(rootfsDir: File) {
+    fun start(rootfsDir: File, packageName: String? = null) {
         rootfsTmpDir = File(rootfsDir, "tmp")
         if (serverSocket != null) return
+        resolvedSocketName = socketNameFor(packageName)
 
         // T287-followup: bind with bounded retry. Linux abstract sockets are
         // freed by the kernel only after the owning process is fully reaped —
@@ -107,14 +135,14 @@ object NativeOffloadServer {
         // 100-300ms window.
         val s = bindWithRetry()
             ?: throw java.io.IOException(
-                "failed to bind abstract socket '$SOCKET_NAME' after retries — " +
+                "failed to bind abstract socket '$resolvedSocketName' after retries — " +
                 "previous process holding the namespace?",
             )
         serverSocket = s
         acceptThread = thread(name = "native-offload-accept", isDaemon = true) {
             runAcceptLoop(s)
         }
-        Log.i(TAG, "listening on abstract socket '$SOCKET_NAME' " +
+        Log.i(TAG, "listening on abstract socket '$resolvedSocketName' " +
             "handlers=${handlers.keys.sorted()} tmpDir=${rootfsTmpDir?.absolutePath}")
 
         // [T-android-offload-tmp-leak] Sweep reply files orphaned by earlier
@@ -180,7 +208,7 @@ object NativeOffloadServer {
         for ((attempt, delay) in delays.withIndex()) {
             if (delay > 0) Thread.sleep(delay)
             try {
-                return LocalServerSocket(SOCKET_NAME)
+                return LocalServerSocket(resolvedSocketName)
             } catch (e: java.io.IOException) {
                 Log.w(TAG, "bind attempt ${attempt + 1}/${delays.size} failed: ${e.message}")
             }
