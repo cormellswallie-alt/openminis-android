@@ -187,6 +187,9 @@ class AnthropicProvider(
         var currentToolId: String? = null
         var currentToolName: String? = null
         val toolInputBuffer = StringBuilder()
+        // [T-anthropic-delta-usage-merge] Usage from message_start, used to
+        // backfill output-only message_delta frames.
+        var startUsage: LLMUsage? = null
 
         try {
             var line: String?
@@ -220,7 +223,9 @@ class AnthropicProvider(
                     "message_start" -> {
                         send(LLMStreamChunk.Started)
                         event.optJSONObject("message")?.optJSONObject("usage")?.let { usage ->
-                            send(LLMStreamChunk.Usage(parseUsage(usage)))
+                            val parsed = parseUsage(usage)
+                            startUsage = parsed
+                            send(LLMStreamChunk.Usage(parsed))
                         }
                     }
                     "content_block_start" -> {
@@ -273,7 +278,15 @@ class AnthropicProvider(
                     }
                     "message_delta" -> {
                         event.optJSONObject("usage")?.let { usage ->
-                            send(LLMStreamChunk.Usage(parseUsage(usage)))
+                            // [T-anthropic-delta-usage-merge] The official API
+                            // repeats cumulative input/cache counts here, but many
+                            // Anthropic-compatible relays send ONLY output_tokens.
+                            // The view model keeps the LAST Usage chunk as the
+                            // turn's usage, so an output-only frame used to wipe
+                            // input/cache to 0 in the persisted stats (cache hit
+                            // rate reading 0% on relays). Fill absent fields from
+                            // message_start.
+                            send(LLMStreamChunk.Usage(mergeDeltaUsage(startUsage, parseUsage(usage))))
                         }
                         val stopReason = event.optJSONObject("delta")
                             ?.safeOptString("stop_reason", "")?.ifEmpty { null }
@@ -627,10 +640,15 @@ class AnthropicProvider(
                 for (part in msg.contentParts) {
                     when (part) {
                         is AgentContentPart.Text -> {
-                            contentArray.put(JSONObject().apply {
-                                put("type", "text")
-                                put("text", part.text)
-                            })
+                            // [T-anthropic-empty-text-block] The API 400s on
+                            // `text content blocks must be non-empty`; an empty
+                            // part carries no information, so drop it.
+                            if (part.text.isNotEmpty()) {
+                                contentArray.put(JSONObject().apply {
+                                    put("type", "text")
+                                    put("text", part.text)
+                                })
+                            }
                         }
                         is AgentContentPart.ToolUse -> {
                             // Anthropic requires tool ids to match ^[a-zA-Z0-9_-]+$.
@@ -645,9 +663,14 @@ class AnthropicProvider(
                         }
                         is AgentContentPart.ToolResult -> {
                             val resultContent = JSONArray()
+                            // [T-anthropic-empty-text-block] An empty tool
+                            // output (e.g. a silent command) used to emit
+                            // `{"type":"text","text":""}` → 400. Use a stable
+                            // placeholder instead (stable so the cached prefix
+                            // replays byte-identically).
                             resultContent.put(JSONObject().apply {
                                 put("type", "text")
-                                put("text", part.content)
+                                put("text", part.content.ifEmpty { "(empty)" })
                             })
                             if (part.imageData != null && part.imageMimeType != null) {
                                 // T-imgsize: belt-and-braces — history tool-result
@@ -687,10 +710,12 @@ class AnthropicProvider(
                         // contentParts may not be populated.
                         contentArray.put(imageBlock(part.data, part.mimeType))
                     }
-                    contentArray.put(JSONObject().apply {
-                        put("type", "text")
-                        put("text", msg.content)
-                    })
+                    if (msg.content.isNotEmpty()) {
+                        contentArray.put(JSONObject().apply {
+                            put("type", "text")
+                            put("text", msg.content)
+                        })
+                    }
                     obj.put("content", contentArray)
                 } else if (echoThinking && msg.role == LLMMessage.Role.ASSISTANT) {
                     // [T-android-anthropic-thinking-echo] (issue #70) Assistant
@@ -764,6 +789,13 @@ class AnthropicProvider(
                 collectContentBlocks(messages.getJSONObject(j), contentBlocks)
                 j++
             }
+            if (j > i +  val contentBlocks = mutableListOf<JSONObject>()
+            collectContentBlocks(current, contentBlocks)
+            var j = i + 1
+            while (j < messages.length() && messages.getJSONObject(j).getString("role") == role) {
+                collectContentBlocks(messages.getJSONObject(j), contentBlocks)
+                j++
+            }
             if (j > i + 1 || contentBlocks.isNotEmpty()) {
                 // Reorder assistant content: thinking first, then text/image,
                 // then tool_use last. Anthropic rejects text before thinking and
@@ -814,20 +846,67 @@ class AnthropicProvider(
         }
     }
 
-    /** Inject cache_control on the last 2 user messages' last content block. */
+    /**
+     * Place the two message-level cache breakpoints (system + tools use the
+     * other two of Anthropic's four).
+     *
+     * [T-anthropic-cache-breakpoints] Two bugs in the previous version:
+     *
+     *  1. **String-content user messages got NO breakpoint.** A plain text turn
+     *     (no attachments, no tool results) serialises as `"content": "…"`, and
+     *     the old code only marked `content is JSONArray`. In an ordinary chat
+     *     every user turn is a string, so the only cached segment was
+     *     system+tools and the whole history was re-billed at full input price
+     *     every turn. Strings are now promoted to a single text block so the
+     *     marker can attach.
+     *
+     *  2. **Breakpoints skipped thinking/empty blocks badly.** Anthropic rejects
+     *     `cache_control` on `thinking` / `redacted_thinking` blocks and on
+     *     empty text blocks; the marker now walks back to the last cacheable
+     *     block of the message.
+     *
+     * Placement stays "last two user messages": the newest one caches the full
+     * prefix for the NEXT request in the agent loop (whose new tail is the
+     * assistant tool_use + next tool_result), and the previous one is the
+     * read point that this request hits — the 20-block lookback then covers a
+     * normal tool round without needing a third marker.
+     */
     private fun injectMessageCacheControl(messages: JSONArray) {
         var userCount = 0
         for (i in messages.length() - 1 downTo 0) {
             val msg = messages.getJSONObject(i)
             if (msg.getString("role") != "user") continue
-            userCount++
-            if (userCount > 2) break
             val content = msg.opt("content")
-            if (content is JSONArray && content.length() > 0) {
-                val lastBlock = content.getJSONObject(content.length() - 1)
-                lastBlock.put("cache_control", ephemeralCacheControl())
+            val blocks: JSONArray = when (content) {
+                is JSONArray -> content
+                is String -> {
+                    if (content.isEmpty()) continue
+                    JSONArray().put(JSONObject().put("type", "text").put("text", content))
+                        .also { msg.put("content", it) }
+                }
+                else -> continue
+            }
+            var marked = false
+            for (k in blocks.length() - 1 downTo 0) {
+                val block = blocks.optJSONObject(k) ?: continue
+                if (isCacheableBlock(block)) {
+                    block.put("cache_control", ephemeralCacheControl())
+                    marked = true
+                    break
+                }
+            }
+            if (marked) {
+                userCount++
+                if (userCount >= 2) break
             }
         }
+    }
+
+    /** Blocks Anthropic accepts a `cache_control` marker on. */
+    private fun isCacheableBlock(block: JSONObject): Boolean = when (block.optString("type")) {
+        "thinking", "redacted_thinking" -> false
+        "text" -> block.optString("text").isNotEmpty()
+        else -> true
     }
 
     companion object {
@@ -1152,14 +1231,32 @@ class AnthropicProvider(
         return LLMResponse(text, stopReason, usage)
     }
 
-    private fun parseUsage(json: JSONObject): LLMUsage {
+    /**
+     * [T-anthropic-ctx-cache-undercount] Anthropic's `input_tokens` is the
+     * UNCACHED remainder only — the prompt the model saw is
+     * `input_tokens + cache_read_input_tokens + cache_creation_input_tokens`.
+     * `latestContextTokens` used to be `input_tokens` alone, so the better the
+     * cache hit rate, the smaller the context looked: on a 150k-token history
+     * with a 99% hit it reported ~1.5k. Every capacity decision keyed on it
+     * (offload threshold, compaction, dynamicMaxTokens, the persona reminder,
+     * the context ring) fired late or never. OpenAI/Gemini already report the
+     * full prompt here; this brings Anthropic onto the same scale.
+     *
+     * `message_delta` usage frames may repeat only `output_tokens`; returning
+     * 0 there (all input fields absent) keeps the caller's
+     * `latestContextTokens > 0` guard from overwriting the real value that
+     * `message_start` delivered.
+     */
+    internal fun parseUsage(json: JSONObject): LLMUsage {
         val inputTokens = json.optInt("input_tokens", 0)
+        val cacheCreation = json.optInt("cache_creation_input_tokens", 0)
+        val cacheRead = json.optInt("cache_read_input_tokens", 0)
         return LLMUsage(
             inputTokens = inputTokens,
             outputTokens = json.optInt("output_tokens", 0),
-            cacheCreationInputTokens = json.optInt("cache_creation_input_tokens").takeIf { it > 0 },
-            cacheReadInputTokens = json.optInt("cache_read_input_tokens").takeIf { it > 0 },
-            latestContextTokens = inputTokens,
+            cacheCreationInputTokens = cacheCreation.takeIf { it > 0 },
+            cacheReadInputTokens = cacheRead.takeIf { it > 0 },
+            latestContextTokens = inputTokens + cacheCreation + cacheRead,
         )
     }
 

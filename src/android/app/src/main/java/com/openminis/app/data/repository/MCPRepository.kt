@@ -439,6 +439,10 @@ class MCPRepository(private val context: Context) {
      * Returns null when the session has no enabled servers. Format per the
      * feature design doc §6a.
      */
+    /** [T-sysprompt-session-freeze] Ids of the MCP servers enabled for [sessionId]. */
+    fun enabledServerIdsForSession(sessionId: String): List<String> =
+        _servers.value.filter { isEnabledForSession(it.id, sessionId) }.map { it.id }
+
     fun mcpPromptFragment(sessionId: String): String? {
         val enabled = _servers.value
             .filter { isEnabledForSession(it.id, sessionId) }

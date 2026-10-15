@@ -342,6 +342,15 @@ class SkillRepository(private val context: Context) {
      * (bundled > 7-day recent > most-used), matching iOS SkillStore.
      * Returns null when the session has no enabled skills.
      */
+    /**
+     * [T-sysprompt-session-freeze] Ids of the skills enabled for [sessionId] —
+     * the structural part of [skillPromptFragment] (which skills exist), with
+     * none of its volatile ordering keys. Used to decide when the frozen system
+     * prompt must be rebuilt.
+     */
+    fun enabledSkillIdsForSession(sessionId: String): List<String> =
+        _skills.value.filter { isEnabledForSession(it.id, sessionId) }.map { it.id }
+
     fun skillPromptFragment(sessionId: String): String? {
         val enabled = _skills.value.filter { isEnabledForSession(it.id, sessionId) }
         if (enabled.isEmpty()) return null
@@ -379,9 +388,16 @@ class SkillRepository(private val context: Context) {
             hasMore = total > selected.size
         }
 
+        // [T-sysprompt-session-freeze] Emit the chosen skills in a FIXED order
+        // (by id). Selection above still uses updatedAt/useCount priority, but
+        // the rendered order used to follow those volatile keys, so reading one
+        // SKILL.md (recordSkillUse → useCount+1) could reshuffle this block and
+        // rewrite the system prompt — a full prompt-cache miss on the next send
+        // for no change in content.
+        val ordered = selected.sortedBy { it.id }
         val xml = buildString {
             append("<available_skills>\n")
-            for (skill in selected) {
+            for (skill in ordered) {
                 var desc = skill.description
                 if (desc.length > MAX_SKILL_DESC_LENGTH) {
                     desc = desc.substring(0, MAX_SKILL_DESC_LENGTH) + "…"
@@ -1289,6 +1305,13 @@ class SkillRepository(private val context: Context) {
     /**
      * [T-android-skill-scan-parity] Queue a background rescan. Mirrors how iOS
      * keeps disk work off the send path: SkillStore.skillPromptFragment() only
+     * reads the in-memory list, and disk is reconciled on discrete events
+     * (foreground, file_write/file_edit of a SKILL.md, the debounced fakefs
+     * notifier after shell activity, backup restore).
+     *
+     * Requests are conflated and served one at a time on [Dispatchers.IO].
+     * With [force] false the scan is skipped unless [SkillDiskSignature]
+     * differs from the one taken at the last scaore.skillPromptFragment() only
      * reads the in-memory list, and disk is reconciled on discrete events
      * (foreground, file_write/file_edit of a SKILL.md, the debounced fakefs
      * notifier after shell activity, backup restore).

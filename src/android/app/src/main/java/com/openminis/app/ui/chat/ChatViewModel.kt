@@ -15065,7 +15065,71 @@ class ChatViewModel(
         return entity.id
     }
 
+    /**
+     * [T-sysprompt-session-freeze] The last prompt this view model sent, and the
+     * fingerprint of the inputs it was built from.
+     *
+     * buildSystemPrompt() runs on every send and every retry, and several of
+     * its inputs drift WITHOUT the user changing anything that matters to the
+     * model:
+     *  - the skill list is ordered by updatedAt / useCount, and recordSkillUse()
+     *    bumps useCount every time the model reads a SKILL.md — so reading a
+     *    skill could reorder the <available_skills> block on the NEXT send;
+     *  - the daily-memory fragment re-reads today's log, which memory_write
+     *    appends to mid-conversation;
+     *  - the date line rolls at midnight.
+     * Any of these rewrites bytes at the head of the request, and Anthropic's
+     * cache is a strict prefix match: system → tools → messages. One changed
+     * byte in the system prompt re-bills the ENTIRE cached history as
+     * cache_creation (1.25x / 2x input price) instead of cache_read (0.1x).
+     *
+     * The fix keeps the first prompt built for this session and reuses it
+     * verbatim while the STRUCTURAL inputs are unchanged. Structural = what
+     * changes the model's capabilities or instructions and must win over cache:
+     * memory toggle, browser/agents switches, sub agent roster, helper mode,
+     * SOUL.md, GLOBAL.md, the SET of enabled skills / MCP servers (not their
+     * order), and model-use count. Today's daily log and the date are NOT
+     * structural — the model already has memory_get and shell `date` for live
+     * values, and the snapshot it got at session start stays valid context.
+     */
+    private var frozenSystemPrompt: String? = null
+    private var frozenSystemPromptKey: String? = null
+
+    private fun systemPromptStructuralKey(): String {
+        val memoryOn = _memoryEnabled.value
+        val skillIds = skillRepository?.let { repo ->
+            runCatching { repo.enabledSkillIdsForSession(activeSessionId).sorted().joinToString(",") }.getOrDefault("?")
+        } ?: ""
+        val mcpIds = mcpRepository?.let { repo ->
+            runCatching { repo.enabledServerIdsForSession(activeSessionId).sorted().joinToString(",") }.getOrDefault("?")
+        } ?: ""
+        val globalHash = if (memoryOn) (memoryRepository?.loadGlobalMemoryFragment()?.hashCode() ?: 0) else 0
+        val soulHash = runCatching { com.openminis.app.agent.SystemPromptBuilder.identitySection(context).hashCode() }.getOrDefault(0)
+        val modelUseCount = try { providerRepository.resolvedAgentLoopEntries().size } catch (_: Exception) { 0 }
+        return listOf(
+            "mem=$memoryOn",
+            "browser=${com.openminis.app.tools.AgentToolSwitch.BROWSER.isEnabled(context)}",
+            "agents=${com.openminis.app.agent.jobs.AgentSettings.isEnabled(context)}",
+            "roster=${providerRepository.subAgents.joinToString(",") { it.name }}",
+            "helper=${helperConfig?.hashCode() ?: 0}",
+            "soul=$soulHash", "global=$globalHash",
+            "skills=$skillIds", "mcp=$mcpIds", "mu=$modelUseCount",
+        ).joinToString("|")
+    }
+
     private fun buildSystemPrompt(): String? {
+        val key = systemPromptStructuralKey()
+        frozenSystemPrompt?.let { frozen ->
+            if (key == frozenSystemPromptKey) return frozen
+            AppLogger.info(TAG, "[SysPromptFreeze] structural inputs changed — rebuilding system prompt (cache prefix resets once)")
+        }
+        val built = buildSystemPromptUncached()
+        frozenSystemPrompt = built
+        frozenSystemPromptKey = key
+        return built
+    }
+
+    private fun buildSystemPromptUncached(): String? {
         // Cache-friendly layout: keep `base` byte-stable by stripping out anything
         // that varies per request, then append a "Runtime context" suffix at the
         // very end with all the dynamic bits (date, timezone, locale, configured
