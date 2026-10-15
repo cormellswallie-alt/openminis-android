@@ -740,6 +740,13 @@ class AnthropicProvider(
                 }
             }
 
+            // [T-anthropic-empty-text-block] After dropping empty text parts a
+            // message can end up with no content at all (`[]` or `""`), which is
+            // its own 400. Skip it; mergeConsecutiveSameRole then joins the
+            // neighbours so roles still alternate.
+            val c = obj.opt("content")
+            val isEmpty = (c is JSONArray && c.length() == 0) || (c is String && c.isEmpty())
+            if (isEmpty) continue
             messagesArray.put(obj)
         }
         return messagesArray
@@ -783,13 +790,6 @@ class AnthropicProvider(
             val role = current.getString("role")
             // Collect all consecutive messages with same role
             val contentBlocks = mutableListOf<JSONObject>()
-            collectContentBlocks(current, contentBlocks)
-            var j = i + 1
-            while (j < messages.length() && messages.getJSONObject(j).getString("role") == role) {
-                collectContentBlocks(messages.getJSONObject(j), contentBlocks)
-                j++
-            }
-            if (j > i +  val contentBlocks = mutableListOf<JSONObject>()
             collectContentBlocks(current, contentBlocks)
             var j = i + 1
             while (j < messages.length() && messages.getJSONObject(j).getString("role") == role) {
@@ -1257,6 +1257,26 @@ class AnthropicProvider(
             cacheCreationInputTokens = cacheCreation.takeIf { it > 0 },
             cacheReadInputTokens = cacheRead.takeIf { it > 0 },
             latestContextTokens = inputTokens + cacheCreation + cacheRead,
+        )
+    }
+
+    /**
+     * [T-anthropic-delta-usage-merge] Combine a `message_delta` usage frame with
+     * the `message_start` one. Fields the delta actually carries win (they are
+     * cumulative on the official API); absent/zero input-side fields fall back
+     * to the start frame so a relay's output-only delta keeps the real counts.
+     */
+    internal fun mergeDeltaUsage(start: LLMUsage?, delta: LLMUsage): LLMUsage {
+        if (start == null) return delta
+        val input = if (delta.inputTokens > 0) delta.inputTokens else start.inputTokens
+        val creation = delta.cacheCreationInputTokens ?: start.cacheCreationInputTokens
+        val read = delta.cacheReadInputTokens ?: start.cacheReadInputTokens
+        return LLMUsage(
+            inputTokens = input,
+            outputTokens = maxOf(delta.outputTokens, start.outputTokens),
+            cacheCreationInputTokens = creation,
+            cacheReadInputTokens = read,
+            latestContextTokens = input + (creation ?: 0) + (read ?: 0),
         )
     }
 
