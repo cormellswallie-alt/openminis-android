@@ -148,9 +148,11 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
         run: |
-          mkdir -p ~/.android
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            KS="$RUNNER_TEMP/ci-signing.keystore"
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"
+            echo "SIGNING_KEYSTORE_FILE=$KS" >> "$GITHUB_ENV"
+            keytool -list -keystore "$KS" -storepass android | grep -i 'fingerprint' || true
             echo "Using fixed signing key from secrets"
           else
             echo "::warning::SIGNING_KEYSTORE_BASE64 not set - random debug key, APKs will not upgrade-install over each other"
@@ -183,7 +185,12 @@ jobs:
           done
           find src/android/app/build/outputs -name 'native-debug-symbols.zip' -exec cp {} out/ \;
           ls -la out
-          "$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner" verify --print-certs out/*.apk | head -5
+          "$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner" verify --print-certs out/*.apk | tee /tmp/signer.txt | head -5
+          if [ -n "${SIGNING_KEYSTORE_FILE:-}" ]; then
+            WANT=$(keytool -exportcert -alias androiddebugkey -keystore "$SIGNING_KEYSTORE_FILE" -storepass android | sha256sum | cut -d' ' -f1)
+            grep -qi "SHA-256 digest: $WANT" /tmp/signer.txt || { echo "::error::APK not signed with the fixed key (want $WANT)"; exit 1; }
+            echo "Signer matches fixed key $WANT"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

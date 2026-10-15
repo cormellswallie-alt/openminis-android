@@ -83,6 +83,21 @@ android {
         }
     }
 
+    // [ci-signing] When CI provides a fixed keystore (SIGNING_KEYSTORE_FILE),
+    // sign every build type with it so successive builds upgrade in place.
+    // Without the env var this is the stock debug key, as upstream.
+    signingConfigs {
+        getByName("debug") {
+            val ks = System.getenv("SIGNING_KEYSTORE_FILE")?.let { file(it) }
+            if (ks != null && ks.exists()) {
+                storeFile = ks
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "android"
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "androiddebugkey"
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "android"
+            }
+        }
+    }
+
     buildTypes {
         getByName("debug") {
             buildConfigField("boolean", "DEV_TOOLS", "true")
