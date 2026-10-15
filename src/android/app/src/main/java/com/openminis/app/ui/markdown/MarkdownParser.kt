@@ -95,7 +95,7 @@ object MarkdownParser {
     }
 
     fun parse(markdown: String): List<Block> {
-        android.util.Log.d("MdParser", "parse() len=${markdown.length} preview=${markdown.take(160).replace("\n","\\n")}")
+        if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdParser", "parse() len=${markdown.length} preview=${markdown.take(160).replace("\n","\\n")}") // [perf-opt]
         val lines = markdown.lines()
         val blocks = mutableListOf<Block>()
         var i = 0
@@ -212,12 +212,12 @@ object MarkdownParser {
                 val alt = mediaMatch.groupValues[1]
                 val url = mediaMatch.groupValues[2]
                 val blk = mediaBlockFor(alt, url)
-                android.util.Log.d("MdParser", "media match: alt=\"$alt\" url=$url -> ${blk::class.simpleName}")
+                if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdParser", "media match: alt=\"$alt\" url=$url -> ${blk::class.simpleName}") // [perf-opt]
                 blocks.add(blk)
                 i++
                 continue
             } else if (line.contains("![") && line.contains("](")) {
-                android.util.Log.d("MdParser", "image-like line did NOT match standalone regex: ${line.take(160)}")
+                if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdParser", "image-like line did NOT match standalone regex: ${line.take(160)}") // [perf-opt]
             }
 
             // Blank line — skip

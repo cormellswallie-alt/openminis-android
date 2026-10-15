@@ -2237,6 +2237,16 @@ class OpenAIProvider private constructor(
             body.put("cache_control", JSONObject().put("type", "ephemeral"))
         }
 
+        // [token-opt] Official OpenAI Chat Completions: route every turn of a
+        // conversation to the same cache shard with a stable `prompt_cache_key`
+        // (same derivation the Responses path already uses). Without it the
+        // automatic prefix cache is best-effort and frequently misses across
+        // turns of a long agent loop. Host-gated to api.openai.com — third-
+        // party OpenAI-compatible relays may reject unknown fields.
+        if (!isAzure && basePath.lowercase().contains("api.openai.com")) {
+            body.put("prompt_cache_key", derivePromptCacheKey(messages))
+        }
+
         // Tools
         if (tools.isNotEmpty()) {
             val toolsArray = JSONArray()

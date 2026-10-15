@@ -137,10 +137,13 @@ class SubAgentQueueTest {
 
     @Test
     fun `the concurrency limit matches the documented contract`() {
-        // The tool description promises "Only 3 run at once"; if this constant
-        // moves, that text is a lie.
-        assertEquals(3, AgentJobRegistry.MAX_CONCURRENT_CHILD_JOBS)
-        assertEquals(3, HelperRunner.MAX_PER_ASSISTANT_TURN)
+        // [subagent-unlimited] Both limits follow the single user setting
+        // (default unlimited), so the per-turn and global caps never disagree.
+        assertEquals(AgentJobRegistry.MAX_CONCURRENT_CHILD_JOBS, HelperRunner.MAX_PER_ASSISTANT_TURN)
+        assertEquals(
+            com.openminis.app.agent.jobs.AgentSettings.UNLIMITED_EFFECTIVE,
+            AgentJobRegistry.MAX_CONCURRENT_CHILD_JOBS,
+        )
     }
 
     @Test

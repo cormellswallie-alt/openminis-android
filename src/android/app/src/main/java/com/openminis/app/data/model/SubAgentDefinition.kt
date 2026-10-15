@@ -67,6 +67,12 @@ data class SubAgentDefinition(
     /** null = Auto: the delegating model chooses with `model_choice`. */
     var modelGroupId: String? = null,
     /**
+     * [subagent-model-pin] Pin this sub agent to ONE specific model entry
+     * (ModelEntry.id). Outranks [modelGroupId] and `model_choice`. null = not
+     * pinned to a model (fall back to the group pin, then Auto).
+     */
+    var modelEntryId: String? = null,
+    /**
      * [T-subagent-thinking-override] Reasoning intensity for runs of this sub
      * agent, overriding whatever the resolved model group defaults to.
      *

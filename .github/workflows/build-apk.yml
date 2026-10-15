@@ -9,7 +9,7 @@ on:
         options: [release, debug]
         default: release
       application_id:
-        description: "Override applicationId (empty = keep com.openminis.app)"
+        description: "Override applicationId (empty = keep com.openminis.plus)"
         type: string
         default: ""
   push:
@@ -21,6 +21,8 @@ concurrency:
 
 env:
   NDK_VERSION: r28c
+  # In-app updater checks this repo's releases (BuildConfig.UPDATE_REPO).
+  UPDATE_REPO: ${{ github.repository }}
   GOMOBILE_VERSION: v0.0.0-20260813181013-1960c775504c
 
 jobs:
@@ -157,7 +159,7 @@ jobs:
       - name: Override applicationId
         if: github.event_name == 'workflow_dispatch' && inputs.application_id != ''
         run: |
-          sed -i 's/applicationId = "com.openminis.app"/applicationId = "${{ inputs.application_id }}"/' src/android/app/build.gradle.kts
+          sed -i 's/applicationId = "com.openminis.plus"/applicationId = "${{ inputs.application_id }}"/' src/android/app/build.gradle.kts
           grep -n 'applicationId =' src/android/app/build.gradle.kts
 
       # ---------- Gradle ----------

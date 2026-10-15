@@ -650,7 +650,7 @@ private fun MdText(
                 val startLine = result.getLineForOffset(startOffset).coerceIn(0, lineCount - 1)
                 val endLine = result.getLineForOffset(endOffset - 1).coerceIn(0, lineCount - 1)
                 if (endLine < startLine) {
-                    android.util.Log.d(
+                    if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d( // [perf-opt]
                         "StreamingMd",
                         "skip inline_code: endLine<startLine annStart=${ann.start} annEnd=${ann.end} " +
                             "clamped=[$startOffset,$endOffset) lineCount=$lineCount maxOffset=$maxOffset"
@@ -1184,7 +1184,7 @@ private fun MarkdownBlockBody(
         // the whole claim of this fix, and it is how the fix was verified on
         // a device whose video encoder was wedged. Fires only on the miss
         // path, for the few ms until the off-main parse lands.
-        if (parsed == null) {
+        if (parsed == null && com.openminis.app.BuildConfig.DEBUG) { // [perf-opt] per-composition log
             android.util.Log.i(
                 "FreezeEdge",
                 "chars=${rawText.length} paint=" +
@@ -2111,7 +2111,7 @@ private suspend fun parseMarkdownBlocks(content: String): List<MdBlock> {
                     val alt = match.groupValues[1]
                     val url = match.groupValues[2]
                     val blk = mediaBlockFrom(line, alt, url)
-                    android.util.Log.d("MdStream", "media match: alt=\"$alt\" url=$url -> ${blk::class.simpleName}")
+                    if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "media match: alt=\"$alt\" url=$url -> ${blk::class.simpleName}") // [perf-opt]
                     blocks.add(blk)
                 }
                 i++
@@ -2525,7 +2525,7 @@ private fun RenderBlock(block: MdBlock) {
         }
 
         is MdBlock.Image -> {
-            android.util.Log.d("MdStream", "render Image url=${block.url}")
+            if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "render Image url=${block.url}") // [perf-opt]
             // [T-android-markdown-image-gallery-cross-message] Prefer the
             // image-specific handler when provided so the host can collect
             // every sibling image across the conversation and open a paged
@@ -2618,12 +2618,12 @@ private fun RenderBlock(block: MdBlock) {
         }
 
         is MdBlock.Video -> {
-            android.util.Log.d("MdStream", "render Video url=${block.url}")
+            if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "render Video url=${block.url}") // [perf-opt]
             RenderMdVideo(block)
         }
 
         is MdBlock.Audio -> {
-            android.util.Log.d("MdStream", "render Audio url=${block.url}")
+            if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "render Audio url=${block.url}") // [perf-opt]
             RenderMdAudio(block)
         }
 
@@ -3017,7 +3017,7 @@ internal fun resolveMdMediaFile(context: Context, url: String, sessionId: String
         else -> null
     }
     if (primary?.let { it.exists() && it.isFile } == true) {
-        android.util.Log.d("MdStream", "resolveMdMediaFile url=$url sid=$sessionId -> primary=${primary.absolutePath}")
+        if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "resolveMdMediaFile url=$url sid=$sessionId -> primary=${primary.absolutePath}") // [perf-opt]
         return primary
     }
 
@@ -3027,7 +3027,7 @@ internal fun resolveMdMediaFile(context: Context, url: String, sessionId: String
     // where `resolveHostPath`'s global bindMounts map points at a different
     // session than the one owning this message.
     if (!stripped.startsWith("minis://")) {
-        android.util.Log.d("MdStream", "resolveMdMediaFile primary miss url=$url (non-minis scheme, no fallback)")
+        if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "resolveMdMediaFile primary miss url=$url (non-minis scheme, no fallback)") // [perf-opt]
         return null
     }
     val decoded = java.net.URLDecoder.decode(stripped.removePrefix("minis://"), "UTF-8")
@@ -3038,7 +3038,7 @@ internal fun resolveMdMediaFile(context: Context, url: String, sessionId: String
         root.listFiles()?.forEach { sessionDir ->
             val candidate = File(sessionDir, "$subdir/$basename")
             if (candidate.exists() && candidate.isFile) {
-                android.util.Log.d("MdStream", "resolveMdMediaFile url=$url -> fallback=${candidate.absolutePath}")
+                if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "resolveMdMediaFile url=$url -> fallback=${candidate.absolutePath}") // [perf-opt]
                 return candidate
             }
         }
@@ -3046,7 +3046,7 @@ internal fun resolveMdMediaFile(context: Context, url: String, sessionId: String
     // Also probe `minis-global/<subdir>` for shared/memory/skills buckets.
     val globalCandidate = File(context.filesDir, "minis-global/$subdir/$basename")
     if (globalCandidate.exists() && globalCandidate.isFile) {
-        android.util.Log.d("MdStream", "resolveMdMediaFile url=$url -> global=${globalCandidate.absolutePath}")
+        if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "resolveMdMediaFile url=$url -> global=${globalCandidate.absolutePath}") // [perf-opt]
         return globalCandidate
     }
     android.util.Log.w("MdStream", "resolveMdMediaFile url=$url -> NOT FOUND (primary=${primary?.absolutePath})")
@@ -3061,7 +3061,7 @@ private fun filenameFromMdUrl(url: String): String {
 }
 
 private fun openMdMediaExternally(context: Context, file: File, mime: String) {
-    android.util.Log.d("MdStream", "openMdMediaExternally file=${file.absolutePath} mime=$mime")
+    if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "openMdMediaExternally file=${file.absolutePath} mime=$mime") // [perf-opt]
     val authority = context.packageName + ".fileprovider"
     val uri = try {
         androidx.core.content.FileProvider.getUriForFile(context, authority, file)
@@ -3104,7 +3104,7 @@ private fun RenderMdVideo(block: MdBlock.Video) {
             try {
                 retriever.setDataSource(f.absolutePath)
                 val bmp = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                android.util.Log.d("MdStream", "video thumbnail ${f.name} -> ${bmp?.width}x${bmp?.height}")
+                if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "video thumbnail ${f.name} -> ${bmp?.width}x${bmp?.height}") // [perf-opt]
                 bmp
             } catch (t: Throwable) {
                 android.util.Log.w("MdStream", "video thumbnail failed: ${t.message}")
@@ -3130,7 +3130,7 @@ private fun RenderMdVideo(block: MdBlock.Video) {
             .background(colors.inlineCodeBg)
             .border(0.5.dp, colors.tableBorder, RoundedCornerShape(8.dp))
             .clickable(enabled = file != null) {
-                android.util.Log.d("MdStream", "open fullscreen video for ${file?.absolutePath}")
+                if (com.openminis.app.BuildConfig.DEBUG) android.util.Log.d("MdStream", "open fullscreen video for ${file?.absolutePath}") // [perf-opt]
                 showPlayer = true
             },
     ) {

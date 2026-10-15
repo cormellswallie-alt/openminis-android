@@ -167,7 +167,9 @@ object AgentJobRegistry {
      *  Helpers bypass SessionConcurrencyManager — a parent awaiting its helper
      *  holds a slot there, so routing helpers through the same pool of 5 could
      *  deadlock every parent behind its own children (§4.4). */
-    const val MAX_CONCURRENT_CHILD_JOBS = 3
+    // [subagent-unlimited] Was a hard-coded 3; now user-configurable
+    // (Settings › Sub Agents), default unlimited. See AgentSettings.
+    val MAX_CONCURRENT_CHILD_JOBS: Int get() = AgentSettings.maxConcurrent
 
     private val _jobs = MutableStateFlow<Map<String, AgentJob>>(emptyMap())
     val jobs: StateFlow<Map<String, AgentJob>> = _jobs.asStateFlow()
@@ -265,7 +267,8 @@ object AgentJobRegistry {
     )
 
     /** Backlog bound. Past this a delegation is refused, and says so plainly. */
-    const val MAX_QUEUED_DELEGATIONS = 10
+    // [subagent-unlimited] Raised from 10 so a large fan-out is queued, not refused.
+    const val MAX_QUEUED_DELEGATIONS = 100
 
     private val queuedDelegations = mutableListOf<QueuedDelegation>()
 

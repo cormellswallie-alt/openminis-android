@@ -219,10 +219,41 @@ object ModelTierResolver {
         parentBindingJson: String?,
         parentModelId: String?,
         parentActiveEntryId: String?,
+        /** [subagent-model-pin] A specific ModelEntry id; outranks everything. */
+        pinnedEntryId: String? = null,
     ): HelperModelResolution? {
         fun inherited() = resolve(
             HelperModelTier.PRIMARY, repo, parentBindingJson, parentModelId, parentActiveEntryId,
         )
+
+        // 0. [subagent-model-pin] A specific model pin outranks a group pin and
+        //    the model's choice. Unusable (deleted / hidden / provider off / no
+        //    credential) degrades to the group pin or Auto below, flagged.
+        var entryPinFailed = false
+        if (pinnedEntryId != null) {
+            val config = repo.config.value
+            val entry = config.modelEntries.firstOrNull { it.id == pinnedEntryId }
+            val inst = entry?.let { e -> config.instances.firstOrNull { it.id == e.providerInstanceId } }
+            if (entry != null && !entry.isHidden && inst != null && inst.isEnabled && repo.hasAnyCredential(inst)) {
+                val binding = JSONObject().put("type", "entry").put("entryId", entry.id).toString()
+                return HelperModelResolution(
+                    binding, entry.model.id, entry.model.displayName, HelperModelTier.PRIMARY,
+                    origin = HelperModelOrigin.PINNED,
+                    resolvedEntryId = entry.id,
+                    resolvedProviderLabel = inst.label,
+                    resolvedProviderType = inst.providerType.name.lowercase(),
+                    resolvedModelId = entry.model.id,
+                    resolvedModelName = entry.model.displayName,
+                )
+            }
+            AppLogger.warning(TAG, "resolveForSubAgent: pinned entry '$pinnedEntryId' unusable — falling back")
+            entryPinFailed = true
+        }
+        if (entryPinFailed) {
+            return resolveForSubAgent(
+                pinnedGroupId, choice, repo, parentBindingJson, parentModelId, parentActiveEntryId, null,
+            )?.copy(modelGroupUnavailable = true)
+        }
 
         // 1. A pin outranks the model's choice.
         if (pinnedGroupId != null) {

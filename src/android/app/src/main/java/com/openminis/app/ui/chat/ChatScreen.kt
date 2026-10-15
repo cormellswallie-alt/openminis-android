@@ -3588,13 +3588,40 @@ fun ChatScreen(
                 // mount uses `lastToolBlocks.isNotEmpty()` over the merged
                 // view; we mirror that semantically by checking the same
                 // filter on both sources.
-                val streamingById by viewModel.streamingById.collectAsState()
-                val hasFloatingTools = remember(messages, streamingById) {
-                    val merged = if (streamingById.isEmpty()) messages
-                                 else mergeStreamingOverlay(messages, streamingById)
-                    merged.any { msg ->
+                // [perf-opt] Was `val streamingById by ...collectAsState()` at
+                // ChatScreen's top level: every streaming flush (several per
+                // second per token batch) invalidated this whole ~8k-line scope
+                // and ran mergeStreamingOverlay — a copy of the ENTIRE history —
+                // just to compute one Boolean. Now the flow is read inside a
+                // derivedStateOf, so ChatScreen recomposes only when the Boolean
+                // actually flips, and no history copy is made: the streaming
+                // deltas are checked directly, the stable `messages` separately.
+                val streamingByIdState = viewModel.streamingById.collectAsState()
+                val messagesHaveFloatingTools = remember(messages) {
+                    messages.any { msg ->
                         msg.role == "assistant" && msg.toolBlocks.any { tb ->
                             tb.toolStatus != null && tb.kind != "thinking" && tb.kind != "info"
+                        }
+                    }
+                }
+                val hasFloatingTools by remember(messages, messagesHaveFloatingTools) {
+                    androidx.compose.runtime.derivedStateOf {
+                        val live = streamingByIdState.value
+                        if (live.isEmpty()) {
+                            messagesHaveFloatingTools
+                        } else {
+                            // Messages overlaid by a live delta take the delta's
+                            // blocks (same semantics as mergeStreamingOverlay).
+                            live.values.any { d ->
+                                d.toolBlocks.any { tb ->
+                                    tb.toolStatus != null && tb.kind != "thinking" && tb.kind != "info"
+                                }
+                            } || messages.any { msg ->
+                                msg.role == "assistant" && !live.containsKey(msg.id) &&
+                                    msg.toolBlocks.any { tb ->
+                                        tb.toolStatus != null && tb.kind != "thinking" && tb.kind != "info"
+                                    }
+                            }
                         }
                     }
                 }

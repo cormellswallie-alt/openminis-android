@@ -115,7 +115,8 @@ object HelperRunner {
      * child, and it is unchanged; this cap is the backstop behind it.
      */
     const val MAX_TURNS = 200
-    const val MAX_PER_ASSISTANT_TURN = 3
+    // [subagent-unlimited] Was 3; follows the user's concurrency setting.
+    val MAX_PER_ASSISTANT_TURN: Int get() = AgentSettings.maxConcurrent
     const val DEFAULT_MINUTES = 10
     const val MAX_MINUTES = 60
 
@@ -346,6 +347,8 @@ object HelperRunner {
     fun subAgentRosterSection(
         roster: List<com.openminis.app.data.model.SubAgentDefinition>,
         groupName: (String) -> String?,
+        /** [subagent-model-pin] Display name of a pinned model entry. */
+        entryName: (String) -> String? = { null },
     ): String {
         if (roster.isEmpty()) return ""
         val lines = mutableListOf(
@@ -355,7 +358,8 @@ object HelperRunner {
             val desc = def.description
                 .take(com.openminis.app.data.model.SubAgentLimits.DESCRIPTION_MAX_LENGTH)
                 .trim()
-            val pinned = def.modelGroupId?.let { groupName(it) }
+            val pinned = def.modelEntryId?.let { entryName(it) }
+                ?: def.modelGroupId?.let { groupName(it) }
             val model = if (pinned != null) {
                 // Pinned by the user: model_choice does not apply to this one.
                 "fixed — $pinned"

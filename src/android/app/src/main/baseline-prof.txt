@@ -1,0 +1,17 @@
+# [perf-opt] Baseline profile: AOT-compile these at install time.
+# Broad wildcard rules (HSPL = hot, startup, post-startup) for the chat path.
+HSPLandroidx/compose/runtime/**->**(**)**
+HSPLandroidx/compose/ui/**->**(**)**
+HSPLandroidx/compose/foundation/**->**(**)**
+HSPLandroidx/compose/material3/**->**(**)**
+HSPLandroidx/compose/animation/**->**(**)**
+HSPLandroidx/compose/ui/text/**->**(**)**
+HSPLkotlinx/coroutines/**->**(**)**
+HSPLcom/openminis/app/ui/chat/**->**(**)**
+HSPLcom/openminis/app/ui/markdown/**->**(**)**
+HSPLcom/openminis/app/ui/components/**->**(**)**
+HSPLcom/openminis/app/MainActivity;->**(**)**
+HSPLcom/openminis/app/MinisApp;->**(**)**
+Landroidx/compose/**;
+Lcom/openminis/app/ui/chat/**;
+Lcom/openminis/app/ui/markdown/**;

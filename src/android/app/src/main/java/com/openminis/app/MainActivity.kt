@@ -156,6 +156,13 @@ class MainActivity : ComponentActivity() {
         }, 1200L)
     }
 
+    // [refresh-rate] Some ROMs drop the window's preferred mode when the app
+    // returns from the background or the display configuration changes.
+    override fun onResume() {
+        super.onResume()
+        com.openminis.app.ui.RefreshRateController.apply(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -508,6 +515,10 @@ class MainActivity : ComponentActivity() {
                 ?: DeepLinkAction.Unknown
         }
 
+        // [refresh-rate] Request the user's preferred display refresh rate
+        // (default: the panel's highest, e.g. 120 Hz) before the first frame.
+        com.openminis.app.ui.RefreshRateController.apply(this)
+
         setContent {
             val prefs = remember { getAppearancePrefs(this) }
             var themeMode by remember { mutableIntStateOf(prefs.getInt(KEY_THEME_MODE, 0)) }
@@ -521,6 +532,9 @@ class MainActivity : ComponentActivity() {
                         KEY_KEEP_SCREEN_AWAKE -> applyKeepScreenAwakeFlag(
                             SessionActivityTracker.activeSessions.value.isNotEmpty()
                         )
+                        // [refresh-rate] Apply immediately when changed in Settings.
+                        com.openminis.app.ui.RefreshRateController.KEY_REFRESH_RATE_MODE ->
+                            com.openminis.app.ui.RefreshRateController.apply(this@MainActivity)
                     }
                 }
                 prefs.registerOnSharedPreferenceChangeListener(listener)

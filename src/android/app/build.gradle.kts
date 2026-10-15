@@ -33,11 +33,13 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.openminis.app"
+        // [package-rename] Own package so it installs alongside the official build.
+        // `namespace` (R / BuildConfig / class names) intentionally stays com.openminis.app.
+        applicationId = "com.openminis.plus"
         minSdk = 26
         targetSdk = 35
-        versionCode = 28
-        versionName = "1.14"
+        versionCode = 29
+        versionName = "1.14-plus.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -47,6 +49,12 @@ android {
         // `release`. Kept separate from BuildConfig.DEBUG so a non-debuggable
         // build can still carry the tooling.
         buildConfigField("boolean", "DEV_TOOLS", "false")
+        // [package-rename] GitHub "owner/repo" the in-app updater checks.
+        buildConfigField(
+            "String",
+            "UPDATE_REPO",
+            "\"${(System.getenv("UPDATE_REPO") ?: "OpenMinis/OpenMinis").replace("\"", "")}\"",
+        )
 
         // System prompt prefix required by Anthropic for Claude Code OAuth
         // credentials. Empty in the public mirror (see provider-customization.properties).
@@ -253,6 +261,12 @@ androidComponents {
 
 dependencies {
     // Compose BOM
+    // [perf-opt] Ship a baseline profile (src/main/baseline-prof.txt) so ART
+    // AOT-compiles the Compose / chat hot paths at install time instead of
+    // running them interpreted+JIT for the first days after every update —
+    // the classic cause of janky first scrolls and streaming in release builds.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+
     val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")

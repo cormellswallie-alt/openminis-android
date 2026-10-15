@@ -135,6 +135,45 @@ fun SubAgentsScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         // offered to the model", not "cannot be configured" — the same rule the
         // other tool switches follow. Matches iOS's .opacity(enabled ? 1 : 0.5).
         Column(Modifier.alpha(if (agentsEnabled) 1f else 0.5f)) {
+        // [subagent-unlimited] User-configurable concurrency (upstream: fixed 3).
+        var maxConcurrent by remember {
+            mutableStateOf(com.openminis.app.agent.jobs.AgentSettings.maxConcurrentRaw(context))
+        }
+        SettingsSection(
+            header = stringResource(R.string.sub_agents_concurrency_header),
+            footer = stringResource(R.string.sub_agents_concurrency_footer),
+        ) {
+            Text(
+                stringResource(R.string.sub_agents_concurrency_title),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 6.dp),
+            )
+            val choices = com.openminis.app.agent.jobs.AgentSettings.MAX_CONCURRENT_CHOICES
+            val unlimitedLabel = stringResource(R.string.sub_agents_concurrency_unlimited)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+            ) {
+                choices.forEachIndexed { idx, v ->
+                    SegmentedButton(
+                        selected = maxConcurrent == v,
+                        onClick = {
+                            maxConcurrent = v
+                            com.openminis.app.agent.jobs.AgentSettings.setMaxConcurrent(context, v)
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = idx, count = choices.size),
+                        icon = {},
+                    ) {
+                        Text(
+                            if (v == com.openminis.app.agent.jobs.AgentSettings.UNLIMITED) unlimitedLabel else v.toString(),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                }
+            }
+        }
         SettingsSection(
             header = stringResource(R.string.sub_agents_list_header),
             footer = stringResource(R.string.sub_agents_list_footer),
@@ -146,7 +185,10 @@ fun SubAgentsScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                             name = def.displayName(context),
                             isBuiltIn = def.isBuiltIn,
                             description = def.displayDescription(context),
-                            modelLabel = def.modelGroupId?.let { repo.group(it)?.name }
+                            modelLabel = def.modelEntryId?.let { eid ->
+                                repo.config.value.modelEntries.firstOrNull { it.id == eid }?.model?.displayName
+                            } // [subagent-model-pin]
+                                ?: def.modelGroupId?.let { repo.group(it)?.name }
                                 ?: stringResource(R.string.sub_agent_model_auto),
                             onClick = { onOpen(def.id) },
                             showDivider = i < roster.lastIndex,
@@ -247,6 +289,8 @@ fun SubAgentDetailScreen(agentId: String, onBack: () -> Unit) {
     var description by remember(agentId) { mutableStateOf(original.description) }
     var instructions by remember(agentId) { mutableStateOf(original.instructions) }
     var groupId by remember(agentId) { mutableStateOf(original.modelGroupId) }
+    var entryId by remember(agentId) { mutableStateOf(original.modelEntryId) } // [subagent-model-pin]
+    var entrySearch by remember(agentId) { mutableStateOf("") }
     var thinking by remember(agentId) { mutableStateOf(original.thinkingLevelOverride) }
     var error by remember(agentId) { mutableStateOf<String?>(null) }
 
@@ -261,6 +305,7 @@ fun SubAgentDetailScreen(agentId: String, onBack: () -> Unit) {
                 original.copy(
                     instructions = instructions,
                     modelGroupId = groupId,
+                    modelEntryId = entryId,
                     thinkingLevelOverride = thinking,
                 ),
             )
@@ -282,6 +327,7 @@ fun SubAgentDetailScreen(agentId: String, onBack: () -> Unit) {
                 description = description.trim(),
                 instructions = instructions,
                 modelGroupId = groupId,
+                modelEntryId = entryId,
                 thinkingLevelOverride = thinking,
             ),
         )
@@ -365,6 +411,50 @@ fun SubAgentDetailScreen(agentId: String, onBack: () -> Unit) {
                     selected = groupId == g.id,
                     onSelect = { groupId = g.id; persist() },
                     showDivider = i < groups.lastIndex,
+                )
+            }
+        }
+
+        // [subagent-model-pin] Pin a specific model. Lists every non-hidden
+        // entry of an enabled provider, filterable by name.
+        val pinnableEntries = remember {
+            val cfg = repo.config.value
+            val enabledInstances = cfg.instances.filter { it.isEnabled }.associateBy { it.id }
+            cfg.modelEntries
+                .filter { !it.isHidden && enabledInstances.containsKey(it.providerInstanceId) }
+                .map { e -> Triple(e.id, e.model.displayName, enabledInstances[e.providerInstanceId]?.label.orEmpty()) }
+        }
+        SettingsSection(
+            header = stringResource(R.string.sub_agent_model_specific_header),
+            footer = stringResource(R.string.sub_agent_model_specific_footer),
+        ) {
+            SettingsChoiceRow(
+                title = stringResource(R.string.sub_agent_model_specific_none),
+                selected = entryId == null,
+                onSelect = { entryId = null; persist() },
+            )
+            if (pinnableEntries.size > 8) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    OutlinedTextField(
+                        value = entrySearch,
+                        onValueChange = { entrySearch = it },
+                        label = { Text(stringResource(R.string.sub_agent_model_specific_search)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+            val q = entrySearch.trim()
+            val shown = pinnableEntries.filter { (id, name, provider) ->
+                id == entryId || q.isEmpty() ||
+                    name.contains(q, ignoreCase = true) || provider.contains(q, ignoreCase = true)
+            }
+            shown.forEachIndexed { i, (id, name, provider) ->
+                SettingsChoiceRow(
+                    title = if (provider.isNotEmpty()) "$name · $provider" else name,
+                    selected = entryId == id,
+                    onSelect = { entryId = id; persist() },
+                    showDivider = i < shown.lastIndex,
                 )
             }
         }

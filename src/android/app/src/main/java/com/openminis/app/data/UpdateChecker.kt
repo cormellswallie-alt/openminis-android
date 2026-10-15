@@ -34,13 +34,15 @@ import java.util.concurrent.TimeUnit
 object UpdateChecker {
 
     private const val TAG = "UpdateChecker"
-    private const val OWNER = "OpenMinis"
+    // [package-rename] Owner/repo come from the build (CI sets UPDATE_REPO to
+    // the building repository) so updates are fetched from this fork.
+    private val OWNER: String = BuildConfig.UPDATE_REPO.substringBefore('/')
     // T133: the public repo is OpenMinis/OpenMinis (org + repo share a name).
     // Previously pointed at OpenMinis/MinisApp, which is the private dev
     // mirror — every API call 404'd, which we mistranslated as "no release
     // published". The 0.1-preview release is published as a prerelease on
     // OpenMinis/OpenMinis with a MinisApp-*.apk asset attached.
-    private const val REPO = "OpenMinis"
+    private val REPO: String = BuildConfig.UPDATE_REPO.substringAfter('/')
     private const val DOWNLOAD_FILENAME = "minis-update.apk"
     /**
      * Sub-directory of `filesDir` where we stage downloaded update APKs. We

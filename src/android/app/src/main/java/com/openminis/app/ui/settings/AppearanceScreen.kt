@@ -417,6 +417,43 @@ fun AppearanceScreen(
             )
         }
 
+        // -- Refresh Rate --  [refresh-rate]
+        // Requests a display mode for this app's window; see RefreshRateController.
+        run {
+            val activity = com.openminis.app.ui.RefreshRateController.findActivity(context)
+            var refreshMode by remember {
+                mutableIntStateOf(com.openminis.app.ui.RefreshRateController.mode(context))
+            }
+            val supported = remember {
+                activity?.let { com.openminis.app.ui.RefreshRateController.supportedRates(it) }.orEmpty()
+            }
+            val supportedLabel = if (supported.isEmpty()) "?" else supported.joinToString(" / ") { "$it Hz" }
+            SettingsSection(
+                header = stringResource(R.string.appearance_section_refresh_rate),
+                footer = stringResource(R.string.appearance_refresh_rate_footer, supportedLabel),
+            ) {
+                val rows = listOf(
+                    com.openminis.app.ui.RefreshRateController.MODE_HIGHEST to stringResource(R.string.appearance_refresh_rate_highest),
+                    com.openminis.app.ui.RefreshRateController.MODE_120 to stringResource(R.string.appearance_refresh_rate_120),
+                    com.openminis.app.ui.RefreshRateController.MODE_90 to stringResource(R.string.appearance_refresh_rate_90),
+                    com.openminis.app.ui.RefreshRateController.MODE_60 to stringResource(R.string.appearance_refresh_rate_60),
+                    com.openminis.app.ui.RefreshRateController.MODE_SYSTEM to stringResource(R.string.appearance_refresh_rate_system),
+                )
+                rows.forEachIndexed { idx, (mode, label) ->
+                    SettingsChoiceRow(
+                        title = label,
+                        selected = refreshMode == mode,
+                        onSelect = {
+                            refreshMode = mode
+                            com.openminis.app.ui.RefreshRateController.setMode(context, mode)
+                            activity?.let { com.openminis.app.ui.RefreshRateController.apply(it) }
+                        },
+                        showDivider = idx < rows.size - 1,
+                    )
+                }
+            }
+        }
+
         // -- Tool Status Bar --
         SettingsSection(
             header = stringResource(R.string.appearance_section_tool_preview),

@@ -2511,6 +2511,8 @@ class ChatViewModel(
         return com.openminis.app.agent.jobs.HelperRunner.subAgentRosterSection(
             roster = providerRepository.subAgents,
             groupName = { id -> providerRepository.group(id)?.name },
+            // [subagent-model-pin]
+            entryName = { id -> providerRepository.config.value.modelEntries.firstOrNull { it.id == id }?.model?.displayName },
         )
     }
 
@@ -4389,7 +4391,13 @@ class ChatViewModel(
         }
         if (images.isEmpty()) return messages
 
-        val plan = ImageBudget.planRequestBudget(images.map { it.image })
+        // [token-opt] Also cap the image COUNT, not just bytes.
+        val plan = ImageBudget.planRequestBudget(
+            images.map { it.image },
+            maxCount = ImageBudget.requestImageCountCap(
+                images.mapTo(HashSet()) { ImageBudget.ImagePartId.of(it.image.data) }.size,
+            ),
+        )
         if (!plan.mutated) return messages
 
         // For dropped images without a linuxPath, lazily spill to disk so
@@ -13340,6 +13348,8 @@ class ChatViewModel(
             repo = providerRepository,
             parentBindingJson = parentRow?.modelBinding, parentModelId = parentRow?.modelId ?: currentModel?.id,
             parentActiveEntryId = _activeEntryId.value,
+            // [subagent-model-pin] A specific model the user pinned this agent to.
+            pinnedEntryId = subAgent.modelEntryId,
         ) ?: return reject("no_model", "No model is configured for a helper to run on.")
 
         // [T-sub-agents-v1] Captured for the completion closures below, which
@@ -13380,6 +13390,7 @@ class ChatViewModel(
         // default exactly as before this feature existed.
         run {
             val pinnedGroupLevel = subAgent.modelGroupId
+                ?.takeIf { subAgent.modelEntryId == null } // [subagent-model-pin]
                 ?.let { providerRepository.group(it) }?.defaultThinkingLevel
             val level = subAgent.thinkingLevelOverride
                 ?: pinnedGroupLevel

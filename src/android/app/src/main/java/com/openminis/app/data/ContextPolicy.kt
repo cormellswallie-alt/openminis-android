@@ -78,6 +78,10 @@ data class ContextPolicy(
     }
 
     companion object {
+        /** [token-opt] Absolute offload line for windows ≥128k (see forContextWindow). */
+        const val LARGE_WINDOW_OFFLOAD_BUDGET = 160_000
+        const val LARGE_WINDOW_OFFLOAD_TARGET = 120_000
+
         /**
          * [T-ctx-measure-outbound] The in-loop guard's decision table, shared
          * with iOS `ContextPolicy.inLoopStep`. Every branch that is not COMPACT
@@ -156,9 +160,19 @@ data class ContextPolicy(
                 exhaustedOnly = false,
                 manualCompactAllowed = true,
             )
+            // [token-opt] Large windows: offload old tool outputs at an
+            // ABSOLUTE budget, not just "40k below the ceiling". With a 1M
+            // window the old rule let ~960k tokens of stale tool output ride
+            // on EVERY request (each loop iteration re-sends the whole
+            // history; caching discounts but does not remove that cost, and
+            // many relays/OpenAI-compatible providers do not cache at all).
+            // Offloaded results stay recoverable — the stub names the file
+            // under /var/minis/offloads/ for file_read. The last 4 messages
+            // are always protected by the offloader. For a 128k–200k window
+            // the values are unchanged (min picks window − 40k / − 60k).
             else -> ContextPolicy(
-                offloadThreshold = contextWindow - 40_000,
-                offloadTarget = contextWindow - 60_000,
+                offloadThreshold = minOf(contextWindow - 40_000, LARGE_WINDOW_OFFLOAD_BUDGET),
+                offloadTarget = minOf(contextWindow - 60_000, LARGE_WINDOW_OFFLOAD_TARGET),
                 compactThreshold = contextWindow - 20_000,
                 exhaustedOnly = false,
                 manualCompactAllowed = true,

@@ -86,6 +86,28 @@ object ImageBudget {
      */
     const val MAX_REQUEST_BYTES = 25L * 1024 * 1024
 
+    /**
+     * [token-opt] Image-count cap for outbound requests, with hysteresis.
+     *
+     * Eliding "everything older than the newest N" would change WHICH image is
+     * elided on every new screenshot — rewriting a mid-history message each
+     * time and busting the provider's prompt cache from that point on (for
+     * Anthropic a cache write costs 1.25x, far more than the image saved).
+     * Instead the oldest images are elided in steps of [REQUEST_IMAGE_STEP]:
+     * the elided set only grows once every STEP new images, so the cached
+     * prefix is invalidated at most that often, while between 4 and 11 recent
+     * images always stay visible.
+     */
+    const val REQUEST_IMAGE_KEEP_MIN = 4
+    const val REQUEST_IMAGE_STEP = 8
+
+    /** How many of [distinctCount] images (newest first) to keep. */
+    fun requestImageCountCap(distinctCount: Int): Int {
+        if (distinctCount <= REQUEST_IMAGE_KEEP_MIN + REQUEST_IMAGE_STEP - 1) return Int.MAX_VALUE
+        val elide = ((distinctCount - REQUEST_IMAGE_KEEP_MIN) / REQUEST_IMAGE_STEP) * REQUEST_IMAGE_STEP
+        return distinctCount - elide
+    }
+
     /** Default re-encode target longest edge in pixels. */
     const val MAX_EDGE_PX = 2000
 
@@ -587,6 +609,15 @@ object ImageBudget {
     fun planRequestBudget(
         images: List<BudgetImage>,
         maxBytes: Long = MAX_REQUEST_BYTES,
+        /**
+         * [token-opt] Keep at most this many DISTINCT images (newest first);
+         * older ones become a text placeholder pointing at their file. Every
+         * image is re-sent on every request of the agent loop (~1-1.6k input
+         * tokens each), so a long browser_use session with dozens of old
+         * screenshots paid for all of them on every iteration. Default
+         * [Int.MAX_VALUE] keeps the byte-only behaviour for existing callers.
+         */
+        maxCount: Int = Int.MAX_VALUE,
     ): RequestBudgetPlan {
         if (images.isEmpty()) {
             return RequestBudgetPlan(emptySet(), emptyMap(), 0L, 0L, 0, 0)
@@ -595,9 +626,20 @@ object ImageBudget {
         val droppedPaths = HashMap<ImagePartId, String?>()
         var kept = 0L
         var elided = 0L
+        val keptIds = HashSet<ImagePartId>()
         // Walk latest → eldest so most-recent images win the budget.
         for (img in images.asReversed()) {
             val id = ImagePartId.of(img.data)
+            // An identity already elided stays elided. A repeat of a KEPT
+            // identity is still charged bytes (it is serialised again) but
+            // does not consume another count slot.
+            if (id in dropped) continue
+            if (id !in keptIds && keptIds.size >= maxCount) {
+                dropped.add(id)
+                droppedPaths[id] = img.linuxPath
+                elided += minOf(estimatedBase64Length(img.data.size), MAX_PER_IMAGE_BYTES)
+                continue
+            }
             // Per-image cap-clamped size, measured as base64 because that is
             // what [maxBytes] budgets. [T-image-budget-base64] The clamp is
             // applied after the conversion so it lands on the same ceiling a
@@ -605,6 +647,7 @@ object ImageBudget {
             val effectiveSize = minOf(estimatedBase64Length(img.data.size), MAX_PER_IMAGE_BYTES)
             if (kept + effectiveSize <= maxBytes) {
                 kept += effectiveSize
+                keptIds.add(id)
             } else {
                 dropped.add(id)
                 droppedPaths[id] = img.linuxPath
@@ -636,7 +679,7 @@ object ImageBudget {
      */
     fun elidedImagePlaceholder(linuxPath: String?): String {
         return if (linuxPath != null) {
-            "[image elided to fit 25MB request budget. Original at $linuxPath — re-fetch with `read_image $linuxPath` if you need to see it.]"
+            "[image elided to fit 25MB request budget (older images are not re-sent). Original at $linuxPath — re-fetch with `read_image $linuxPath` if you need to see it.]"
         } else {
             "[image elided to fit 25MB request budget. Original bytes no longer addressable; ask the user to re-attach if needed.]"
         }

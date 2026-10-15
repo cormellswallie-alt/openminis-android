@@ -1110,6 +1110,8 @@ private fun RestoreTab(
                 )
             }
         }
+        // [chat-import] Migrate conversations from other apps' exports.
+        ChatImportSection(enabled = !running)
         // Tapped straight from the destinations list above — same picker, but
         // with the server already chosen.
         browsing?.let { r ->

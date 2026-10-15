@@ -493,6 +493,8 @@ class MinisApp : Application(), ImageLoaderFactory {
         }
         database = AppDatabase.getInstance(this)
         chatRepository = ChatRepository(database.chatDao())
+        // [subagent-unlimited] Load the user's sub agent concurrency cap.
+        com.openminis.app.agent.jobs.AgentSettings.init(this)
         // [T-p2-agent-series] How a background agent's completion reaches its
         // parent: submit the <agent_callback> as a PROGRAMMATIC prompt on the
         // parent's ViewModel (queued behind a running loop, never interrupting).

@@ -29,6 +29,8 @@ data class BackupSubAgentRecord(
     val subAgentDescription: String,
     val instructions: String,
     val modelGroupId: String? = null,
+    /** [subagent-model-pin] Android-only extension; iOS ignores unknown keys. */
+    val modelEntryId: String? = null,
     val sortOrder: Int,
     /** ISO-8601, whole seconds, UTC (`2026-09-28T12:00:00Z`). */
     val updatedAt: String,
@@ -55,6 +57,7 @@ internal object BackupSubAgentMapping {
         subAgentDescription = def.description,
         instructions = def.instructions,
         modelGroupId = def.modelGroupId,
+        modelEntryId = def.modelEntryId,
         sortOrder = def.sortOrder,
         // Whole seconds: Swift's `.iso8601` date strategy REJECTS fractional
         // seconds, and one undecodable date fails the whole record on iOS.
@@ -78,6 +81,7 @@ internal object BackupSubAgentMapping {
             description = r.subAgentDescription,
             instructions = r.instructions,
             modelGroupId = r.modelGroupId?.takeIf { it.isNotBlank() },
+            modelEntryId = r.modelEntryId?.takeIf { it.isNotBlank() },
             // Case-insensitive: "high" (iOS) and "HIGH" (older Android) both work.
             thinkingLevelOverride = r.thinkingLevelOverride?.let { ThinkingLevel.parseOrNull(it) },
             isBuiltIn = false,
