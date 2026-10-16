@@ -18,7 +18,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -32,11 +32,26 @@ jobs:
       # Unit tests compile the whole app module, which references rclone.aar
       # (flatDir) and the provider-customization file. Stub both so javac/kotlinc
       # can resolve the module without the 30-minute native/Go pipeline.
+      # AnthropicProvider.resolveSystemPrompt reads
+      # ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT on every request
+      # (API-key path included), and that getter throws when the BuildConfig
+      # value is empty. Use the same secret as the APK build; fall back to a
+      # test-only placeholder so forks without the secret still run tests.
       - name: Stub build-time inputs
+        env:
+          OAUTH_PROMPT: ${{ secrets.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT }}
         run: |
           mkdir -p src/android/app/libs
           f=src/android/app/provider-customization.properties
-          [ -f "$f" ] || cp src/android/app/provider-customization.properties.example "$f"
+          cp src/android/app/provider-customization.properties.example "$f"
+          python3 - "$f" <<'PY'
+          import os, sys
+          p = sys.argv[1]
+          v = os.environ.get("OAUTH_PROMPT") or "unit-test-oauth-identifier"
+          lines = [l for l in open(p) if not l.startswith("ANTHROPIC_OAUTH_IDENTIFIER_PROMPT=")]
+          lines.append("ANTHROPIC_OAUTH_IDENTIFIER_PROMPT=" + v.replace("\\", "\\\\") + "\n")
+          open(p, "w").writelines(lines)
+          PY
 
       - name: Fetch rclone.aar from latest successful APK build cache (optional)
         uses: actions/cache/restore@v4
@@ -64,11 +79,15 @@ jobs:
                 src/android/app/src/test/java/com/openminis/app/backup/BackupSubAgentsTest.kt \
                 src/android/app/src/test/java/com/openminis/app/data/SubAgentToolSchemaTest.kt
 
+      # The previous run's tests finished in ~7 min, then the job sat until the
+      # 60-min timeout (test JVM / daemon never exited). Bound the step and skip
+      # the daemon so a hang surfaces in minutes, results already printed above.
       - name: Run provider unit tests
         working-directory: src/android
+        timeout-minutes: 20
         run: |
           chmod +x gradlew
-          ./gradlew :app:testDebugUnitTest \
+          ./gradlew --no-daemon :app:testDebugUnitTest \
             --tests 'com.openminis.app.provider.AnthropicCacheAndUsageTest' \
             --tests 'com.openminis.app.provider.AnthropicProviderTest' \
             --tests 'com.openminis.app.provider.ThinkingWireGeminiAnthropicSnapshotTest' \
