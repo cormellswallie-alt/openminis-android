@@ -35,6 +35,26 @@ object ShellJobRegistry {
     const val MIN_YIELD_SEC = 5
     const val MAX_YIELD_SEC = 240
 
+    /**
+     * [T-shell-call-budget] Hard ceiling for ONE shell_execute call, delay
+     * included. `delay` runs before the command and used to be unbounded and
+     * outside `yield_after`, so `delay: 600` blocked the turn for 10 minutes
+     * no matter how the command itself was detached.
+     */
+    const val MAX_CALL_SEC = 240
+
+    /** Env var carrying the seconds left in the current call to minis-shell-job. */
+    const val BUDGET_ENV = "MINIS_SHELL_CALL_BUDGET"
+
+    /** Delay actually honoured: leaves at least [MIN_YIELD_SEC] for the command. */
+    fun effectiveDelaySec(requested: Int): Int =
+        requested.coerceIn(0, MAX_CALL_SEC - MIN_YIELD_SEC)
+
+    /** Inline wait actually honoured once [delaySec] has been spent. */
+    fun effectiveYieldSec(requested: Int, delaySec: Int): Int =
+        requested.coerceIn(MIN_YIELD_SEC, MAX_YIELD_SEC)
+            .coerceAtMost((MAX_CALL_SEC - delaySec).coerceAtLeast(MIN_YIELD_SEC))
+
     /** `minis-shell-job wait` bounds. */
     const val DEFAULT_WAIT_SEC = 120
     const val MAX_WAIT_SEC = 240

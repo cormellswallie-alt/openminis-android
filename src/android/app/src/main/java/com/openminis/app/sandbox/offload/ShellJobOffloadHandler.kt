@@ -43,8 +43,11 @@ class ShellJobOffloadHandler : NativeOffloadHandler {
         return when (sub) {
             "status", "output", "logs" -> reportResult(job)
             "wait" -> {
-                val timeout = parseTimeout(args.drop(2))
+                val requested = parseTimeout(args.drop(2))
                     ?: return NativeOffloadResult(64, "$CLI: --timeout must be a number of seconds\n")
+                // [T-shell-call-budget] Never wait past what is left of this tool call.
+                val budget = request.env[ShellJobRegistry.BUDGET_ENV]?.toIntOrNull()?.takeIf { it > 0 }
+                val timeout = if (budget != null) minOf(requested, budget) else requested
                 if (job.state == ShellJobRegistry.State.RUNNING) ShellJobRegistry.awaitBlocking(job, timeout)
                 reportResult(job)
             }

@@ -86,6 +86,31 @@ class AgentEfficiency2Test {
         assertNotEquals(FileMutationLock.keyFor(f), FileMutationLock.keyFor(File(dir, f.name + "_other")))
     }
 
+    // ── [T-shell-call-budget] ───────────────────────────────────────────
+
+    @Test
+    fun `delay plus inline wait never exceeds the per-call ceiling`() {
+        val r = com.openminis.app.sandbox.ShellJobRegistry
+        for (delay in listOf(0, 30, 120, 230, 235, 600, 3600, -5)) {
+            for (yieldReq in listOf(1, 5, 60, 240, 1000)) {
+                val d = r.effectiveDelaySec(delay)
+                val y = r.effectiveYieldSec(yieldReq, d)
+                assertTrue("delay=$delay yield=$yieldReq -> $d+$y", d + y <= r.MAX_CALL_SEC)
+                assertTrue(y >= r.MIN_YIELD_SEC)
+                assertTrue(d >= 0)
+            }
+        }
+    }
+
+    @Test
+    fun `small delays leave the requested yield untouched`() {
+        val r = com.openminis.app.sandbox.ShellJobRegistry
+        assertEquals(60, r.effectiveYieldSec(60, 0))
+        assertEquals(60, r.effectiveYieldSec(60, 100))
+        assertEquals(40, r.effectiveYieldSec(60, 200))
+        assertEquals(235, r.effectiveDelaySec(600))
+    }
+
     // ── [T-shell-auto-background] poll detection ────────────────────────
 
     private fun shell(cmd: String) = mapOf<String, Any?>("command" to cmd, "tool_title" to "poll")
