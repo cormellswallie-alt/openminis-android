@@ -85,8 +85,11 @@ class ClaudeSonnet55Test {
         for (id in listOf("claude-sonnet-5-5", "claude-sonnet-5")) {
             assertTrue("$id rejects temperature", AnthropicProvider.modelRejectsTemperature(id))
             assertTrue("$id uses adaptive thinking", AnthropicProvider.modelUsesAdaptiveThinking(id))
-            assertFalse("$id 400s on thinking.type=disabled", AnthropicProvider.modelAcceptsExplicitThinkingDisabled(id))
         }
+        // Per the official per-model table: Sonnet 5.5 rejects "disabled" (its
+        // off switch is between_tools); Sonnet 5 accepts it.
+        assertFalse(AnthropicProvider.modelAcceptsExplicitThinkingDisabled("claude-sonnet-5-5"))
+        assertTrue(AnthropicProvider.modelAcceptsExplicitThinkingDisabled("claude-sonnet-5"))
     }
 
     private fun anthropicBody(model: LLMModel, level: ThinkingLevel): JSONObject {

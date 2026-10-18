@@ -336,21 +336,19 @@ class ClaudeVersionParseTest {
                 src.contains("if (claudeAt < 0) return null"),
         )
         assertTrue("temperature threshold moved", src.contains("return major > 4 || (major == 4 && minor >= 6)"))
+        // [T-anthropic-thinking-off-by-model] OFF encoding is a per-model table
+        // (4.6-4.x and Opus 5 / Sonnet 5 / Haiku 5.5 → disabled, Sonnet 5.5 →
+        // between_tools, always-on → effort only), NOT modelUsesAdaptiveThinking.
         assertTrue(
-            "modelAcceptsExplicitThinkingDisabled must stay a 4.6 <= v < 5 window — it is NOT " +
-                "the same predicate as modelUsesAdaptiveThinking, which also covers 5+",
-            src.contains("fun modelAcceptsExplicitThinkingDisabled(modelId: String): Boolean") &&
-                src.contains("return major == 4 && minor >= 6"),
-        )
-        assertTrue(
-            "the request builder must gate the disabled literal on acceptsExplicitThinkingDisabled, " +
-                "not on modelUsesAdaptiveThinking",
-            src.contains("} else if (modelAcceptsExplicitThinkingDisabled(model.id)) {"),
+            "OFF must be decided by thinkingOffMode, not by modelUsesAdaptiveThinking",
+            src.contains("fun thinkingOffMode(modelId: String): ThinkingOffMode") &&
+                src.contains("if (major == 4) return ThinkingOffMode.DISABLED") &&
+                src.contains("when (thinkingOffMode(model.id)) {"),
         )
         val resolver = ProductionSources.read("provider/thinking/ThinkingRuleResolver.kt")
         assertTrue(
-            "the resolver's OFF shape must ask acceptsExplicitThinkingDisabled, not adaptive",
-            resolver.contains(".modelAcceptsExplicitThinkingDisabled(modelId)"),
+            "the resolver's OFF shape must ask thinkingOffMode, not adaptive",
+            resolver.contains("AnthropicProvider.thinkingOffMode(modelId)"),
         )
         assertTrue(
             "the thinking-toggle threshold moved off 3.7",
