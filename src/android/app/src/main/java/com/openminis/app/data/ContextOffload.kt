@@ -144,6 +144,42 @@ object ContextOffload {
         "$OFFLOADED_PREFIX Content (~$approxTokens tokens, $byteCount bytes) saved to: $linuxPath\n" +
             "Use file_read tool to retrieve if needed."
 
+    /** [T-offload-stub-preview] Head / tail kept inline by [stubWithPreview]. */
+    const val PREVIEW_HEAD_CHARS = 700
+    const val PREVIEW_TAIL_CHARS = 400
+
+    /**
+     * [T-offload-stub-preview] [stub] plus the first and last lines of what was
+     * offloaded.
+     *
+     * A bare path forces a file_read round trip whenever the model needs to
+     * remember anything about an old result — even just "did that build pass"
+     * or "which file was that". Most of those questions are answered by the
+     * head (command banner, first matches) or the tail (exit code, summary
+     * line, error). ~1.1k chars instead of a whole result is still a >90% cut
+     * for anything worth offloading, and the full text stays on disk.
+     *
+     * The stub still STARTS with [OFFLOADED_PREFIX], so [isOffloadPlaceholder]
+     * keeps recognising it: it is never re-offloaded, and a write tool still
+     * refuses it as content. Short content (≤ head+tail) gets no preview: it
+     * would be offloaded for nothing.
+     */
+    fun stubWithPreview(approxTokens: Int, byteCount: Int, linuxPath: String, content: String): String {
+        val base = stub(approxTokens, byteCount, linuxPath)
+        if (content.length <= PREVIEW_HEAD_CHARS + PREVIEW_TAIL_CHARS + 200) return base
+        fun cutHead(s: String): String {
+            val raw = s.take(PREVIEW_HEAD_CHARS)
+            val nl = raw.lastIndexOf('\n')
+            return if (nl > PREVIEW_HEAD_CHARS / 2) raw.substring(0, nl) else raw
+        }
+        fun cutTail(s: String): String {
+            val raw = s.takeLast(PREVIEW_TAIL_CHARS)
+            val nl = raw.indexOf('\n')
+            return if (nl in 0 until PREVIEW_TAIL_CHARS / 2) raw.substring(nl + 1) else raw
+        }
+        return base + "\nPreview (head … tail):\n" + cutHead(content) + "\n[…]\n" + cutTail(content)
+    }
+
     /**
      * [T-offload-stub-system-reminder] (GH#374) The notice handed to the model in
      * place of a `file_write` / `file_edit` payload moved to disk. Byte-identical

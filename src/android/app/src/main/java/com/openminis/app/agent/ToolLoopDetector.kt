@@ -278,6 +278,15 @@ class ToolLoopDetector(private val config: ToolLoopConfig = ToolLoopConfig()) {
 
     private fun isPollTool(toolName: String, params: Map<String, Any?>): Boolean {
         if (toolName == "command_status") return true
+        // [T-shell-auto-background] Polling a background job repeats the
+        // IDENTICAL command by design (`minis-shell-job wait sh_x`). Judge it
+        // by progress (result hash) like other poll tools; the generic
+        // identical-args rule would tell the model to "report the task as
+        // failed" after 10 polls of a healthy 20-minute build.
+        if (toolName == "shell_execute") {
+            val cmd = (params["command"] as? String)?.trimStart().orEmpty()
+            if (cmd.startsWith("minis-shell-job wait") || cmd.startsWith("minis-shell-job status")) return true
+        }
         if (toolName == "process") {
             val action = (params["action"] as? String)?.lowercase()
             if (action == "poll" || action == "log") return true

@@ -10415,7 +10415,14 @@ class ChatViewModel(
                         } else ""
                     } ?: ""
                     if (linuxPath.isEmpty()) linuxPath = imgPath
-                    val stub = ContextOffload.stub(candidateTokens, candidate.bytes, linuxPath)
+                    // [T-offload-stub-preview] Keep head/tail of text results
+                    // inline; a readback re-stub keeps the plain form (its
+                    // preview would only repeat the file_read header).
+                    val stub = if (readbackPath == null && part.content.length > 500) {
+                        ContextOffload.stubWithPreview(candidateTokens, candidate.bytes, linuxPath, part.content)
+                    } else {
+                        ContextOffload.stub(candidateTokens, candidate.bytes, linuxPath)
+                    }
                     part.copy(content = stub, imageData = null, imageMimeType = null)
                 }
                 is AgentContentPart.ToolUse -> {

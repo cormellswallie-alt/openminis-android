@@ -69,6 +69,8 @@ object FileEditTool {
             val file = PRootKernel.resolveSessionHostPath(sessionId, path, context)
                 ?: return ToolExecutionResult("Error: Cannot resolve path: $path", false, toolTitle = toolTitle)
 
+            // [T-file-tool-race] Whole read-modify-write under the per-file lock.
+            FileMutationLock.withLock(file) {
             if (!file.exists()) {
                 return ToolExecutionResult("Error: File not found: $path", false, toolTitle = toolTitle)
             }
@@ -106,9 +108,10 @@ object FileEditTool {
             file.writeText(newContent)
             val replacements = if (replaceAll) count else 1
             ToolExecutionResult(
-                "Edited $path ($replacements replacement(s), ${newContent.length} bytes)",
+                "Edited $path ($replacements replacement(s), ${newContent.toByteArray(Charsets.UTF_8).size} bytes)",
                 true, toolTitle = toolTitle
             )
+            }
         } catch (e: Exception) {
             ToolExecutionResult("Error editing file: ${e.message}", false)
         }

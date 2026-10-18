@@ -102,10 +102,14 @@ object FileWriteTool {
                 parent.mkdirs()
             }
 
-            if (append) {
-                file.appendText(content)
-            } else {
-                file.writeText(content)
+            // [T-file-tool-race] Same lock as file_edit: a write racing an edit
+            // of the same file in one concurrent batch must not interleave.
+            FileMutationLock.withLock(file) {
+                if (append) {
+                    file.appendText(content)
+                } else {
+                    file.writeText(content)
+                }
             }
 
             val bytes = file.length()
