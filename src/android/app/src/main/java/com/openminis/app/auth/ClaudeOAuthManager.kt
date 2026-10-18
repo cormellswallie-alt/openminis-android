@@ -52,7 +52,7 @@ class ClaudeOAuthManager(context: Context, instanceId: String) : OAuthManager(co
          * OAuth (Claude Code) request needs the prompt.
          */
         val ANTHROPIC_OAUTH_IDENTIFIER_PROMPT: String
-            get() = BuildConfig.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT.ifEmpty {
+            get() = configuredIdentifierPrompt.ifEmpty {
                 throw IllegalStateException(
                     "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT is not configured. Copy "
                         + "app/provider-customization.properties.example to "
@@ -350,7 +350,7 @@ class ClaudeOAuthManager(context: Context, instanceId: String) : OAuthManager(co
 
                 if (responseCode in 200..299) {
                     val json = JSONObject(responseBody)
-                  n if (!json.has("refresh_token")) {
+                    if (!json.has("refresh_token")) {
                         json.put("refresh_token", refreshTokenValue)
                     }
                     val expiresIn = json.optLong("expires_in", 0)
