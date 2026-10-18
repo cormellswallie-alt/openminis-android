@@ -147,6 +147,11 @@
     <string name="settings_model_groups_subtitle">回退与负载均衡</string>
     <string name="settings_token_usage">Token 用量</string>
     <string name="settings_token_usage_subtitle">跨提供商追踪 API 使用情况</string>
+    <string name="settings_section_anthropic_cache">Anthropic 提示缓存</string>
+    <string name="settings_cache_mode_standard">标准（5 分钟）</string>
+    <string name="settings_cache_mode_extended">全部 1 小时</string>
+    <string name="settings_cache_mode_smart">智能（1 小时检查点 + 5 分钟末尾）</string>
+    <string name="settings_cache_mode_footer">对 Anthropic 及 Anthropic 兼容提供商生效。缓存写入价格：5 分钟为输入价的 1.25 倍，1 小时为 2 倍；读取价格相同。全部 1 小时：适合经常隔 5 分钟以上才回复。智能：工具循环按 5 分钟计价，每 4 条消息设一个 1 小时检查点，回复晚了或工具跑得久，只需重写检查点之后的一小段。部分中转站可能忽略 1 小时设置。</string>
     <string name="settings_section_appearance">外观</string>
     <string name="settings_appearance_subtitle">主题、字号与显示</string>
     <string name="settings_section_agent_runtime">Agent 运行时</string>
@@ -533,6 +538,7 @@
     <string name="chat_typing_indicator">%1$s 正在思考</string>
     <string name="read_aloud_unavailable">朗读失败：没有可用的语音引擎。请检查语音输出设置，或安装系统语音引擎。</string>
     <string name="chat_error_stream_dropped_partial">连接中断，此回复可能不完整。点击重试以继续。</string>
+    <string name="chat_error_model_refusal">模型拒绝回答这条请求（stop_reason: refusal）。可以换个说法、点击重试，或切换到其他模型。</string>
     <string name="chat_input_placeholder">发消息给 %1$s（@ 提及文件）</string>
     <string name="chat_input_placeholder_hint_1">试试用 @ 提及文件，让 %1$s 读取</string>
     <string name="chat_input_placeholder_hint_2">输入 / 使用技能和快捷命令</string>

@@ -366,4 +366,178 @@ class AnthropicCompatTest {
             assertTrue(e.message!!.contains("group quota exhausted"))
         }
     }
+
+    // ── preserved-thinking prefix mismatch is per request ───────────────
+
+    @Test
+    fun `prefix mismatch drops the echo for one request only`() = runBlocking {
+        val p = provider(LLMModel.claudeSonnet46)
+        server.enqueue(
+            MockResponse().setResponseCode(400).setBody(
+                """{"type":"error","error":{"type":"invalid_request_error","message":"messages.1.content.0: Invalid `signature` in `thinking` block. The block is bound to a different conversation. Remove the block, or set `thinking.block_binding.prefix_mismatch_behavior` to drop_block."}}""",
+            ),
+        )
+        server.enqueue(ok())
+        server.enqueue(ok())
+        p.sendMessage(toolLoopHistory(signedBlocks), null, 4096, thinkingLevel = ThinkingLevel.HIGH)
+        assertEquals("thinking", assistantContent(sent()).getJSONObject(0).getString("type"))
+        assertEquals("text", assistantContent(sent()).getJSONObject(0).getString("type"))
+        assertFalse(AnthropicProvider.WireFeature.SIGNED_THINKING_ECHO in p.disabledFeatures)
+        p.sendMessage(toolLoopHistory(signedBlocks), null, 4096, thinkingLevel = ThinkingLevel.HIGH)
+        assertEquals("next request replays again", "thinking", assistantContent(sent()).getJSONObject(0).getString("type"))
+    }
+
+    @Test
+    fun `block binding is never sent to a custom endpoint`() = runBlocking {
+        server.enqueue(ok())
+        provider(LLMModel.claudeOpus48).sendMessage(
+            listOf(LLMMessage(LLMMessage.Role.USER, "hi")), null, 4096, thinkingLevel = ThinkingLevel.HIGH,
+        )
+        val req = server.takeRequest()
+        val body = JSONObject(req.body.readUtf8())
+        assertFalse(body.getJSONObject("thinking").has("block_binding"))
+        assertFalse((req.getHeader("anthropic-beta") ?: "").contains("thinking-binding"))
+    }
+
+    // ── beta headers ─────────────────────────────────────────────────────
+
+    @Test
+    fun `api key requests carry no GA beta values`() = runBlocking {
+        val p = provider(LLMModel.claudeOpus48)
+        p.cacheMode = AnthropicProvider.CacheTtlMode.EXTENDED
+        server.enqueue(ok())
+        p.sendMessage(listOf(LLMMessage(LLMMessage.Role.USER, "hi")), "sys", 4096, thinkingLevel = ThinkingLevel.HIGH)
+        val beta = server.takeRequest().getHeader("anthropic-beta") ?: ""
+        assertFalse(beta, beta.contains("effort-2025-11-24"))
+        assertFalse(beta, beta.contains("extended-cache-ttl"))
+        // Legacy manual thinking still needs interleaved thinking.
+        server.enqueue(ok())
+        provider(LLMModel.claudeHaiku45).sendMessage(
+            listOf(LLMMessage(LLMMessage.Role.USER, "hi")), null, 16_000, thinkingLevel = ThinkingLevel.LOW,
+        )
+        assertTrue((server.takeRequest().getHeader("anthropic-beta") ?: "").contains("interleaved-thinking"))
+    }
+
+    // ── cache TTL modes ──────────────────────────────────────────────────
+
+    private fun userTurns(n: Int): List<LLMMessage> = buildList {
+        for (i in 1..n) {
+            add(LLMMessage(LLMMessage.Role.USER, "question $i"))
+            if (i < n) add(LLMMessage(LLMMessage.Role.ASSISTANT, "answer $i"))
+        }
+    }
+
+    /** (message index, ttl or "5m") for every message-level breakpoint. */
+    private fun messageMarks(body: JSONObject): List<Pair<Int, String>> {
+        val out = mutableListOf<Pair<Int, String>>()
+        val msgs = body.getJSONArray("messages")
+        for (i in 0 until msgs.length()) {
+            val c = msgs.getJSONObject(i).opt("content") as? JSONArray ?: continue
+            for (k in 0 until c.length()) {
+                c.getJSONObject(k).optJSONObject("cache_control")?.let { out.add(i to it.optString("ttl", "5m")) }
+            }
+        }
+        return out
+    }
+
+    private fun bodyFor(mode: AnthropicProvider.CacheTtlMode, history: List<LLMMessage>, longTail: Boolean = false): JSONObject {
+        val p = provider(LLMModel.claudeOpus48)
+        p.cacheMode = mode
+        p.cacheLongTail = longTail
+        server.enqueue(ok())
+        runBlocking { p.sendMessage(history, "sys", 4096) }
+        return sent()
+    }
+
+    @Test
+    fun `standard and extended mark the last two user turns`() {
+        val std = bodyFor(AnthropicProvider.CacheTtlMode.STANDARD, userTurns(3))
+        assertEquals(listOf(2 to "5m", 4 to "5m"), messageMarks(std))
+        assertFalse(std.getJSONArray("system").getJSONObject(0).getJSONObject("cache_control").has("ttl"))
+        val ext = bodyFor(AnthropicProvider.CacheTtlMode.EXTENDED, userTurns(3))
+        assertEquals(listOf(2 to "1h", 4 to "1h"), messageMarks(ext))
+        assertEquals("1h", ext.getJSONArray("system").getJSONObject(0).getJSONObject("cache_control").getString("ttl"))
+    }
+
+    @Test
+    fun `smart keeps a 1h checkpoint every 4 user messages and a 5m tail`() {
+        // 6 user messages: checkpoint = #4 (index 6), tail = #6 (index 10).
+        val b = bodyFor(AnthropicProvider.CacheTtlMode.SMART, userTurns(6))
+        assertEquals(listOf(6 to "1h", 10 to "5m"), messageMarks(b))
+        assertEquals("1h", b.getJSONArray("system").getJSONObject(0).getJSONObject("cache_control").getString("ttl"))
+        // The tail that IS a checkpoint is written with 1h, alone.
+        assertEquals(listOf(14 to "1h"), messageMarks(bodyFor(AnthropicProvider.CacheTtlMode.SMART, userTurns(8))))
+        // Before the first checkpoint: previous + tail, both 5m.
+        assertEquals(listOf(2 to "5m", 4 to "5m"), messageMarks(bodyFor(AnthropicProvider.CacheTtlMode.SMART, userTurns(3))))
+        // Long-gap upgrade: tail becomes 1h too; 1h never follows a 5m.
+        assertEquals(listOf(6 to "1h", 10 to "1h"), messageMarks(bodyFor(AnthropicProvider.CacheTtlMode.SMART, userTurns(6), longTail = true)))
+    }
+
+    @Test
+    fun `no request ever puts a 1h breakpoint after a 5m one`() {
+        for (mode in AnthropicProvider.CacheTtlMode.values()) for (n in 1..9) for (lt in listOf(false, true)) {
+            val ttls = messageMarks(bodyFor(mode, userTurns(n), lt)).map { it.second }
+            val firstShort = ttls.indexOf("5m")
+            if (firstShort >= 0) {
+                assertFalse("$mode n=$n longTail=$lt -> $ttls", ttls.drop(firstShort).contains("1h"))
+            }
+            assertTrue("at most 2 message breakpoints: $ttls", ttls.size <= 2)
+        }
+    }
+
+    // ── tool use ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `wrap-up turn keeps tools and sends tool_choice none`() = runBlocking {
+        val p = provider(LLMModel.claudeOpus48)
+        p.forceNoToolUse = true
+        val tool = com.openminis.app.data.model.AgentToolDefinition(
+            name = "shell_execute",
+            description = "run",
+            parameters = mapOf("command" to com.openminis.app.data.model.AgentToolParam("string", "cmd")),
+        )
+        server.enqueue(ok())
+        p.sendMessage(listOf(LLMMessage(LLMMessage.Role.USER, "hi")), null, 4096, tools = listOf(tool))
+        val body = sent()
+        assertEquals(1, body.getJSONArray("tools").length())
+        assertEquals("none", body.getJSONObject("tool_choice").getString("type"))
+    }
+
+    @Test
+    fun `tool_result blocks come first in a merged user turn`() = runBlocking {
+        server.enqueue(ok())
+        val history = toolLoopHistory(null).dropLast(1) + LLMMessage(
+            role = LLMMessage.Role.USER,
+            content = "",
+            contentParts = listOf(
+                AgentContentPart.Text("note first"),
+                AgentContentPart.ToolResult("toolu_1", "shell_execute", "a.txt"),
+            ),
+        )
+        provider(LLMModel.claudeHaiku45).sendMessage(history, null, 256)
+        val msgs = sent().getJSONArray("messages")
+        val last = msgs.getJSONObject(msgs.length() - 1).getJSONArray("content")
+        assertEquals("tool_result", last.getJSONObject(0).getString("type"))
+        assertEquals("text", last.getJSONObject(1).getString("type"))
+    }
+
+    @Test
+    fun `tool input given whole in content_block_start is used`() = runBlocking {
+        server.enqueue(
+            MockResponse().setHeader("Content-Type", "text/event-stream").setBody(
+                sse(
+                    """{"type":"message_start","message":{"usage":{"input_tokens":5,"output_tokens":1}}}""",
+                    """{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"toolu_9","name":"shell_execute","input":{"command":"pwd"}}}""",
+                    """{"type":"content_block_stop","index":0}""",
+                    """{"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"output_tokens":9}}""",
+                ),
+            ),
+        )
+        val chunks = provider(LLMModel.claudeHaiku45).streamMessage(
+            listOf(LLMMessage(LLMMessage.Role.USER, "x")), null, 256,
+        ).toList()
+        val call = chunks.filterIsInstance<LLMStreamChunk.ToolCallComplete>().single()
+        assertEquals("pwd", call.args.getString("command"))
+    }
 }
+

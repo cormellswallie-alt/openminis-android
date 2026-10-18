@@ -3217,7 +3217,7 @@ fun ChatScreen(
                 actions = {
                     // iOS: "..." circle button → dropdown menu
                     Box {
-                        IconButton(onClick = { showChatMenu = true }) {
+                        IconButton(onClick = { viewModel.refreshEnhancedCacheState(); showChatMenu = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "More")
                         }
                         MinisMenu(

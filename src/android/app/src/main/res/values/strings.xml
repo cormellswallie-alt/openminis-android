@@ -179,6 +179,11 @@
     <string name="settings_model_groups_subtitle">Fallback and load balancing</string>
     <string name="settings_token_usage">Token Usage</string>
     <string name="settings_token_usage_subtitle">Track API usage across providers</string>
+    <string name="settings_section_anthropic_cache">Anthropic prompt cache</string>
+    <string name="settings_cache_mode_standard">Standard (5 minutes)</string>
+    <string name="settings_cache_mode_extended">All 1 hour</string>
+    <string name="settings_cache_mode_smart">Smart (1-hour checkpoints + 5-minute tail)</string>
+    <string name="settings_cache_mode_footer">Applies to Anthropic and Anthropic-compatible providers. Cache writes cost 1.25x input for 5 minutes and 2x for 1 hour; reads are the same. All 1 hour: best when you often reply after more than 5 minutes. Smart: tool loops pay the 5-minute price, a 1-hour checkpoint every 4 messages limits what a late reply or a long tool run has to re-write. Relays may ignore the 1-hour TTL.</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_appearance_subtitle">Theme, font size, and display</string>
     <string name="settings_section_agent_runtime">Agent Runtime</string>
@@ -598,6 +603,7 @@
     <string name="chat_typing_indicator">%1$s is thinking</string>
     <string name="read_aloud_unavailable">Read aloud failed: no usable voice engine. Check Voice Output settings or install a system speech engine.</string>
     <string name="chat_error_stream_dropped_partial">The connection dropped — this reply may be incomplete. Tap Retry to continue.</string>
+    <string name="chat_error_model_refusal">The model declined to answer this request (stop_reason: refusal). Rephrase it, tap Retry, or switch to another model.</string>
     <!-- Composer placeholder. %1$s is the Soul-customized assistant name (default "Minis"). The parenthetical is an inline hint reminding the user that typing '@' opens the file-mention picker. T-android-placeholder-single-line collapses the prior two-row (title + hint) layout into a single line, matching iOS 19e1d61f. -->
     <string name="chat_input_placeholder">Message %1$s (@ to mention files)</string>
     <string name="chat_input_placeholder_hint_1">Try @ to mention files for %1$s to read</string>

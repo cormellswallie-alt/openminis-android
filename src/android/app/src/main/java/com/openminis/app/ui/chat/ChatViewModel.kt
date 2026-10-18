@@ -146,6 +146,15 @@ class ChatViewModel(
          */
         const val MAX_CONCURRENT_TOOLS = 10
 
+        /** [T-anthropic-signed-thinking-persist] partsJson key on an assistant row's first part. */
+        const val ANTHROPIC_THINKING_KEY = "anthropicThinking"
+
+        /** [T-offload-persist] toolResult value key holding the stub the model was sent. */
+        const val OFFLOADED_MODEL_OUTPUT_KEY = "modelOutput"
+
+        /** [T-anthropic-cache-mode] Request gap that outlives a 5-minute cache entry (with margin). */
+        const val LONG_GAP_MS = 4 * 60 * 1000L
+
         /** [T-android-parity-fixes] Ceiling on shell_execute `timeout`, stated
          *  in the tool schema (AgentTools.shellExecuteDefinition). */
         const val SHELL_TIMEOUT_MAX_SEC = 3600
@@ -2707,7 +2716,14 @@ class ChatViewModel(
      * AnthropicProvider is stamped with `enhancedCache = true` just before the
      * request (see the streamMessage choke point).
      */
-    internal val _enhancedCacheEnabled = MutableStateFlow(false)
+    // [T-anthropic-cache-mode] Now backed by the persisted, app-wide cache mode
+    // (EnhancedCachePrefs): on = any 1-hour strategy.
+    internal val _enhancedCacheEnabled = MutableStateFlow(
+        runCatching {
+            com.openminis.app.data.EnhancedCachePrefs.mode(context) !=
+                com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD
+        }.getOrDefault(false),
+    )
     val enhancedCacheEnabled: StateFlow<Boolean> = _enhancedCacheEnabled.asStateFlow()
 
     /**
@@ -2726,9 +2742,11 @@ class ChatViewModel(
         ) { entryId, config ->
             val entry = entryId?.let { id -> config.modelEntries.find { it.id == id } }
             val instance = entry?.let { e -> config.instances.find { it.id == e.providerInstanceId } }
+            // [T-anthropic-cache-mode] Shown for Anthropic-compatible relays
+            // too: most forward cache_control.ttl unchanged, and the mode is
+            // now an app-wide setting the user chooses deliberately.
             instance != null &&
-                instance.providerType == com.openminis.app.data.model.ProviderType.anthropic &&
-                instance.customBaseURL.isNullOrBlank()
+                instance.providerType == com.openminis.app.data.model.ProviderType.anthropic
         }.stateIn(
             viewModelScope,
             kotlinx.coroutines.flow.SharingStarted.Eagerly,
@@ -2746,7 +2764,7 @@ class ChatViewModel(
      */
     fun confirmAndEnableEnhancedCache() {
         com.openminis.app.data.EnhancedCachePrefs.setConfirmed(context)
-        _enhancedCacheEnabled.value = true
+        setEnhancedCacheEnabled(true)
     }
 
     /**
@@ -2755,7 +2773,21 @@ class ChatViewModel(
      * acknowledged). The confirmation-gated first enable is handled in the UI.
      */
     fun setEnhancedCacheEnabled(enabled: Boolean) {
+        val prefs = com.openminis.app.data.EnhancedCachePrefs
+        prefs.setMode(
+            context,
+            if (enabled) prefs.lastLongMode(context)
+            else com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD,
+        )
         _enhancedCacheEnabled.value = enabled
+    }
+
+    /** Re-read the persisted mode (it may have changed in Settings). */
+    fun refreshEnhancedCacheState() {
+        _enhancedCacheEnabled.value = runCatching {
+            com.openminis.app.data.EnhancedCachePrefs.mode(context) !=
+                com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD
+        }.getOrDefault(false)
     }
 
     /**
@@ -10334,6 +10366,8 @@ class ChatViewModel(
 
         var offloadedCount = 0
         var freedTokens = 0
+        // [T-offload-persist] toolUseId -> stub, written back to the DB below.
+        val offloadedResults = mutableListOf<Pair<String, String>>()
 
         for (candidate in candidates) {
             if (currentTokens <= targetTokens) break
@@ -10422,6 +10456,7 @@ class ChatViewModel(
             if (newPart == null) continue
             parts[candidate.partIdx] = newPart
             agentHistory[candidate.msgIdx] = msg.copy(contentParts = parts)
+            if (newPart is AgentContentPart.ToolResult) offloadedResults.add(newPart.id to newPart.content)
 
             currentTokens -= candidateTokens
             freedTokens += candidateTokens
@@ -10433,6 +10468,7 @@ class ChatViewModel(
             )
         }
 
+        if (offloadedResults.isNotEmpty()) persistOffloadedResults(offloadedResults)
         if (offloadedCount > 0) {
             val afterPct = (currentTokens.toLong() * 100 / contextWindow.coerceAtLeast(1)).toInt()
             AppLogger.info(TAG, "━━━ Context Offload Complete ━━━")
@@ -10441,6 +10477,39 @@ class ChatViewModel(
             AppLogger.info(TAG, "  Before: $beforeTokens/$contextWindow ($pct%)")
             AppLogger.info(TAG, "  After:  $currentTokens/$contextWindow ($afterPct%)")
             AppLogger.info(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        }
+    }
+
+    /**
+     * [T-offload-persist] Record the offload stub on the stored tool_result
+     * (as `modelOutput`, leaving `output` for the UI) so a reloaded session
+     * sends exactly what was sent before the reload. Previously the original
+     * output came back on reload: the cached prefix no longer matched, and the
+     * offload ran again with a fresh stub.
+     */
+    private fun persistOffloadedResults(results: List<Pair<String, String>>) {
+        val sid = realSessionId.ifEmpty { sessionId }
+        if (sid.isEmpty()) return
+        val pending = results.toMap()
+        viewModelScope.launch(Dispatchers.IO) {
+            val rows = runCatching { chatRepository.dao.loadMessages(sid) }.getOrElse { return@launch }
+            var written = 0
+            for (row in rows) {
+                if (row.role != "user" || pending.keys.none { row.partsJson.contains(it) }) continue
+                val arr = runCatching { org.json.JSONArray(row.partsJson) }.getOrNull() ?: continue
+                var hit = false
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    if (o.optString("type") != "toolResult") continue
+                    val v = o.optJSONObject("value") ?: continue
+                    val stub = pending[v.optString("toolUseId")] ?: continue
+                    v.put(OFFLOADED_MODEL_OUTPUT_KEY, stub)
+                    hit = true
+                    written++
+                }
+                if (hit) runCatching { chatRepository.updateMessageParts(row.id, arr.toString()) }
+            }
+            AppLogger.info(TAG, "[Offload] persisted $written/${pending.size} offload stub(s)")
         }
     }
 
@@ -10675,6 +10744,9 @@ class ChatViewModel(
         // turns the user explicitly asked not to surface, even when a
         // forced-reasoning model still streams reasoning_content.
         val turnThinkingLevel = _thinkingLevel.value
+        // [T-anthropic-cache-mode] Request-gap tracking for SMART cache mode.
+        var lastDispatchElapsedMs = 0L
+        var longGapSeenThisTurn = false
         withContext(Dispatchers.Main) {
             _messages.value = _messages.value + ChatMessage(
                 id = assistantId, role = "assistant", content = "", isStreaming = true,
@@ -10919,7 +10991,10 @@ class ChatViewModel(
             // real fixed share.
             contextFixedTokens = ContextSizeMeter.estimateFixedTokens(
                 loopSystemPrompt,
-                if (helperWrapUpInjected) emptyList() else agentTools,
+                // Anthropic keeps its tools on the wrap-up turn ([T-anthropic-wrapup-tool-choice]).
+                if (helperWrapUpInjected &&
+                    currentProvider !is com.openminis.app.provider.anthropic.AnthropicProvider
+                ) emptyList() else agentTools,
             )
             effectiveContextWindowTokens()?.takeIf { it > 0 }?.let { window ->
                 offloadContextIfNeeded(
@@ -11221,8 +11296,24 @@ class ChatViewModel(
                     // choke point every turn passes through, regardless of how
                     // currentProvider was (re)assigned by the fallback loop.
                     // Non-Anthropic providers ignore it (cast fails silently).
-                    (currentProvider as? com.openminis.app.provider.anthropic.AnthropicProvider)
-                        ?.enhancedCache = _enhancedCacheEnabled.value
+                    (currentProvider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.let { ap ->
+                        // [T-anthropic-cache-mode] Persisted TTL strategy
+                        // (Settings → Anthropic prompt cache / chat menu).
+                        ap.cacheMode = runCatching { com.openminis.app.data.EnhancedCachePrefs.mode(context) }
+                            .getOrDefault(com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD)
+                        // SMART: once this turn has had a > 4 min gap between
+                        // requests (a long tool run), keep the tail at 1h for
+                        // the rest of the turn so the next long wait is covered.
+                        val nowMs = android.os.SystemClock.elapsedRealtime()
+                        if (lastDispatchElapsedMs > 0 && nowMs - lastDispatchElapsedMs > LONG_GAP_MS) {
+                            longGapSeenThisTurn = true
+                        }
+                        lastDispatchElapsedMs = nowMs
+                        ap.cacheLongTail = longGapSeenThisTurn
+                        // [T-anthropic-wrapup-tool-choice] Keep `tools`, switch
+                        // tool use off with tool_choice=none (see below).
+                        ap.forceNoToolUse = helperWrapUpInjected
+                    }
                     // [T-STALL-DIAG] First-chunk watchdog. The reported symptom
                     // is "new session shows thinking… forever, UI empty, stop
                     // button still armed" — which is indistinguishable, in the
@@ -11318,13 +11409,23 @@ class ChatViewModel(
                                 ),
                             ),
                             loopSystemPrompt, dynamicMaxTokens(currentProvider, dispatchInputTokens),
-                            tools = if (helperWrapUpInjected) emptyList() else agentTools,
+                            // [T-anthropic-wrapup-tool-choice] Anthropic keeps the
+                            // tool list (removing it re-bills the whole cached
+                            // prefix) and gets tool_choice=none instead; other
+                            // providers keep the old behaviour.
+                            tools = if (helperWrapUpInjected &&
+                                currentProvider !is com.openminis.app.provider.anthropic.AnthropicProvider
+                            ) emptyList() else agentTools,
                             // [T-switch-model-thinking-gate] Gate on the provider that
                             // serves THIS turn. selectEntry swaps the class-level
                             // currentModel mid-turn while the turn keeps its local
                             // provider, so reading the class-level model would send the
                             // NEW model's reasoning decision to the OLD model.
-                            thinkingLevel = if (currentProvider.model.supportsReasoning == true) _thinkingLevel.value else ThinkingLevel.OFF,
+                            // [T-anthropic-turn-thinking-stable] The level snapshotted
+                            // when this loop started: changing thinking mid tool-use
+                            // turn invalidates the message cache and the API silently
+                            // drops thinking for the request. A change applies next turn.
+                            thinkingLevel = if (currentProvider.model.supportsReasoning == true) turnThinkingLevel else ThinkingLevel.OFF,
                         )
                     }
                     turnChunks.collect { chunk ->
@@ -12237,7 +12338,7 @@ class ChatViewModel(
                 }
                 val turnParts = buildTurnParts(allToolBlocks, turnStartBlockIndex, toolInputMap)
                 val blockMeta = allToolBlocks.filter { it.kind == "tool_use" }.associateBy { it.id }
-                persistAssistantTurn(turnParts, lastUsage, turnReasoningContent, blockMeta, uiAssistantId = assistantId, streamMs = turnStreamMs)
+                persistAssistantTurn(turnParts, lastUsage, turnReasoningContent, blockMeta, uiAssistantId = assistantId, streamMs = turnStreamMs, anthropicThinking = turnAnthropicThinking)
                 // [T-error-persist-android] Empty-response hint: the model ended a
                 // turn (finish=stop/end_turn) with no visible text anywhere in the
                 // reply and no tool blocks — the user just sees a blank bubble.
@@ -12288,6 +12389,20 @@ class ChatViewModel(
                     break
                 }
 
+                // [T-anthropic-refusal] stop_reason="refusal": a safety classifier
+                // declined (HTTP 200, not an error). Without this the turn just
+                // ended — usually as a blank bubble, since the empty-turn path
+                // only recognises end_turn/stop. Tell the user what happened;
+                // Retry or another model are the ways forward (platform.claude.com
+                // handling-stop-reasons → refusal).
+                if (turnFinishReason == "refusal") {
+                    AppLogger.warning(TAG_STREAM, "turn ended with stop_reason=refusal (turn=$turn, textLen=${accumulatedText.length})")
+                    withContext(Dispatchers.Main) {
+                        setInlineError(context.getString(R.string.chat_error_model_refusal))
+                    }
+                    loopExitedNormally = true
+                    break
+                }
                 // A null stopReason reaching here means an EMPTY turn, which the
                 // empty-turn path below is designed to recover; treat it as
                 // "clean" for that purpose exactly as before.
@@ -12841,7 +12956,7 @@ class ChatViewModel(
             // assistant entry — compact-marker boundary resolution depends on it.
             val turnParts = buildTurnParts(allToolBlocks, turnStartBlockIndex, toolInputMap)
             val blockMeta = allToolBlocks.filter { it.kind == "tool_use" }.associateBy { it.id }
-            val assistantDbId = persistAssistantTurn(turnParts, lastUsage, turnReasoningContent, blockMeta, uiAssistantId = assistantId, streamMs = turnStreamMs)
+            val assistantDbId = persistAssistantTurn(turnParts, lastUsage, turnReasoningContent, blockMeta, uiAssistantId = assistantId, streamMs = turnStreamMs, anthropicThinking = turnAnthropicThinking)
             if (assistantDbId != null) {
                 val lastIdx = agentHistory.indexOfLast { it.role == LLMMessage.Role.ASSISTANT && it.dbMessageId == null }
                 if (lastIdx >= 0) {
@@ -14951,9 +15066,21 @@ class ChatViewModel(
         // "not measured", which is also what every row written before this
         // change reads as — hence a NEW key rather than a changed one.
         streamMs: Long = 0L,
+        // [T-anthropic-signed-thinking-persist] Signed Anthropic thinking blocks
+        // of this turn (JSON array). Stored as an extra key on the row's first
+        // part — unknown keys are ignored by every other reader — so a reloaded
+        // session replays them and the cached prefix still matches.
+        anthropicThinking: String? = null,
     ): String? {
         if (parts.isEmpty()) return null
-        val partsJson = buildAssistantPartsJson(parts, toolBlockMeta)
+        val partsJson = buildAssistantPartsJson(parts, toolBlockMeta).let { json ->
+            if (anthropicThinking.isNullOrEmpty()) json
+            else runCatching {
+                val arr = org.json.JSONArray(json)
+                if (arr.length() > 0) arr.getJSONObject(0).put(ANTHROPIC_THINKING_KEY, anthropicThinking)
+                arr.toString()
+            }.getOrDefault(json)
+        }
         val tokenJson = usage?.let {
             """{"inputTokens":${it.inputTokens},"outputTokens":${it.outputTokens},"cacheCreationTokens":${it.cacheCreationInputTokens ?: 0},"cacheReadTokens":${it.cacheReadInputTokens ?: 0},"latestContextTokens":${it.latestContextTokens},"streamMs":$streamMs${calibrationJsonFields()}}"""
         }
@@ -17388,11 +17515,15 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
         val contentParts = mutableListOf<AgentContentPart>()
         val imageParts = mutableListOf<LLMMessage.ImagePart>()
         var textContent = ""
+        var anthropicThinking: String? = null
 
         try {
             val array = org.json.JSONArray(partsJson)
             for (i in 0 until array.length()) {
                 val obj = array.getJSONObject(i)
+                if (anthropicThinking == null) {
+                    anthropicThinking = obj.optString(ANTHROPIC_THINKING_KEY, "").ifEmpty { null }
+                }
                 when (obj.optString("type")) {
                     "text" -> {
                         val value = obj.optString("value", "")
@@ -17435,7 +17566,10 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
                         contentParts.add(AgentContentPart.ToolResult(
                             id = v.optString("toolUseId", ""),
                             name = v.optString("name", ""),
-                            content = v.optString("output", ""),
+                            // [T-offload-persist] The offload stub the model was
+                            // actually sent, when the result was offloaded; the
+                            // UI keeps showing the original `output`.
+                            content = v.optString(OFFLOADED_MODEL_OUTPUT_KEY, "").ifEmpty { v.optString("output", "") },
                             isError = !v.optBoolean("success", true),
                         ))
                     }
@@ -17538,6 +17672,7 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
             contentParts = contentParts,
             dbMessageId = id,
             reasoningContent = reasoningContent,
+            anthropicThinkingBlocks = if (r == LLMMessage.Role.ASSISTANT) anthropicThinking else null,
         )
     }
 

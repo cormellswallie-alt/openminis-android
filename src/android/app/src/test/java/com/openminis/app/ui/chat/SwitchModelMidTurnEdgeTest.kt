@@ -94,7 +94,7 @@ class SwitchModelMidTurnEdgeTest {
     fun `the in-flight turn gates thinking on its own provider, not the freshly picked model`() {
         // The argument line right after the tools argument of the turn's stream call.
         val call = agentLoop
-            .substringAfter("tools = if (helperWrapUpInjected) emptyList() else agentTools,", "")
+            .substringAfter("[T-anthropic-wrapup-tool-choice] Anthropic keeps the", "")
             .substringBefore(".collect { chunk ->")
         assertTrue("stream call not found", call.contains("thinkingLevel ="))
         assertFalse(

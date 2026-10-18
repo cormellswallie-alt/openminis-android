@@ -50,15 +50,48 @@ class AnthropicProvider(
     override val defaultMaxOutputTokens: Int get() = 64_000
 
     /**
-     * [T-android-enhanced-cache] Enhanced Cache toggle — when true, every
-     * `cache_control: ephemeral` breakpoint carries `ttl:"1h"` (1-hour cache
-     * TTL) instead of the default 5-minute TTL, and the
-     * `extended-cache-ttl-2025-04-11` beta flag is attached to API-key requests
-     * (OAuth already carries it). Set per chat turn from
-     * `ChatViewModel.enhancedCacheEnabled`; defaults off so existing behaviour
-     * is unchanged. Mirrors iOS `RequestBodyPatcher.setExtendedCacheTTL`.
+     * [T-android-enhanced-cache] Legacy boolean view of [cacheMode]: true for
+     * any 1-hour mode; setting true picks EXTENDED unless a 1-hour mode is
+     * already selected. The 1-hour TTL is GA, so no beta header is attached.
      */
-    var enhancedCache: Boolean = false
+    var enhancedCache: Boolean
+        get() = cacheMode != CacheTtlMode.STANDARD
+        set(value) {
+            cacheMode = if (value) {
+                if (cacheMode == CacheTtlMode.STANDARD) CacheTtlMode.EXTENDED else cacheMode
+            } else CacheTtlMode.STANDARD
+        }
+
+    /**
+     * [T-anthropic-cache-mode] Prompt-cache TTL strategy (platform.claude.com
+     * prompt-caching: `ttl` is set per `cache_control` breakpoint, and 1-hour
+     * breakpoints must come before 5-minute ones).
+     *
+     *  - STANDARD: every breakpoint 5 minutes (writes 1.25x).
+     *  - EXTENDED: every breakpoint 1 hour (writes 2x) — the old Enhanced Cache.
+     *  - SMART: tools / system / a checkpoint that advances every
+     *    [SMART_CHECKPOINT_EVERY] user messages are 1 hour; the moving tail is
+     *    5 minutes. A late reply or a long tool run only re-writes the short
+     *    stretch after the last checkpoint, while tool-loop rounds pay 1.25x.
+     *    [cacheLongTail] upgrades the tail to 1 hour too (set by the chat loop
+     *    once it has seen a > 4 min gap between requests in this turn).
+     */
+    enum class CacheTtlMode { STANDARD, EXTENDED, SMART }
+
+    @Volatile
+    var cacheMode: CacheTtlMode = CacheTtlMode.STANDARD
+
+    @Volatile
+    var cacheLongTail: Boolean = false
+
+    /**
+     * [T-anthropic-wrapup-tool-choice] Turn tool use off for this request with
+     * `tool_choice: none` while keeping `tools` unchanged — removing `tools`
+     * would invalidate the whole cached prefix (and every signed thinking
+     * block). Set per request by the chat loop.
+     */
+    @Volatile
+    var forceNoToolUse: Boolean = false
 
     /**
      * [T-anthropic-wire-compat] Optional, documented request features that a
@@ -74,20 +107,25 @@ class AnthropicProvider(
         EXPLICIT_THINKING_OFF,
         /** `output_config.effort` = "xhigh" (Claude 4.7+). */
         XHIGH_EFFORT,
+        /** `thinking.block_binding` + its beta header (official API only). */
+        BLOCK_BINDING,
     }
 
-    @Volatile
-    internal var disabledFeatures: Set<WireFeature> = emptySet()
-        private set
+    /** Key for the sticky per-endpoint feature state (providers are rebuilt often). */
+    private val compatKey: String = "${basePath.trimEnd('/')}|oauth=$isOAuth"
+
+    internal var disabledFeatures: Set<WireFeature>
+        get() = stickyDisabledFeatures[compatKey] ?: emptySet()
+        private set(value) { stickyDisabledFeatures[compatKey] = value }
 
     /**
-     * Build a `cache_control` object honoring [enhancedCache]. Default 5-minute
+     * Build a `cache_control` object; [long] = 1-hour TTL. Default 5-minute
      * TTL is `{"type":"ephemeral"}`; enhanced is `{"type":"ephemeral","ttl":"1h"}`.
      * Every ephemeral breakpoint in the request body routes through here.
      */
-    private fun ephemeralCacheControl(): JSONObject =
+    private fun ephemeralCacheControl(long: Boolean = cacheMode != CacheTtlMode.STANDARD): JSONObject =
         JSONObject().put("type", "ephemeral").apply {
-            if (enhancedCache) put("ttl", "1h")
+            if (long) put("ttl", "1h")
         }
 
     /** Use Bearer auth for custom (non-Anthropic) base URLs or OAuth. */
@@ -202,6 +240,7 @@ class AnthropicProvider(
         var currentToolId: String? = null
         var currentToolName: String? = null
         val toolInputBuffer = StringBuilder()
+        var toolInputSeenDelta = false
         // [T-anthropic-delta-usage-merge] Usage from message_start, used to
         // backfill output-only message_delta frames.
         var startUsage: LLMUsage? = null
@@ -268,9 +307,17 @@ class AnthropicProvider(
                             }
                         }
                         if (contentBlock?.safeOptString("type", "") == "tool_use") {
+                            toolInputSeenDelta = false
                             currentToolId = contentBlock.safeOptString("id", "")
                             currentToolName = contentBlock.safeOptString("name", "")
                             toolInputBuffer.clear()
+                            // Some relays put the complete input here and send
+                            // no input_json_delta; seed the buffer so the call
+                            // isn't executed with empty args. Deltas, when they
+                            // come, start from an empty object instead.
+                            contentBlock.optJSONObject("input")?.let { initial ->
+                                if (initial.length() > 0) toolInputBuffer.append(initial.toString())
+                            }
                             android.util.Log.d("ToolChain[Provider]", "→ ToolUseStart id=$currentToolId name=$currentToolName")
                             send(LLMStreamChunk.ToolUseStart(currentToolId!!, currentToolName!!))
                         }
@@ -295,6 +342,10 @@ class AnthropicProvider(
                             "input_json_delta" -> {
                                 val partial = delta.safeOptString("partial_json", "")
                                 if (partial.isNotEmpty() && currentToolId != null) {
+                                    if (!toolInputSeenDelta) {
+                                        toolInputSeenDelta = true
+                                        toolInputBuffer.clear()
+                                    }
                                     toolInputBuffer.append(partial)
                                     // [T-android-log-hotpath] Fires per tool-argument chunk.
                                     if (com.openminis.app.logging.AppLogger.traceEnabled) {
@@ -403,6 +454,12 @@ class AnthropicProvider(
         val errorBody = try { response.body?.string() ?: "" } catch (_: Exception) { "" }
         response.close()
         val drop = featuresBlamedBy(errorBody, used)
+        // [T-anthropic-block-binding] "bound to a different conversation" is a
+        // property of THIS history (an earlier message was edited, e.g. by
+        // context offload), not of the endpoint. Drop the echo for this one
+        // request only; future requests keep replaying signed thinking.
+        val prefixMismatch = isPrefixMismatch(errorBody)
+        val sticky = if (prefixMismatch) drop - WireFeature.SIGNED_THINKING_ECHO else drop
         android.util.Log.w(
             "AnthropicProvider",
             "400 with optional features $used; retrying without $drop. body=${errorBody.take(300)}",
@@ -411,8 +468,8 @@ class AnthropicProvider(
         val retryStr = retryBody.toString()
         val retryRequest = buildRequest(retryStr, retryBody)
         val retryResponse = client.newCall(retryRequest).execute()
-        if (retryResponse.isSuccessful) {
-            disabledFeatures = disabledFeatures + drop
+        if (retryResponse.isSuccessful && sticky.isNotEmpty()) {
+            disabledFeatures = disabledFeatures + sticky
         }
         return Triple(retryResponse, retryStr, retryRequest)
     }
@@ -441,14 +498,23 @@ class AnthropicProvider(
         return if (out.length() == 0) null else out.toString()
     }
 
+    internal fun isPrefixMismatch(errorBody: String): Boolean {
+        val m = errorBody.lowercase()
+        return m.contains("different conversation") || m.contains("prefix_mismatch")
+    }
+
     /** Which of [used] a 400 body points at; all of them when unclear. */
     internal fun featuresBlamedBy(errorBody: String, used: Set<WireFeature>): Set<WireFeature> {
         val msg = errorBody.lowercase()
         val blamed = mutableSetOf<WireFeature>()
-        if (WireFeature.SIGNED_THINKING_ECHO in used &&
+        val bindingRejected = msg.contains("block_binding") || msg.contains("thinking-binding")
+        if (WireFeature.BLOCK_BINDING in used && bindingRejected && !isPrefixMismatch(errorBody)) {
+            blamed.add(WireFeature.BLOCK_BINDING)
+        }
+        if (WireFeature.SIGNED_THINKING_ECHO in used && !(bindingRejected && blamed.isNotEmpty()) &&
             (msg.contains("signature") || msg.contains("redacted_thinking") ||
-                msg.contains("block_binding") || msg.contains("thinking block") ||
-                msg.contains("thinking` block") || msg.contains("cannot be modified"))
+                msg.contains("thinking block") || msg.contains("thinking` block") ||
+                msg.contains("cannot be modified") || isPrefixMismatch(errorBody))
         ) blamed.add(WireFeature.SIGNED_THINKING_ECHO)
         if (WireFeature.EXPLICIT_THINKING_OFF in used &&
             (msg.contains("thinking.type") || msg.contains("between_tools") || msg.contains("disabled"))
@@ -667,7 +733,10 @@ class AnthropicProvider(
                 toolsArray.put(toolJson)
             }
             body.put("tools", toolsArray)
-            body.put("tool_choice", JSONObject().put("type", "auto"))
+            body.put(
+                "tool_choice",
+                JSONObject().put("type", if (forceNoToolUse) "none" else "auto"),
+            )
         }
 
         // Build and merge messages
@@ -679,6 +748,20 @@ class AnthropicProvider(
             WireFeature.SIGNED_THINKING_ECHO !in suppress &&
             parseClaudeVersion(model.id) != null &&
             !shouldEchoInterleavedThinking()
+        // [T-anthropic-block-binding] On the official API, ask for stale
+        // signed blocks to be DROPPED instead of a 400 (preserved-thinking:
+        // thinking.block_binding.prefix_mismatch_behavior = "drop_block").
+        // Sent whenever thinking is configured — not only when blocks are
+        // echoed — so the thinking object stays identical across requests.
+        if (!isCustomEndpoint && WireFeature.BLOCK_BINDING !in suppress) {
+            body.optJSONObject("thinking")?.let { t ->
+                val type = t.optString("type")
+                if (type == "adaptive" || type == "enabled") {
+                    t.put("block_binding", JSONObject().put("prefix_mismatch_behavior", "drop_block"))
+                    used?.add(WireFeature.BLOCK_BINDING)
+                }
+            }
+        }
         val rawMessages = buildMessages(messages, imageParts, echoSigned, used)
         val merged = mergeConsecutiveSameRole(rawMessages)
         ensureEndsWithUserTurn(merged)
@@ -1010,6 +1093,17 @@ class AnthropicProvider(
                     contentBlocks.addAll(other)
                     contentBlocks.addAll(toolUse)
                 }
+                if (role == "user") {
+                    // "In the user message containing tool results, the
+                    // tool_result blocks must come FIRST in the content array."
+                    val results = contentBlocks.filter { it.optString("type") == "tool_result" }
+                    if (results.isNotEmpty() && results.size < contentBlocks.size) {
+                        val rest = contentBlocks.filter { it.optString("type") != "tool_result" }
+                        contentBlocks.clear()
+                        contentBlocks.addAll(results)
+                        contentBlocks.addAll(rest)
+                    }
+                }
                 val merged = JSONObject().apply {
                     put("role", role)
                     put("content", JSONArray(contentBlocks.map { it }))
@@ -1067,34 +1161,73 @@ class AnthropicProvider(
      * normal tool round without needing a third marker.
      */
     private fun injectMessageCacheControl(messages: JSONArray) {
-        var userCount = 0
-        for (i in messages.length() - 1 downTo 0) {
-            val msg = messages.getJSONObject(i)
-            if (msg.getString("role") != "user") continue
-            val content = msg.opt("content")
-            val blocks: JSONArray = when (content) {
-                is JSONArray -> content
-                is String -> {
-                    if (content.isEmpty()) continue
-                    JSONArray().put(JSONObject().put("type", "text").put("text", content))
-                        .also { msg.put("content", it) }
-                }
-                else -> continue
-            }
-            var marked = false
-            for (k in blocks.length() - 1 downTo 0) {
-                val block = blocks.optJSONObject(k) ?: continue
-                if (isCacheableBlock(block)) {
-                    block.put("cache_control", ephemeralCacheControl())
-                    marked = true
-                    break
+        // User messages in order, as (array index, 1-based ordinal).
+        val userIdx = ArrayList<Int>()
+        for (i in 0 until messages.length()) {
+            if (messages.getJSONObject(i).getString("role") == "user") userIdx.add(i)
+        }
+        if (userIdx.isEmpty()) return
+        val n = userIdx.size
+        val tailIdx = userIdx[n - 1]
+
+        when (cacheMode) {
+            CacheTtlMode.STANDARD, CacheTtlMode.EXTENDED -> {
+                val long = cacheMode == CacheTtlMode.EXTENDED
+                var marked = 0
+                for (k in n - 1 downTo 0) {
+                    if (markLastCacheable(messages, userIdx[k], long)) marked++
+                    if (marked >= 2) break
                 }
             }
-            if (marked) {
-                userCount++
-                if (userCount >= 2) break
+            CacheTtlMode.SMART -> {
+                // [T-anthropic-cache-mode] Checkpoint = the newest user message
+                // whose ordinal is a multiple of SMART_CHECKPOINT_EVERY. It is
+                // written once with a 1h TTL (while it is the tail, so only that
+                // round's delta pays 2x) and then read — and refreshed — at the
+                // same position by every later request.
+                val cpOrdinal = (n / SMART_CHECKPOINT_EVERY) * SMART_CHECKPOINT_EVERY
+                val tailIsCheckpoint = cpOrdinal == n
+                val tailLong = tailIsCheckpoint || cacheLongTail
+                markLastCacheable(messages, tailIdx, tailLong)
+                if (!tailIsCheckpoint) {
+                    if (cpOrdinal >= 1) {
+                        // 1h before (5m or 1h) tail — ordering rule satisfied.
+                        markLastCacheable(messages, userIdx[cpOrdinal - 1], true)
+                    } else if (n >= 2) {
+                        // No checkpoint yet: read point = previous user message,
+                        // same TTL as the tail so a 5m never precedes a 1h.
+                        markLastCacheable(messages, userIdx[n - 2], tailLong)
+                    }
+                }
             }
         }
+    }
+
+    /**
+     * Put a breakpoint on the last cacheable block of message [index]. Plain
+     * string content is promoted to a single text block so the marker can
+     * attach ([T-anthropic-cache-breakpoints]). Returns false when nothing in
+     * the message can carry one.
+     */
+    private fun markLastCacheable(messages: JSONArray, index: Int, long: Boolean): Boolean {
+        val msg = messages.getJSONObject(index)
+        val blocks: JSONArray = when (val content = msg.opt("content")) {
+            is JSONArray -> content
+            is String -> {
+                if (content.isEmpty()) return false
+                JSONArray().put(JSONObject().put("type", "text").put("text", content))
+                    .also { msg.put("content", it) }
+            }
+            else -> return false
+        }
+        for (k in blocks.length() - 1 downTo 0) {
+            val block = blocks.optJSONObject(k) ?: continue
+            if (isCacheableBlock(block)) {
+                block.put("cache_control", ephemeralCacheControl(long))
+                return true
+            }
+        }
+        return false
     }
 
     /** Blocks Anthropic accepts a `cache_control` marker on. */
@@ -1340,6 +1473,16 @@ class AnthropicProvider(
             return major > 4 || major == 4 || (major == 3 && minor >= 7)
         }
 
+        /** [T-anthropic-wire-compat] endpoint -> features a relay rejected. */
+        private val stickyDisabledFeatures =
+            java.util.concurrent.ConcurrentHashMap<String, Set<WireFeature>>()
+
+        /** [T-anthropic-cache-mode] SMART checkpoint spacing, in user messages. */
+        const val SMART_CHECKPOINT_EVERY = 4
+
+        /** Budget granularity when it has to shrink below its level cap. */
+        private const val BUDGET_STEP = 4096
+
         /** Calculate thinking budget tokens based on level (legacy <=4.5 protocol). */
         fun thinkingBudget(maxTokens: Int, level: ThinkingLevel): Int {
             // Below the API floor there is no valid budget at all.
@@ -1361,8 +1504,14 @@ class AnthropicProvider(
             // clamp to exactly maxTokens, so pull back to maxTokens-1 when they
             // hit the ceiling. Affects the legacy budget_tokens path (pre-4.6
             // Claude + Anthropic-compatible relays without adaptive thinking).
-            val clamped = minOf(cap, maxTokens)
-            return if (clamped >= maxTokens && maxTokens > 1) maxTokens - 1 else clamped
+            if (cap < maxTokens) return cap
+            // [T-anthropic-budget-stable] Clamped by max_tokens, which the chat
+            // loop shrinks as context fills. budget_tokens is part of the cache
+            // key (changing it re-bills every message block), so round DOWN to
+            // a 4K step instead of tracking max_tokens-1 request by request.
+            // Below one step, fall back to max_tokens-1 (still >= the floor).
+            val stepped = ((maxTokens - 1) / BUDGET_STEP) * BUDGET_STEP
+            return if (stepped >= MIN_THINKING_BUDGET) stepped else maxTokens - 1
         }
 
         /**
@@ -1447,19 +1596,15 @@ class AnthropicProvider(
                 "context-management-2025-06-27",
                 "extended-cache-ttl-2025-04-11",
             ))
-        } else if (body.has("thinking")) {
-            val isAdaptive = body.optJSONObject("thinking")?.optString("type") == "adaptive"
-            if (isAdaptive) {
-                betaFlags.add("effort-2025-11-24")
-            } else {
-                betaFlags.add("interleaved-thinking-2025-05-14")
-            }
+        } else if (body.optJSONObject("thinking")?.optString("type") == "enabled") {
+            // [T-anthropic-beta-trim] Only the legacy manual mode needs a beta
+            // (interleaved thinking on <= 4.5). Effort and the 1-hour cache TTL
+            // are GA — no header — and strict relays 400 on beta values they
+            // don't recognise, so they are no longer sent on API-key requests.
+            betaFlags.add("interleaved-thinking-2025-05-14")
         }
-        // [T-android-enhanced-cache] API-key path only carries the betas the
-        // body needs; the 1-hour cache TTL requires this flag. OAuth already
-        // lists it above, so guard on !isOAuth to avoid a duplicate token.
-        if (enhancedCache && !isOAuth) {
-            betaFlags.add("extended-cache-ttl-2025-04-11")
+        if (body.optJSONObject("thinking")?.has("block_binding") == true) {
+            betaFlags.add("thinking-binding-controls-2026-08-01")
         }
         if (betaFlags.isNotEmpty()) {
             builder.header("anthropic-beta", betaFlags.joinToString(","))

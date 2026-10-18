@@ -9,6 +9,8 @@ on:
       - "src/android/app/src/main/java/com/openminis/app/ui/chat/ChatViewModel.kt"
       - "src/android/app/src/main/java/com/openminis/app/data/**"
       - "src/android/app/src/main/java/com/openminis/app/auth/**"
+      - "src/android/app/src/main/java/com/openminis/app/ui/settings/**"
+      - "src/android/app/src/main/res/**"
       - "src/android/app/src/test/**"
       - ".github/workflows/unit-tests.yml"
 
@@ -98,6 +100,10 @@ jobs:
             --tests 'com.openminis.app.provider.anthropic.ClaudeVersionParseTest' \
             --tests 'com.openminis.app.provider.GPT6SolLunaOpus55Test' \
             --tests 'com.openminis.app.provider.ClaudeSonnet55Test' \
+            --tests 'com.openminis.app.provider.AnthropicProviderTest' \
+            --tests 'com.openminis.app.ui.chat.SwitchModelMidTurnEdgeTest' \
+            --tests 'com.openminis.app.ui.chat.UsageCapsuleLiveStampTest' \
+            --tests 'com.openminis.app.ui.chat.EmptyTurnRecoveryTest' \
             --stacktrace
 
       - name: Upload test report

@@ -165,6 +165,9 @@ fun SettingsScreen(
                 )
             }
 
+            // -- Anthropic prompt cache [T-anthropic-cache-mode] --
+            AnthropicCacheModeSection()
+
             // -- Appearance --
             SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
                 SettingsItem(
@@ -638,3 +641,44 @@ private fun SettingsItem(
     }
 }
 
+/**
+ * [T-anthropic-cache-mode] App-wide Anthropic prompt-cache TTL strategy. Applies
+ * to every Anthropic-protocol provider (official and compatible relays). The
+ * chat-menu "Enhanced Cache" switch flips between Standard and the last 1-hour
+ * strategy chosen here.
+ */
+@Composable
+private fun AnthropicCacheModeSection() {
+    val context = LocalContext.current
+    val prefs = com.openminis.app.data.EnhancedCachePrefs
+    var mode by remember { mutableStateOf(prefs.mode(context)) }
+    val options = listOf(
+        com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD to
+            R.string.settings_cache_mode_standard,
+        com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.EXTENDED to
+            R.string.settings_cache_mode_extended,
+        com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.SMART to
+            R.string.settings_cache_mode_smart,
+    )
+    SettingsSection(
+        title = stringResource(R.string.settings_section_anthropic_cache),
+        footer = stringResource(R.string.settings_cache_mode_footer),
+    ) {
+        options.forEachIndexed { i, (m, label) ->
+            SettingsChoiceRow(
+                title = stringResource(label),
+                selected = mode == m,
+                onSelect = {
+                    prefs.setMode(context, m)
+                    // Choosing a 1-hour mode here is the informed opt-in the
+                    // chat-menu dialog would otherwise ask for.
+                    if (m != com.openminis.app.provider.anthropic.AnthropicProvider.CacheTtlMode.STANDARD) {
+                        prefs.setConfirmed(context)
+                    }
+                    mode = m
+                },
+                showDivider = i < options.lastIndex,
+            )
+        }
+    }
+}

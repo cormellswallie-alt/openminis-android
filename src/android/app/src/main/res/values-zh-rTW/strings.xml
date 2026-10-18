@@ -146,6 +146,11 @@
     <string name="settings_model_groups_subtitle">備援與負載平衡</string>
     <string name="settings_token_usage">Token 用量</string>
     <string name="settings_token_usage_subtitle">追蹤各供應商的 API 用量</string>
+    <string name="settings_section_anthropic_cache">Anthropic 提示快取</string>
+    <string name="settings_cache_mode_standard">標準（5 分鐘）</string>
+    <string name="settings_cache_mode_extended">全部 1 小時</string>
+    <string name="settings_cache_mode_smart">智慧（1 小時檢查點 + 5 分鐘末尾）</string>
+    <string name="settings_cache_mode_footer">對 Anthropic 及 Anthropic 相容提供商生效。快取寫入價格：5 分鐘為輸入價的 1.25 倍，1 小時為 2 倍；讀取價格相同。全部 1 小時：適合經常隔 5 分鐘以上才回覆。智慧：工具循環按 5 分鐘計價，每 4 則訊息設一個 1 小時檢查點，回覆晚了或工具跑得久，只需重寫檢查點之後的一小段。部分中轉站可能忽略 1 小時設定。</string>
     <string name="settings_section_appearance">外觀</string>
     <string name="settings_appearance_subtitle">主題、字型大小與顯示</string>
     <string name="settings_section_agent_runtime">Agent 執行環境</string>
@@ -532,6 +537,7 @@
     <string name="chat_typing_indicator">%1$s 正在思考</string>
     <string name="read_aloud_unavailable">朗讀失敗：沒有可用的語音引擎。請檢查語音輸出設定，或安裝系統語音引擎。</string>
     <string name="chat_error_stream_dropped_partial">連線中斷，此回覆可能不完整。點擊重試以繼續。</string>
+    <string name="chat_error_model_refusal">模型拒絕回答這則請求（stop_reason: refusal）。可以換個說法、點擊重試，或切換到其他模型。</string>
     <string name="chat_input_placeholder">傳訊息給 %1$s（@ 提及檔案）</string>
     <string name="chat_input_placeholder_hint_1">試試用 @ 提及檔案，讓 %1$s 讀取</string>
     <string name="chat_input_placeholder_hint_2">輸入 / 使用技能和快捷指令</string>

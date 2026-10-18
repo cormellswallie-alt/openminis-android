@@ -423,17 +423,23 @@ class AnthropicProviderTest {
 
     @Test
     fun `thinking budget stays strictly below max tokens`() {
-        // Anthropic rejects budget_tokens == max_tokens with a 400. Every level
-        // that would clamp to exactly maxTokens must pull back to maxTokens - 1.
+        // Anthropic rejects budget_tokens >= max_tokens. When a level's cap
+        // reaches max_tokens the budget is rounded DOWN to a 4K step
+        // ([T-anthropic-budget-stable]) so it does not change — and re-bill
+        // the message cache — every time max_tokens shrinks by a few tokens.
         val maxTokens = 40_000
-        // HIGH: min(maxTokens, 65536) == maxTokens here → must be maxTokens-1.
-        assertEquals(maxTokens - 1, AnthropicProvider.thinkingBudget(maxTokens, ThinkingLevel.HIGH))
-        // Top tiers take the full budget → also pulled back by one.
-        for (level in listOf(ThinkingLevel.XHIGH, ThinkingLevel.MAX, ThinkingLevel.ULTRA)) {
+        for (level in listOf(ThinkingLevel.HIGH, ThinkingLevel.XHIGH, ThinkingLevel.MAX, ThinkingLevel.ULTRA)) {
             val budget = AnthropicProvider.thinkingBudget(maxTokens, level)
             assertTrue("$level budget $budget must be < $maxTokens", budget < maxTokens)
-            assertEquals(maxTokens - 1, budget)
+            assertEquals(36_864, budget)
         }
+        // Stable across small max_tokens changes.
+        assertEquals(
+            AnthropicProvider.thinkingBudget(39_000, ThinkingLevel.HIGH),
+            AnthropicProvider.thinkingBudget(39_800, ThinkingLevel.HIGH),
+        )
+        // Below one step it falls back to max_tokens-1 (still >= 1024).
+        assertEquals(2000, AnthropicProvider.thinkingBudget(2001, ThinkingLevel.HIGH))
     }
 
     @Test
