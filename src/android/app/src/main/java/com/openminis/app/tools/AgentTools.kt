@@ -124,7 +124,9 @@ object AgentTools {
         description = "Execute a command in an isolated Linux process (Alpine Linux via PRoot). " +
             "The command runs via /bin/sh -c with stdout and stderr merged. " +
             "Each invocation spawns a fresh process — there is no shared terminal session. " +
-            "Default timeout is 15 minutes.",
+            "Default timeout is 15 minutes. Long commands do not block the turn: one still running after " +
+            "`yield_after` seconds (default 60) returns its output so far plus a background job id and keeps " +
+            "running; poll it with `minis-shell-job wait <id>` (or `status` / `kill`) instead of re-running it.",
         parameters = mapOf(
             "tool_title" to AgentToolParam("string", "A concise 5-10 word summary of what this tool call does, shown to the user (e.g. 'Install Python data analysis packages', 'List files in home directory'). Use the same language as the user."),
             "command" to AgentToolParam("string", "The shell command to execute. Supports multi-line commands directly — no special escaping needed. Keep under 1000 chars; for longer scripts, write to a file with file_write first, then run it."),
@@ -132,9 +134,12 @@ object AgentTools {
             // a larger value" while values above 900 were silently cut to 900.
             "timeout" to AgentToolParam("integer", "Timeout in seconds (default: 900, maximum: 3600 — larger values are capped at 3600). Use a larger value for long-running commands like package installs."),
             "delay" to AgentToolParam("integer", "Delay in seconds before execution begins. The tool blocks the agent flow during this wait WITHOUT occupying the shell, so other concurrent tasks can use it. Use this instead of sleep commands to avoid resource contention."),
+            // [T-shell-auto-background] Inline-wait budget before the command is
+            // detached into a background job (ShellJobRegistry).
+            "yield_after" to AgentToolParam("integer", "Seconds to wait for the command inline (default: 60, min 5, max 240). If it is still running then, the call returns the output so far plus a job id (sh_xxxxxx) and the command keeps running in the background until it finishes or `timeout` expires. Poll with `minis-shell-job wait <id>` (blocks up to 120s, prints only new output and the exit code), `minis-shell-job status <id>`, or stop it with `minis-shell-job kill <id>`. Raise it only when you have nothing else to do and expect completion soon; lower it to start a long build/download and keep working."),
         ),
         required = listOf("tool_title", "command"),
-        propertyOrdering = listOf("tool_title", "command", "timeout", "delay"),
+        propertyOrdering = listOf("tool_title", "command", "timeout", "yield_after", "delay"),
     )
 
     // Aligned with iOS AIChatViewModel.swift browser_use definition

@@ -282,6 +282,11 @@ class MemoryRepository(private val memoryDir: File) {
         // source files rather than just a count.
         val injectedFiles = mutableListOf<String>()
         var dayOffset = 0
+        // [T-memory-dedupe] GLOBAL.md is injected too; strip daily lines that
+        // only repeat it (see MemoryDedupe). Disk files are not modified.
+        val globalText = try {
+            File(memoryDir, GLOBAL_FILE).takeIf { it.exists() }?.readText()
+        } catch (_: Exception) { null }
 
         while (fragments.size < MAX_RECENT_FILES && dayOffset < MAX_LOOKBACK_DAYS) {
             val date = Date(now.time - dayOffset.toLong() * 86400_000L)
@@ -289,7 +294,8 @@ class MemoryRepository(private val memoryDir: File) {
             val file = File(memoryDir, "$dateStr.md")
 
             if (file.exists()) {
-                val content = try { file.readText() } catch (_: Exception) { "" }
+                val rawContent = try { file.readText() } catch (_: Exception) { "" }
+                val content = com.openminis.app.data.MemoryDedupe.filterAgainstGlobal(rawContent, globalText)
                 if (content.isNotEmpty()) {
                     val lines = content.lines()
                     val preview = lines.take(MAX_INJECT_LINES).joinToString("\n")

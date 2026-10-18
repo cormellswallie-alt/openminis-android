@@ -14398,12 +14398,28 @@ class ChatViewModel(
                 }
             }
 
-            var result = ExecutionCoordinator.execute(
-                sessionId = dispatchSessionId,
-                fsSessionId = fsSessionId,
-                command = command,
-                timeout = timeoutSec * 1000L,
-                lineCallback = lc@{ rawLine ->
+            // [T-shell-auto-background] A command still running after
+            // `yield_after` seconds is detached instead of blocking the turn:
+            // this call returns the output so far plus a job id, and the
+            // command keeps running in ShellJobRegistry.scope. The model polls
+            // it with `minis-shell-job wait|status|kill <id>`. A command that
+            // IS that CLI never detaches (a long `wait` must not become a job).
+            val isJobCli = originalCommand.trimStart().startsWith(
+                com.openminis.app.sandbox.ShellJobRegistry.CLI_NAME,
+            )
+            val yieldSec = if (isJobCli) timeoutSec else args.optInt(
+                "yield_after",
+                com.openminis.app.sandbox.ShellJobRegistry.DEFAULT_YIELD_SEC,
+            ).coerceIn(
+                com.openminis.app.sandbox.ShellJobRegistry.MIN_YIELD_SEC,
+                com.openminis.app.sandbox.ShellJobRegistry.MAX_YIELD_SEC,
+            )
+            val shellJob = com.openminis.app.sandbox.ShellJobRegistry.create(
+                dispatchSessionId, originalCommand, timeoutSec,
+            )
+            val commandForRun = command
+            val bashScriptForRun = bashScript
+            val shellLineCallback: (String) -> Unit = lc@{ rawLine ->
                     // Strip any OSC MinisOpenURL markers emitted by
                     // /usr/local/bin/minis-open and forward the captured
                     // URLs to the broker so the chat screen can present the
@@ -14413,6 +14429,11 @@ class ChatViewModel(
                     val (cleanedLine, capturedUrls) = MinisUrlMarker.extract(rawLine)
                     for (raw in capturedUrls) MinisOpenUrlBroker.offer(raw)
                     if (cleanedLine.isEmpty() && rawLine.isNotEmpty()) return@lc
+
+                    shellJob.appendLine(com.openminis.app.sandbox.TerminalSanitizer.sanitize(cleanedLine))
+                    // Detached: the tool block already holds the final
+                    // "moved to background" result; stop streaming into it.
+                    if (shellJob.detached) return@lc
 
                     val idx = toolBlocks.indexOfFirst { it.id == toolId }
                     if (idx >= 0) {
@@ -14425,26 +14446,95 @@ class ChatViewModel(
                             updateAssistantMessage(assistantId, currentText, true, toolBlocks)
                         }
                     }
-                },
-            )
-
-            // [T-bash-on-demand] M5 self-heal: our bash wrapper returns sentinel
-            // 119 when bash vanished (user apk del'd) after we cached it
-            // available. Re-probe + reinstall once and rerun THIS command under
-            // bash inline, so it still succeeds instead of failing.
-            // Accept both the raw sentinel (119) and the wait(2)-encoded status
-            // (119 << 8 = 30464) the coordinator may surface.
-            if ((result.exitCode == BASH_MISSING_SENTINEL ||
-                    result.exitCode == (BASH_MISSING_SENTINEL shl 8)) && bashScript != null) {
-                OnDemandBash.markDisappeared()
-                val executor = OnDemandBash.Executor { c, t ->
-                    ExecutionCoordinator.execute(sessionId = dispatchSessionId, command = c, timeout = t, fsSessionId = fsSessionId).exitCode
-                }
-                val healed = OnDemandBash.ensureBash(context, executor)
-                command = if (healed is OnDemandBash.Outcome.Available) wrapForBash(bashScript!!) else bashScript!!
-                result = ExecutionCoordinator.execute(
-                    sessionId = dispatchSessionId, command = command, timeout = timeoutSec * 1000L, fsSessionId = fsSessionId)
             }
+            val stopperSink: (() -> Unit) -> Unit = { stop -> shellJob.setStopper(stop) }
+
+            val run = com.openminis.app.sandbox.ShellJobRegistry.scope.async {
+              try {
+                var r = ExecutionCoordinator.execute(
+                    sessionId = dispatchSessionId,
+                    fsSessionId = fsSessionId,
+                    command = commandForRun,
+                    timeout = timeoutSec * 1000L,
+                    lineCallback = shellLineCallback,
+                    onProcessStarted = stopperSink,
+                )
+
+                // [T-bash-on-demand] M5 self-heal: our bash wrapper returns sentinel
+                // 119 when bash vanished (user apk del'd) after we cached it
+                // available. Re-probe + reinstall once and rerun THIS command under
+                // bash inline, so it still succeeds instead of failing.
+                // Accept both the raw sentinel (119) and the wait(2)-encoded status
+                // (119 << 8 = 30464) the coordinator may surface.
+                if ((r.exitCode == BASH_MISSING_SENTINEL ||
+                        r.exitCode == (BASH_MISSING_SENTINEL shl 8)) && bashScriptForRun != null) {
+                    OnDemandBash.markDisappeared()
+                    val executor = OnDemandBash.Executor { c, t ->
+                        ExecutionCoordinator.execute(sessionId = dispatchSessionId, command = c, timeout = t, fsSessionId = fsSessionId).exitCode
+                    }
+                    val healed = OnDemandBash.ensureBash(context, executor)
+                    val retryCommand = if (healed is OnDemandBash.Outcome.Available) wrapForBash(bashScriptForRun) else bashScriptForRun
+                    r = ExecutionCoordinator.execute(
+                        sessionId = dispatchSessionId,
+                        command = retryCommand,
+                        timeout = timeoutSec * 1000L,
+                        fsSessionId = fsSessionId,
+                        lineCallback = shellLineCallback,
+                        onProcessStarted = stopperSink,
+                    )
+                }
+                com.openminis.app.sandbox.ShellJobRegistry.finish(shellJob, r.exitCode)
+                r
+              } catch (t: Throwable) {
+                // Never leave a job reported as running forever.
+                shellJob.appendLine("[shell error: ${t.message}]")
+                com.openminis.app.sandbox.ShellJobRegistry.finish(shellJob, -1)
+                throw t
+              }
+            }
+
+            val result = try {
+                withTimeoutOrNull(yieldSec * 1000L) { run.await() }
+                    ?: (if (run.isCompleted) run.await() else null)
+            } catch (e: CancellationException) {
+                // The turn was cancelled while we were still waiting inline:
+                // nobody will ever poll this command, so do not leave it running.
+                if (!run.isCompleted) {
+                    shellJob.kill()
+                    run.cancel()
+                }
+                com.openminis.app.sandbox.ShellJobRegistry.discard(shellJob)
+                throw e
+            }
+
+            if (result == null) {
+                com.openminis.app.sandbox.ShellJobRegistry.markDetached(shellJob)
+                val (soFar, skipped) = shellJob.readNew()
+                val (redactedSoFar, _) = com.openminis.app.data.EnvVarRedactor.redactIfEnabled(soFar)
+                val cli = com.openminis.app.sandbox.ShellJobRegistry.CLI_NAME
+                val id = shellJob.id
+                val backgroundOutput = buildString {
+                    append("[Still running after ${yieldSec}s - moved to the background as job $id. ")
+                    append("It keeps running (total timeout ${timeoutSec}s); nothing was lost or killed.]\n")
+                    append("Output so far:\n")
+                    if (skipped > 0) append("[... $skipped earlier chars omitted ...]\n")
+                    append(if (redactedSoFar.isBlank()) "(no output yet)" else redactedSoFar.trimEnd())
+                    append("\n\n<system-reminder>Poll it with `$cli wait $id` (blocks until the job ")
+                    append("finishes or ${com.openminis.app.sandbox.ShellJobRegistry.DEFAULT_WAIT_SEC}s pass, ")
+                    append("then prints only NEW output and the exit code; `--timeout S` up to ")
+                    append("${com.openminis.app.sandbox.ShellJobRegistry.MAX_WAIT_SEC}), `$cli status $id` ")
+                    append("(returns at once), or stop it with `$cli kill $id`. Do independent work meanwhile ")
+                    append("instead of waiting idle. Do not re-run the command. The job also stops if the user ")
+                    append("taps Stop or the app is closed.</system-reminder>")
+                }
+                AppLogger.info(TAG, "[ShellJob] $id detached after ${yieldSec}s session=${dispatchSessionId.take(8)}")
+                return ToolExecutionResult(
+                    output = backgroundOutput,
+                    success = true,
+                    toolTitle = toolTitle,
+                )
+            }
+            com.openminis.app.sandbox.ShellJobRegistry.discard(shellJob)
 
             // Also scrub markers from the aggregated one-shot output and
             // broker any URLs that only appeared there (defensive — handles
@@ -14481,9 +14571,13 @@ class ChatViewModel(
             // §4.2: append the bashism reminder when we fell back to sh and the
             // command failed OR any silent-class rule was hit (S-class exit-0
             // exception, default-on).
+            // [T-shell-missing-command-hint] "rg: not found" etc. → name the
+            // apk package, so the next call fixes it instead of investigating.
+            val withMissingHint = com.openminis.app.agent.shell.MissingCommandHint.hintFor(redactedOut)
+                ?.let { "$redactedOut\n\n$it" } ?: redactedOut
             val withBashReminder = bashReminder?.let { rem ->
-                if (result.exitCode != 0 || bashism.hasSilent) "$redactedOut\n\n$rem" else redactedOut
-            } ?: redactedOut
+                if (result.exitCode != 0 || bashism.hasSilent) "$withMissingHint\n\n$rem" else withMissingHint
+            } ?: withMissingHint
             // [T-android-shell-process-budget] Last, so nothing is appended
             // after the note that the command waited in the process queue.
             val withReminder = result.queueNote?.let { "$withBashReminder\n\n$it" } ?: withBashReminder
@@ -15383,7 +15477,7 @@ Memory system (currently DISABLED):
         val base = identitySection + """You should proactively use shell commands to accomplish the user's tasks — installing packages (apk add), writing and running scripts, managing files, networking, and any other operations a Linux terminal can perform.
 
 Available tools:
-- shell_execute: Run any shell command. Each invocation is an isolated process with stdout/stderr captured. Prefer this for most tasks — it is a real Linux environment with persistent filesystem. Common tools (python3, pip, curl, wget, git, ssh, etc.) can be installed via apk add; Python packages via pip install. Use `which <cmd>` to check if a tool is already installed before running apk add — many packages persist across sessions. When you need to wait before checking results (e.g. polling, waiting for a process), use the `delay` parameter instead of `sleep` in the command — delay blocks the agent flow without occupying the shell, so other concurrent tasks can use it during the wait. This avoids resource contention. Execution discipline for long-running or dispatched work: make tool calls immediately instead of describing intentions, and keep working until the task is complete. Within a turn, `delay` is your wait mechanism — to follow up on something still running, chain delay-then-check calls at a task-appropriate interval until you have the result or hit a sensible retry cap. For a check that should happen AFTER this turn ends, register it by running `minis-scheduled create …` via shell_execute (see the CLI list) — it fires a new turn at the scheduled time through a system alarm. NEVER end a turn with a promise of future action: 'I'll keep monitoring', 'will sync the result later', and ending right after a single still-running status check with 'let's keep waiting' are all the same violation — once your turn ends, NOTHING runs until the user's next message. If polling to completion is genuinely not worth blocking the turn, close honestly instead: either register a `minis-scheduled` follow-up (say so, with its task id) or state that you will only learn the outcome when the user next messages; see 'Scheduled tasks' later in this prompt.
+- shell_execute: Run any shell command. Each invocation is an isolated process with stdout/stderr captured. Prefer this for most tasks — it is a real Linux environment with persistent filesystem. Long-running commands never block for more than `yield_after` seconds (default 60): a command still running then comes back with its output so far and a background job id — continue other work and collect it with `minis-shell-job wait <id>`; never re-run it. Common tools (python3, pip, curl, wget, git, ssh, etc.) can be installed via apk add; Python packages via pip install. Use `which <cmd>` to check if a tool is already installed before running apk add — many packages persist across sessions. When you need to wait before checking results (e.g. polling, waiting for a process), use the `delay` parameter instead of `sleep` in the command — delay blocks the agent flow without occupying the shell, so other concurrent tasks can use it during the wait. This avoids resource contention. Execution discipline for long-running or dispatched work: make tool calls immediately instead of describing intentions, and keep working until the task is complete. Within a turn, `delay` is your wait mechanism — to follow up on something still running, chain delay-then-check calls at a task-appropriate interval until you have the result or hit a sensible retry cap. For a check that should happen AFTER this turn ends, register it by running `minis-scheduled create …` via shell_execute (see the CLI list) — it fires a new turn at the scheduled time through a system alarm. NEVER end a turn with a promise of future action: 'I'll keep monitoring', 'will sync the result later', and ending right after a single still-running status check with 'let's keep waiting' are all the same violation — once your turn ends, NOTHING runs until the user's next message. If polling to completion is genuinely not worth blocking the turn, close honestly instead: either register a `minis-scheduled` follow-up (say so, with its task id) or state that you will only learn the outcome when the user next messages; see 'Scheduled tasks' later in this prompt.
 - file_read: Read file contents (faster than cat).
 - file_write: Create new files or overwrite existing files (faster than echo/tee).
 - file_edit: Edit existing files with exact string replacement (old_string → new_string). Preferred over file_write for modifications — always file_read first.
@@ -15426,7 +15520,7 @@ File creation guidelines:
 - Also (BusyBox ash, NOT bash): brace expansion ({a,b,c}) and bash arrays (arr=(...), ${'$'}{arr[@]}) are unsupported — use space-separated strings with a for loop or multiple arguments instead.
 - Python packages: many PyPI packages (numpy, pandas, scipy, pillow, etc.) lack musllinux_aarch64 wheels and will fail to build from source. Use Alpine's native packages instead: `apk search py3-<name>` then `apk add py3-numpy py3-pandas py3-matplotlib py3-pillow py3-scipy py3-requests`. Only fall back to `pip install` for pure-Python packages not available via apk. For matplotlib, always set `matplotlib.use('Agg')` before importing pyplot — there is no display server in the sandbox.
 - Background services: each shell_execute runs in an isolated process. When starting a background server (e.g. `python3 -m http.server &`), you MUST redirect stdout/stderr to avoid SIGPIPE when the shell exits: `python3 -m http.server 8765 > /dev/null 2>&1 &`. Without redirection the server dies silently after the command finishes.
-- File search & text scanning: use ripgrep (`rg`) for EVERY scan of files — finding names, keyword/regex search, field extraction, log analysis — on one file or a whole tree. Never use grep/awk/sed/find here, rg is far faster. Contents: `rg -n 'pattern' <dir>` (`-i` ignore case, `-w` whole word, `-F` literal, `-l` file names only, `-t py` or `-g '*.md'` to filter files). File names: `rg --files <dir> -g '*.pdf'`, or `rg --files <dir> | rg 'name'`. rg skips hidden, .gitignored and binary files by default; add `-uuu` to search everything. If `which rg` finds nothing, install it once with `apk add ripgrep`. `**` recursive glob (globstar) is not supported by the shell — use rg instead. When looking for user files, do NOT scan the whole filesystem: search /var/minis/ first (workspace/attachments/shared for the current session, mounts/* for user-provided external folders), and widen the scope only if the file is clearly not there.
+- File search & text scanning: use ripgrep (`rg`) for EVERY scan of files — finding names, keyword/regex search, field extraction, log analysis — on one file or a whole tree. Never use grep/awk/sed/find here, rg is far faster. Contents: `rg -n 'pattern' <dir>` (`-i` ignore case, `-w` whole word, `-F` literal, `-l` file names only, `-t py` or `-g '*.md'` to filter files). File names: `rg --files <dir> -g '*.pdf'`, or `rg --files <dir> | rg 'name'`. rg skips hidden, .gitignored and binary files by default; add `-uuu` to search everything. rg is NOT in the default rootfs: check the tool list in the Runtime context at the end of this prompt, and if rg is missing install it once (`apk add -q ripgrep`) as part of your FIRST search command — do not fall back to grep. `**` recursive glob (globstar) is not supported by the shell — use rg instead. When looking for user files, do NOT scan the whole filesystem: search /var/minis/ first (workspace/attachments/shared for the current session, mounts/* for user-provided external folders), and widen the scope only if the file is clearly not there.
 
 Tool call style:
 - Default: do not narrate routine, low-risk tool calls — just call the tool directly.
@@ -15536,6 +15630,19 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
             append("- Current date: ").append(dateStr).append(" (").append(tzId).append(")\n")
             append("- Device language: ").append(lang).append("\n")
             append("- minis-model-use models available: ").append(modelUseCount)
+            // [T-env-manifest] What the sandbox has, so the model does not find
+            // out by failing (tool names and env var NAMES only, never values).
+            runCatching {
+                val rootfs = com.openminis.app.sandbox.RootfsManager.getInstance(context).rootfsDir
+                val installed = if (rootfs.isDirectory) {
+                    com.openminis.app.agent.EnvironmentManifest.installedTools(rootfs)
+                } else {
+                    null
+                }
+                // Names from the in-memory entry list: no secret is decrypted for this.
+                val envNames = ExecutionCoordinator.envVarRepository?.entries?.value?.map { it.key } ?: emptyList()
+                com.openminis.app.agent.EnvironmentManifest.render(installed, envNames)
+            }.getOrNull()?.let { append("\n").append(it) }
         }
     }
 

@@ -209,6 +209,16 @@ internal class FreshProcessShell(
             watchdog.cancel()
             monitor.cancel()
         }
+        // [T-shell-auto-background] feedLines only emits newline-terminated
+        // lines; hand the unterminated tail over too, or a background job's
+        // buffer would miss the final line (e.g. a prompt-less `printf`).
+        lineCallback?.let { cb ->
+            if (lineBuffer.isNotEmpty()) {
+                val tail = lineBuffer.toString()
+                lineBuffer.setLength(0)
+                runCatching { cb(tail) }
+            }
+        }
 
         // Stderr goes after stdout: separate pipes cannot be re-interleaved.
         // When proot was left running its stderr never reaches EOF either, so

@@ -7,6 +7,8 @@ on:
     paths:
       - "src/android/app/src/main/java/com/openminis/app/provider/**"
       - "src/android/app/src/main/java/com/openminis/app/ui/chat/ChatViewModel.kt"
+      - "src/android/app/src/main/java/com/openminis/app/agent/**"
+      - "src/android/app/src/main/java/com/openminis/app/sandbox/**"
       - "src/android/app/src/main/java/com/openminis/app/data/**"
       - "src/android/app/src/main/java/com/openminis/app/auth/**"
       - "src/android/app/src/main/java/com/openminis/app/ui/settings/**"
@@ -104,6 +106,7 @@ jobs:
             --tests 'com.openminis.app.ui.chat.SwitchModelMidTurnEdgeTest' \
             --tests 'com.openminis.app.ui.chat.UsageCapsuleLiveStampTest' \
             --tests 'com.openminis.app.ui.chat.EmptyTurnRecoveryTest' \
+            --tests 'com.openminis.app.agent.AgentEfficiencyTest' \
             --stacktrace
 
       - name: Upload test report

@@ -67,6 +67,7 @@ object ExecutionCoordinator {
         timeout: Long,
         lineCallback: ((String) -> Unit)?,
         fsSessionId: String?,
+        onProcessStarted: ((stop: () -> Unit) -> Unit)? = null,
     ): CommandResult {
         val startTime = System.currentTimeMillis()
         val bindMounts = buildSessionBindMounts(fsSessionId ?: sessionId)
@@ -92,6 +93,7 @@ object ExecutionCoordinator {
             freshShells.compute(sessionId) { _, existing ->
                 (existing ?: newFreshShellSet()).also { it.add(shell) }
             }
+            onProcessStarted?.let { cb -> runCatching { cb { shell.stop() } } }
             return try {
                 shell.execute(
                     command = command,
@@ -226,6 +228,10 @@ object ExecutionCoordinator {
          *  binds (a helper's PARENT). The shell process itself stays keyed by
          *  [sessionId], so stop / cleanup never reach the parent's shell. */
         fsSessionId: String? = null,
+        /** [T-shell-auto-background] Receives a function that stops THIS
+         *  command only (not the session's other commands). Called once per
+         *  process start, so a retry hands out a fresh stopper. */
+        onProcessStarted: ((stop: () -> Unit) -> Unit)? = null,
     ): CommandResult {
         // [T-android-concurrent-shell] Pick a FREE shell from this session's
         // pool instead of queueing behind its one shell.
@@ -304,9 +310,9 @@ object ExecutionCoordinator {
             isStartFailure = ::isStartFailure,
         ) {
             if (executionStrategy == ShellExecutionStrategy.FRESH_PROCESS) {
-                executeFresh(sessionId, command, timeout, lineCallback, fsSessionId)
+                executeFresh(sessionId, command, timeout, lineCallback, fsSessionId, onProcessStarted)
             } else {
-                executeWarm(sessionId, command, timeout, lineCallback, fsSessionId)
+                executeWarm(sessionId, command, timeout, lineCallback, fsSessionId, onProcessStarted)
             }
         }
         return when (outcome) {
@@ -352,11 +358,15 @@ object ExecutionCoordinator {
         timeout: Long,
         lineCallback: ((String) -> Unit)?,
         fsSessionId: String?,
+        onProcessStarted: ((stop: () -> Unit) -> Unit)? = null,
     ): CommandResult {
         val lease = acquireShellLease(sessionId, fsSessionId ?: sessionId)
 
         return try {
             val startTime = System.currentTimeMillis()
+            // [T-shell-auto-background] Stopping the leased slot's shell stops
+            // exactly this command; the next lease of the slot respawns it.
+            onProcessStarted?.let { cb -> runCatching { cb { lease.shell.stop() } } }
 
             // [diag] trace the sessionId that shell_execute is dispatched with —
             // suspected source of the Chinese-emoji filename vanishing bug

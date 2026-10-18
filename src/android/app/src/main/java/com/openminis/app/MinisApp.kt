@@ -701,6 +701,12 @@ class MinisApp : Application(), ImageLoaderFactory {
         // so PATH lookup succeeds; PRoot intercepts the execve before
         // the stub runs and routes to this handler).
         NativeOffloadServer.register("minis-sessions-cli", SessionsOffloadHandler(chatRepository))
+        // [T-shell-auto-background] minis-shell-job — poll / stop shell_execute
+        // commands that were detached after their yield_after budget.
+        NativeOffloadServer.register(
+            com.openminis.app.sandbox.ShellJobRegistry.CLI_NAME,
+            com.openminis.app.sandbox.offload.ShellJobOffloadHandler(),
+        )
         // [T-android-scheduled-tasks-full] minis-scheduled — create/list/run
         // timed AI tasks (new chat / follow-up / re-run), mirroring the in-app
         // Scheduled Tasks editor and the iOS Shortcuts intent set.
