@@ -274,15 +274,24 @@ class ClaudeVersionParseTest {
                     .anthropicThinkingShape(id, true, ThinkingLevel.OFF, 8192),
             )
         }
-        // OFF on 5+: the literal is REJECTED — send nothing (iOS 69be65763).
-        for (id in listOf("claude-fable-5", "claude-opus-5", "claude-sonnet-5")) {
-            assertTrue(
-                "Claude 5 400s on thinking.type=disabled and treats absence as adaptive, " +
-                    "so OFF must send nothing: $id",
+        // OFF on 5+ follows the per-model table (platform.claude.com
+        // thinking-troubleshooting): Opus 5 / Sonnet 5 accept the disabled
+        // literal; always-on models (Fable 5) reject it, so OFF can only lower
+        // effort. [T-anthropic-thinking-off-by-model]
+        for (id in listOf("claude-opus-5", "claude-sonnet-5")) {
+            assertEquals(
+                "$id accepts thinking.type=disabled",
+                mapOf("disabled" to true),
                 com.openminis.app.provider.thinking.ThinkingRuleResolver
-                    .anthropicThinkingShape(id, true, ThinkingLevel.OFF, 8192).isEmpty(),
+                    .anthropicThinkingShape(id, true, ThinkingLevel.OFF, 8192),
             )
         }
+        assertEquals(
+            "Fable 5 is always-on: OFF must not send disabled, only low effort",
+            mapOf("effort" to "low"),
+            com.openminis.app.provider.thinking.ThinkingRuleResolver
+                .anthropicThinkingShape("claude-fable-5", true, ThinkingLevel.OFF, 8192),
+        )
         val legacyOn = com.openminis.app.provider.thinking.ThinkingRuleResolver
             .anthropicThinkingShape("claude-sonnet-4-5", true, ThinkingLevel.HIGH, 8192)
         assertTrue("a pre-4.6 model takes a token budget: $legacyOn", legacyOn.containsKey("budget_tokens"))

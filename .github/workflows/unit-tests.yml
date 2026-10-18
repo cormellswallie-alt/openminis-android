@@ -8,6 +8,7 @@ on:
       - "src/android/app/src/main/java/com/openminis/app/provider/**"
       - "src/android/app/src/main/java/com/openminis/app/ui/chat/ChatViewModel.kt"
       - "src/android/app/src/main/java/com/openminis/app/data/**"
+      - "src/android/app/src/main/java/com/openminis/app/auth/**"
       - "src/android/app/src/test/**"
       - ".github/workflows/unit-tests.yml"
 
@@ -32,11 +33,11 @@ jobs:
       # Unit tests compile the whole app module, which references rclone.aar
       # (flatDir) and the provider-customization file. Stub both so javac/kotlinc
       # can resolve the module without the 30-minute native/Go pipeline.
-      # AnthropicProvider.resolveSystemPrompt reads
-      # ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT on every request
-      # (API-key path included), and that getter throws when the BuildConfig
-      # value is empty. Use the same secret as the APK build; fall back to a
-      # test-only placeholder so forks without the secret still run tests.
+      # The OAuth tests need a non-empty ANTHROPIC_OAUTH_IDENTIFIER_PROMPT.
+      # (The API-key path no longer reads it — AnthropicCompatTest covers the
+      # "not configured" case through ClaudeOAuthManager.identifierPromptSource.)
+      # Use the same secret as the APK build; fall back to a test-only
+      # placeholder so forks without the secret still run tests.
       - name: Stub build-time inputs
         env:
           OAUTH_PROMPT: ${{ secrets.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT }}
@@ -92,6 +93,11 @@ jobs:
             --tests 'com.openminis.app.provider.AnthropicProviderTest' \
             --tests 'com.openminis.app.provider.ThinkingWireGeminiAnthropicSnapshotTest' \
             --tests 'com.openminis.app.provider.OutboundFieldGatingTest' \
+            --tests 'com.openminis.app.provider.AnthropicCompatTest' \
+            --tests 'com.openminis.app.provider.ThinkingPassbackMatrixTest' \
+            --tests 'com.openminis.app.provider.anthropic.ClaudeVersionParseTest' \
+            --tests 'com.openminis.app.provider.GPT6SolLunaOpus55Test' \
+            --tests 'com.openminis.app.provider.ClaudeSonnet55Test' \
             --stacktrace
 
       - name: Upload test report

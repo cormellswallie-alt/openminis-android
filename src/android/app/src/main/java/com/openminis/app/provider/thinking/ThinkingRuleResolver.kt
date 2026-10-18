@@ -869,24 +869,30 @@ object ThinkingRuleResolver {
             if (adaptive) {
                 return mapOf(
                     "effort" to com.openminis.app.provider.anthropic.AnthropicProvider
-                        .thinkingEffort(level),
+                        .thinkingEffort(level, modelId),
                 )
             }
             val budget = com.openminis.app.provider.anthropic.AnthropicProvider
                 .thinkingBudget(maxTokens, level)
             return if (budget > 0) mapOf("budget_tokens" to budget) else emptyMap()
         }
-        // [T-android-claude5-thinking-disabled-400] Deliberately NOT `adaptive`:
-        // that is true for 4.6+ AND 5+, but only 4.6-4.x accepts the explicit
-        // disabled value. Claude 5+ 400s on it and treats an absent field as
-        // adaptive — which is exactly what OFF wants. Ported from iOS 69be65763.
-        return if (
-            com.openminis.app.provider.anthropic.AnthropicProvider
-                .modelAcceptsExplicitThinkingDisabled(modelId)
+        // [T-anthropic-thinking-off-by-model] OFF is spelled per model — see
+        // AnthropicProvider.thinkingOffMode (platform.claude.com per-model
+        // thinking table). 4.6-4.x and Opus 5 / Sonnet 5 / Haiku 5.5 take the
+        // disabled literal, Sonnet 5.5 takes between_tools, always-on models
+        // (Fable / Mythos / Opus 5.5) can only lower effort, <= 4.5 omit.
+        return when (
+            com.openminis.app.provider.anthropic.AnthropicProvider.thinkingOffMode(modelId)
         ) {
-            mapOf("disabled" to true)
-        } else {
-            emptyMap()
+            com.openminis.app.provider.anthropic.AnthropicProvider.Companion.ThinkingOffMode.DISABLED,
+            com.openminis.app.provider.anthropic.AnthropicProvider.Companion.ThinkingOffMode.DISABLED_5X ->
+                mapOf("disabled" to true)
+            com.openminis.app.provider.anthropic.AnthropicProvider.Companion.ThinkingOffMode.BETWEEN_TOOLS ->
+                mapOf("between_tools" to true)
+            com.openminis.app.provider.anthropic.AnthropicProvider.Companion.ThinkingOffMode.LOW_EFFORT ->
+                mapOf("effort" to "low")
+            com.openminis.app.provider.anthropic.AnthropicProvider.Companion.ThinkingOffMode.OMIT ->
+                emptyMap()
         }
     }
 

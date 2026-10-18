@@ -7202,7 +7202,7 @@ class ChatViewModel(
      * The rest of the prompt is not model-specific on Android.
      */
     private fun systemPromptFor(provider: LLMProvider, prompt: String?): String? {
-        val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+        val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
         if (prompt == null || prefix.isEmpty()) return prompt
         val bare = if (prompt.startsWith(prefix)) prompt.removePrefix(prefix).trimStart('\n') else prompt
         val oauth = (provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true
@@ -8295,7 +8295,7 @@ class ChatViewModel(
 
         val baseSystemPrompt = buildSystemPrompt()
         val systemPrompt = if ((provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true) {
-            val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+            val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
             if (baseSystemPrompt?.startsWith(prefix) == true) baseSystemPrompt
             else "$prefix\n\n${baseSystemPrompt ?: ""}"
         } else baseSystemPrompt
@@ -9376,7 +9376,7 @@ class ChatViewModel(
             // Anthropic OAuth requires the Claude Code prefix in the system prompt
             val baseSystemPrompt = buildSystemPrompt()
             val systemPrompt = if ((provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true) {
-                val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+                val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
                 if (baseSystemPrompt?.startsWith(prefix) == true) baseSystemPrompt
                 else "$prefix\n\n${baseSystemPrompt ?: ""}"
             } else baseSystemPrompt
@@ -9754,7 +9754,7 @@ class ChatViewModel(
 
             val baseSystemPrompt = buildSystemPrompt()
             val systemPrompt = if ((provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true) {
-                val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+                val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
                 if (baseSystemPrompt?.startsWith(prefix) == true) baseSystemPrompt
                 else "$prefix\n\n${baseSystemPrompt ?: ""}"
             } else baseSystemPrompt
@@ -11147,6 +11147,10 @@ class ChatViewModel(
             // server-emitted value round-trips on the next request — DeepSeek V4
             // emits "" legitimately and fabricated text would be in-context-learned.
             var turnReasoningBlob: String? = null
+            // [T-anthropic-signed-thinking] Signed Anthropic thinking blocks of
+            // this turn's response (null for other providers), replayed on the
+            // tool-use continuation via LLMMessage.anthropicThinkingBlocks.
+            var turnAnthropicThinking: String? = null
             // T321: capture finish_reason from LLMStreamChunk.Finished so we can
             // log it at turn-end alongside the empty-turn warning.
             var turnFinishReason: String? = null
@@ -11703,8 +11707,13 @@ class ChatViewModel(
                     is LLMStreamChunk.Finished -> {
                         // T321: stash for empty-turn diagnostic logging below.
                         turnFinishReason = chunk.stopReason
+                        turnAnthropicThinking = chunk.anthropicThinkingBlocks
                     }
-                    is LLMStreamChunk.Started -> { /* no-op */ }
+                    is LLMStreamChunk.Started -> {
+                        // A new attempt (retry / fallback) starts a new response;
+                        // signatures from an abandoned attempt must not leak in.
+                        turnAnthropicThinking = null
+                    }
                     is LLMStreamChunk.MediaAttachment -> {
                         // [T-codex-gpt-image2-oauth-android] Model-generated
                         // media (gpt-image-2 image). Inline chat display is out
@@ -12204,6 +12213,7 @@ class ChatViewModel(
                 content = turnText,
                 contentParts = assistantParts,
                 reasoningContent = turnReasoningContent,
+                anthropicThinkingBlocks = turnAnthropicThinking,
             ))
 
             // T321: empty-turn diagnostic — fires when GPT-5.5 (or any other
@@ -16590,7 +16600,7 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
 
             val baseSystemPrompt = buildSystemPrompt()
             val systemPrompt = if ((provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true) {
-                val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+                val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
                 if (baseSystemPrompt?.startsWith(prefix) == true) baseSystemPrompt
                 else "$prefix\n\n${baseSystemPrompt ?: ""}"
             } else baseSystemPrompt
@@ -16885,7 +16895,7 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
             val baseSystemPrompt = buildSystemPrompt()
             val systemPrompt =
                 if ((provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true) {
-                    val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+                    val prefix = com.openminis.app.auth.ClaudeOAuthManager.configuredIdentifierPrompt
                     if (baseSystemPrompt?.startsWith(prefix) == true) baseSystemPrompt
                     else "$prefix\n\n${baseSystemPrompt ?: ""}"
                 } else baseSystemPrompt

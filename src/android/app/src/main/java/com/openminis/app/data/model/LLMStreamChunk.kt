@@ -6,7 +6,16 @@ sealed class LLMStreamChunk {
     data object Started : LLMStreamChunk()
     data class Text(val text: String) : LLMStreamChunk()
     data class Usage(val usage: LLMUsage) : LLMStreamChunk()
-    data class Finished(val stopReason: String?) : LLMStreamChunk()
+    data class Finished(
+        val stopReason: String?,
+        /**
+         * [T-anthropic-signed-thinking] Anthropic only: JSON array of this
+         * response's signed `thinking` / `redacted_thinking` blocks, to be
+         * replayed unchanged on the next request of the tool-use loop. Null
+         * for every other provider and when the response had none.
+         */
+        val anthropicThinkingBlocks: String? = null,
+    ) : LLMStreamChunk()
 
     /** Thinking/reasoning streaming event */
     data class ThinkingDelta(val text: String) : LLMStreamChunk()

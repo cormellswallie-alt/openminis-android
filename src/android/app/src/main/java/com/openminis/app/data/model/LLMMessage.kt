@@ -29,6 +29,15 @@ data class LLMMessage(
      * reasoning_content once `thinking` is enabled.
      */
     val reasoningContent: String? = null,
+    /**
+     * [T-anthropic-signed-thinking] Signed thinking blocks of this assistant
+     * turn as returned by Anthropic (JSON array string, see
+     * [LLMStreamChunk.Finished.anthropicThinkingBlocks]). In-memory only — kept
+     * for the running agent loop so tool-use continuations carry the model's
+     * reasoning, as the API requires; not persisted, so history reloaded from
+     * the database simply omits it (the API accepts that).
+     */
+    val anthropicThinkingBlocks: String? = null,
 ) {
     enum class Role(val value: String) {
         USER("user"),

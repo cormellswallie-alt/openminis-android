@@ -61,6 +61,26 @@ class AnthropicProvider(
     var enhancedCache: Boolean = false
 
     /**
+     * [T-anthropic-wire-compat] Optional, documented request features that a
+     * relay / older backend might not understand. If a request carrying any of
+     * them is answered with HTTP 400, it is retried once without them; when
+     * that retry succeeds they stay off for this provider instance, so one
+     * incompatible relay costs one extra request instead of every request.
+     */
+    enum class WireFeature {
+        /** Replaying signed `thinking` / `redacted_thinking` blocks. */
+        SIGNED_THINKING_ECHO,
+        /** `thinking.type` = "disabled" / "between_tools" on Claude 5.x. */
+        EXPLICIT_THINKING_OFF,
+        /** `output_config.effort` = "xhigh" (Claude 4.7+). */
+        XHIGH_EFFORT,
+    }
+
+    @Volatile
+    internal var disabledFeatures: Set<WireFeature> = emptySet()
+        private set
+
+    /**
      * Build a `cache_control` object honoring [enhancedCache]. Default 5-minute
      * TTL is `{"type":"ephemeral"}`; enhanced is `{"type":"ephemeral","ttl":"1h"}`.
      * Every ephemeral breakpoint in the request body routes through here.
@@ -91,9 +111,9 @@ class AnthropicProvider(
         tools: List<AgentToolDefinition>,
         thinkingLevel: ThinkingLevel,
     ): LLMResponse = withContext(Dispatchers.IO) {
-        val body = buildRequestBody(messages, systemPrompt, maxTokens, stream = false, temperature = temperature, imageParts = imageParts, tools = tools, thinkingLevel = thinkingLevel)
-        val request = buildRequest(body.toString(), body)
-        val response = client.newCall(request).execute()
+        val (response, _, _) = executeWithCompatRetry { suppress, used ->
+            buildRequestBody(messages, systemPrompt, maxTokens, stream = false, temperature = temperature, imageParts = imageParts, tools = tools, thinkingLevel = thinkingLevel, suppress = suppress, used = used)
+        }
         val responseBody = response.body?.string() ?: ""
 
         if (!response.isSuccessful) {
@@ -125,24 +145,19 @@ class AnthropicProvider(
         tools: List<AgentToolDefinition>,
         thinkingLevel: ThinkingLevel,
     ): Flow<LLMStreamChunk> = callbackFlow {
-        val body = buildRequestBody(messages, systemPrompt, maxTokens, stream = true, temperature = temperature, imageParts = imageParts, tools = tools, thinkingLevel = thinkingLevel)
-        // T302: serialize the body exactly once and pass the string to
-        // buildRequest. Pre-T302 body.toString() ran twice per call (once
-        // here, once inside buildRequest); each emitted string was tens of
-        // MB on long agent loops and stacked under GC pressure.
-        val bodyStr = body.toString()
-        val request = buildRequest(bodyStr, body)
-
         val startTime = System.currentTimeMillis()
+        // T302: the body is serialized exactly once per attempt inside
+        // executeWithCompatRetry and the string reused for the request.
+        val (response, bodyStr, request) = executeWithCompatRetry { suppress, used ->
+            buildRequestBody(messages, systemPrompt, maxTokens, stream = true, temperature = temperature, imageParts = imageParts, tools = tools, thinkingLevel = thinkingLevel, suppress = suppress, used = used)
+        }
+        val durationMs = System.currentTimeMillis() - startTime
 
         // Capture request headers as map
         val headerMap = mutableMapOf<String, String>()
         for (name in request.headers.names()) {
             headerMap[name] = request.headers[name] ?: ""
         }
-
-        val response = client.newCall(request).execute()
-        val durationMs = System.currentTimeMillis() - startTime
 
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: ""
@@ -190,13 +205,19 @@ class AnthropicProvider(
         // [T-anthropic-delta-usage-merge] Usage from message_start, used to
         // backfill output-only message_delta frames.
         var startUsage: LLMUsage? = null
+        // [T-anthropic-signed-thinking] index -> thinking / redacted_thinking
+        // block being assembled (text + signature), in arrival order.
+        val thinkingBlocks = java.util.TreeMap<Int, JSONObject>()
+        val thinkingText = HashMap<Int, StringBuilder>()
 
         try {
             var line: String?
             while (reader.readLine().also { line = it } != null) {
                 val l = line ?: continue
-                if (!l.startsWith("data: ")) continue
-                val payload = l.removePrefix("data: ")
+                // SSE allows `data:` with or without the space; some relays
+                // emit the compact form, which used to be silently skipped.
+                if (!l.startsWith("data:")) continue
+                val payload = l.substring(5).trimStart()
                 if (payload == "[DONE]") break
 
                 val event = try { JSONObject(payload) } catch (_: Exception) { continue }
@@ -230,6 +251,22 @@ class AnthropicProvider(
                     }
                     "content_block_start" -> {
                         val contentBlock = event.optJSONObject("content_block")
+                        val blockIndex = event.optInt("index", -1)
+                        if (contentBlock != null) when (contentBlock.safeOptString("type", "")) {
+                            "thinking" -> {
+                                thinkingBlocks[blockIndex] = JSONObject().apply {
+                                    put("type", "thinking")
+                                    put("signature", contentBlock.safeOptString("signature", ""))
+                                }
+                                thinkingText[blockIndex] = StringBuilder(contentBlock.safeOptString("thinking", ""))
+                            }
+                            "redacted_thinking" -> {
+                                thinkingBlocks[blockIndex] = JSONObject().apply {
+                                    put("type", "redacted_thinking")
+                                    put("data", contentBlock.safeOptString("data", ""))
+                                }
+                            }
+                        }
                         if (contentBlock?.safeOptString("type", "") == "tool_use") {
                             currentToolId = contentBlock.safeOptString("id", "")
                             currentToolName = contentBlock.safeOptString("name", "")
@@ -247,7 +284,13 @@ class AnthropicProvider(
                             }
                             "thinking_delta" -> {
                                 val thinking = delta.safeOptString("thinking", "")
+                                thinkingText[event.optInt("index", -1)]?.append(thinking)
                                 if (thinking.isNotEmpty()) send(LLMStreamChunk.ThinkingDelta(thinking))
+                            }
+                            "signature_delta" -> {
+                                thinkingBlocks[event.optInt("index", -1)]?.let { b ->
+                                    b.put("signature", b.optString("signature") + delta.safeOptString("signature", ""))
+                                }
                             }
                             "input_json_delta" -> {
                                 val partial = delta.safeOptString("partial_json", "")
@@ -290,7 +333,7 @@ class AnthropicProvider(
                         }
                         val stopReason = event.optJSONObject("delta")
                             ?.safeOptString("stop_reason", "")?.ifEmpty { null }
-                        send(LLMStreamChunk.Finished(stopReason))
+                        send(LLMStreamChunk.Finished(stopReason, collectSignedThinking(thinkingBlocks, thinkingText)))
                     }
                     // [T-android-fallback-providererror] Anthropic can emit an
                     // `error` frame MID-STREAM (overloaded_error, rate-limit,
@@ -339,6 +382,84 @@ class AnthropicProvider(
     }
 
     /**
+     * [T-anthropic-wire-compat] Execute a request built by [build]. When the
+     * body carried optional [WireFeature]s and the server answers 400, retry
+     * once without the feature(s) the error points at (all of them when the
+     * message names none). If the retry succeeds those features stay off for
+     * this instance. Returns the final response (successful or not — the
+     * caller maps errors as before), its body string and the request.
+     */
+    private fun executeWithCompatRetry(
+        build: (Set<WireFeature>, MutableSet<WireFeature>?) -> JSONObject,
+    ): Triple<okhttp3.Response, String, Request> {
+        val used = mutableSetOf<WireFeature>()
+        val suppress = disabledFeatures
+        val body = build(suppress, used)
+        val bodyStr = body.toString()
+        val request = buildRequest(bodyStr, body)
+        val response = client.newCall(request).execute()
+        if (response.code != 400 || used.isEmpty()) return Triple(response, bodyStr, request)
+
+        val errorBody = try { response.body?.string() ?: "" } catch (_: Exception) { "" }
+        response.close()
+        val drop = featuresBlamedBy(errorBody, used)
+        android.util.Log.w(
+            "AnthropicProvider",
+            "400 with optional features $used; retrying without $drop. body=${errorBody.take(300)}",
+        )
+        val retryBody = build(suppress + drop, null)
+        val retryStr = retryBody.toString()
+        val retryRequest = buildRequest(retryStr, retryBody)
+        val retryResponse = client.newCall(retryRequest).execute()
+        if (retryResponse.isSuccessful) {
+            disabledFeatures = disabledFeatures + drop
+        }
+        return Triple(retryResponse, retryStr, retryRequest)
+    }
+
+    /**
+     * [T-anthropic-signed-thinking] Serialize the turn's replayable thinking
+     * blocks (non-empty signature / data), in stream order, or null if none.
+     */
+    private fun collectSignedThinking(
+        blocks: Map<Int, JSONObject>,
+        texts: Map<Int, StringBuilder>,
+    ): String? {
+        val out = JSONArray()
+        for ((idx, b) in blocks) {
+            when (b.optString("type")) {
+                "thinking" -> if (b.optString("signature").isNotEmpty()) {
+                    out.put(JSONObject().apply {
+                        put("type", "thinking")
+                        put("thinking", texts[idx]?.toString() ?: "")
+                        put("signature", b.optString("signature"))
+                    })
+                }
+                "redacted_thinking" -> if (b.optString("data").isNotEmpty()) out.put(b)
+            }
+        }
+        return if (out.length() == 0) null else out.toString()
+    }
+
+    /** Which of [used] a 400 body points at; all of them when unclear. */
+    internal fun featuresBlamedBy(errorBody: String, used: Set<WireFeature>): Set<WireFeature> {
+        val msg = errorBody.lowercase()
+        val blamed = mutableSetOf<WireFeature>()
+        if (WireFeature.SIGNED_THINKING_ECHO in used &&
+            (msg.contains("signature") || msg.contains("redacted_thinking") ||
+                msg.contains("block_binding") || msg.contains("thinking block") ||
+                msg.contains("thinking` block") || msg.contains("cannot be modified"))
+        ) blamed.add(WireFeature.SIGNED_THINKING_ECHO)
+        if (WireFeature.EXPLICIT_THINKING_OFF in used &&
+            (msg.contains("thinking.type") || msg.contains("between_tools") || msg.contains("disabled"))
+        ) blamed.add(WireFeature.EXPLICIT_THINKING_OFF)
+        if (WireFeature.XHIGH_EFFORT in used && (msg.contains("xhigh") || msg.contains("effort"))) {
+            blamed.add(WireFeature.XHIGH_EFFORT)
+        }
+        return if (blamed.isEmpty()) used else blamed
+    }
+
+    /**
      * Build the `system` field as a JSON array of content blocks.
      * Mirrors iOS AnthropicProvider.resolveSystemPrompt — two authentication paths:
      *
@@ -352,8 +473,13 @@ class AnthropicProvider(
      *   Returns null when the prompt is null/empty (iOS parity — no empty `system` field).
      */
     internal fun resolveSystemPrompt(userPrompt: String?): JSONArray? {
-        val claudeCodePrefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
         if (isOAuth) {
+            // [T-anthropic-apikey-prefix-throw] Read the (throwing) prefix ONLY
+            // on the OAuth path. It used to be read before this branch, so every
+            // API-key / Anthropic-compatible request on a build without the
+            // secret failed with "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT is not
+            // configured" even though that path never sends it.
+            val claudeCodePrefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
             // Strip the prefix if the caller already prepended it; the tail is the real user prompt.
             val tail = when {
                 userPrompt == null -> ""
@@ -397,6 +523,11 @@ class AnthropicProvider(
         // [T-android-thinking-level-arch] Already clamped to the model ceiling by
         // LLMProvider.streamMessage/sendMessage before reaching here.
         thinkingLevel: ThinkingLevel = ThinkingLevel.OFF,
+        // [T-anthropic-wire-compat] Features to leave out of this body (sticky
+        // per instance after a relay rejected them), and an out-set recording
+        // which optional features the body actually carries.
+        suppress: Set<WireFeature> = disabledFeatures,
+        used: MutableSet<WireFeature>? = null,
     ): JSONObject {
         val body = JSONObject()
         body.put("model", model.id)
@@ -429,28 +560,38 @@ class AnthropicProvider(
             "[resolve] provider=anthropic model=${model.id} level=${thinkingLevel.name} " +
                 "shape=[${thinkShape.keys.sorted().joinToString(",")}]",
         )
+        // [T-anthropic-wire-compat] Whether the request ends up with thinking
+        // active (explicit adaptive/enabled, or a model whose server default is
+        // adaptive and that we did not turn off). Signed thinking blocks are
+        // only echoed back when it is — the docs say not to mix thinking modes
+        // inside one tool-use turn, and an "off" request has nothing to bind.
+        var thinkingActive = false
         if (thinkingLevel.isEnabled) {
             if (modelUsesAdaptiveThinking(model.id)) {
                 // [T-anthropic-thinking-display] Explicitly request summarized
-                // thinking. This is the SECOND half of the "thinking on but no
-                // thoughts shown" fix (first half: dropping the redact-thinking
-                // beta, f24e3f07). adaptive thinking has a separate `display`
-                // field: "summarized" returns readable thinking text; "omitted"
-                // leaves the thinking block empty (only a signature) — identical
-                // to being redacted. Newer models default `display` to "omitted"
-                // (Opus 4.7+ / Fable-tier), so without setting it Claude Sonnet 5
-                // etc. still show no thinking text even after the beta was
-                // removed. Pin it to "summarized" regardless of the model default.
+                // thinking. Adaptive thinking defaults `display` to "omitted"
+                // on Claude 4.7+ / all 5.x models (thinking block arrives empty,
+                // signature only), so without this the UI shows no thoughts.
                 body.put("thinking", JSONObject().apply {
                     put("type", "adaptive")
                     put("display", "summarized")
                 })
+                val effort = thinkingEffort(
+                    thinkingLevel, model.id,
+                    allowXhigh = WireFeature.XHIGH_EFFORT !in suppress,
+                )
+                if (effort == "xhigh") used?.add(WireFeature.XHIGH_EFFORT)
                 body.put("output_config", JSONObject().apply {
-                    put("effort", thinkingEffort(thinkingLevel))
+                    put("effort", effort)
                 })
+                thinkingActive = true
             } else {
                 val budgetTokens = thinkingBudget(maxTokens, thinkingLevel)
-                if (budgetTokens > 0) {
+                // [T-anthropic-budget-floor] The API rejects budget_tokens below
+                // 1024 (and it must stay < max_tokens). A tiny max_tokens (quick
+                // tests, title generation) used to produce budget=max_tokens-1,
+                // e.g. 127 → 400. Run without thinking instead.
+                if (budgetTokens >= MIN_THINKING_BUDGET) {
                     body.put("thinking", JSONObject().apply {
                         put("type", "enabled")
                         put("budget_tokens", budgetTokens)
@@ -458,24 +599,50 @@ class AnthropicProvider(
                     if (!modelRejectsTemperature(model.id)) {
                         body.put("temperature", 1)
                     }
+                    thinkingActive = true
                 }
             }
-        } else if (modelAcceptsExplicitThinkingDisabled(model.id)) {
-            // Claude 4.6-4.x think by DEFAULT when the request carries no
-            // thinking field at all — "off" must be sent explicitly, or
-            // small-maxTokens calls burn the whole budget on thinking_tokens and
-            // return zero text (iOS ea86dd8a observed: max_tokens=256 →
-            // stop_reason=max_tokens, thinking_tokens=256/256, empty body).
-            // Legacy (<=4.5) models default to no thinking, so absence is fine
-            // there.
-            //
-            // [T-android-claude5-thinking-disabled-400] Note this asks
-            // modelAcceptsExplicitThinkingDisabled, NOT modelUsesAdaptiveThinking:
-            // the latter is true for 4.6+ AND 5+, but Claude 5 rejects the literal
-            // with `"thinking.type.disabled" is not supported for this model` and
-            // treats an absent field as adaptive — which is exactly what OFF
-            // wants. Ported from iOS 69be65763.
-            body.put("thinking", JSONObject().put("type", "disabled"))
+        } else {
+            // [T-anthropic-thinking-off-by-model] How "thinking off" is spelled
+            // differs per model (platform.claude.com thinking-troubleshooting,
+            // "Thinking support, defaults, and rejected configurations"):
+            //   - 4.6-4.x: think by default → must send {"type":"disabled"}
+            //     (or small-maxTokens calls burn everything on thinking).
+            //   - Opus 5 / Sonnet 5 / Haiku 5.5: default ON, accept "disabled".
+            //     Previously we sent nothing, so OFF still thought.
+            //   - Sonnet 5.5: rejects "disabled"; its off switch is
+            //     {"type":"between_tools"}.
+            //   - Fable / Mythos / Opus 5.5 (and unknown future ids): always on,
+            //     reject "disabled". Closest to OFF is effort=low.
+            //   - <= 4.5: off by default → omit.
+            when (thinkingOffMode(model.id)) {
+                ThinkingOffMode.DISABLED -> {
+                    body.put("thinking", JSONObject().put("type", "disabled"))
+                }
+                ThinkingOffMode.DISABLED_5X -> {
+                    if (WireFeature.EXPLICIT_THINKING_OFF !in suppress) {
+                        body.put("thinking", JSONObject().put("type", "disabled"))
+                        used?.add(WireFeature.EXPLICIT_THINKING_OFF)
+                    } else {
+                        body.put("output_config", JSONObject().put("effort", "low"))
+                        thinkingActive = true
+                    }
+                }
+                ThinkingOffMode.BETWEEN_TOOLS -> {
+                    if (WireFeature.EXPLICIT_THINKING_OFF !in suppress) {
+                        body.put("thinking", JSONObject().put("type", "between_tools"))
+                        used?.add(WireFeature.EXPLICIT_THINKING_OFF)
+                    } else {
+                        body.put("output_config", JSONObject().put("effort", "low"))
+                        thinkingActive = true
+                    }
+                }
+                ThinkingOffMode.LOW_EFFORT -> {
+                    body.put("output_config", JSONObject().put("effort", "low"))
+                    thinkingActive = true
+                }
+                ThinkingOffMode.OMIT -> Unit
+            }
         }
 
         // System prompt blocks — mirrors iOS AnthropicProvider.resolveSystemPrompt.
@@ -504,8 +671,17 @@ class AnthropicProvider(
         }
 
         // Build and merge messages
-        val rawMessages = buildMessages(messages, imageParts)
+        // [T-anthropic-signed-thinking] Replay signed thinking blocks on
+        // Claude models while thinking is active (docs: "when you return tool
+        // results, you must pass the thinking blocks from the assistant
+        // message back to the API, complete and unmodified").
+        val echoSigned = thinkingActive &&
+            WireFeature.SIGNED_THINKING_ECHO !in suppress &&
+            parseClaudeVersion(model.id) != null &&
+            !shouldEchoInterleavedThinking()
+        val rawMessages = buildMessages(messages, imageParts, echoSigned, used)
         val merged = mergeConsecutiveSameRole(rawMessages)
+        ensureEndsWithUserTurn(merged)
 
         // Inject cache_control on last 2 user messages
         injectMessageCacheControl(merged)
@@ -607,6 +783,8 @@ class AnthropicProvider(
     private fun buildMessages(
         rawMessages: List<LLMMessage>,
         imageParts: List<LLMMessage.ImagePart>,
+        echoSigned: Boolean = false,
+        used: MutableSet<WireFeature>? = null,
     ): JSONArray {
         // Sanitize orphan tool_results before serialization. Operates on a
         // copy — caller's stored history is untouched.
@@ -618,6 +796,13 @@ class AnthropicProvider(
         for ((index, msg) in messages.withIndex()) {
             val obj = JSONObject()
             obj.put("role", msg.role.value)
+            // [T-anthropic-signed-thinking] Signed thinking / redacted_thinking
+            // blocks captured off the wire for this assistant turn, replayed
+            // verbatim ahead of its text / tool_use.
+            val signed = if (echoSigned && msg.role == LLMMessage.Role.ASSISTANT) {
+                parseSignedThinkingBlocks(msg.anthropicThinkingBlocks)
+            } else emptyList()
+            if (signed.isNotEmpty()) used?.add(WireFeature.SIGNED_THINKING_ECHO)
 
             if (msg.contentParts.isNotEmpty()) {
                 val contentArray = JSONArray()
@@ -637,6 +822,7 @@ class AnthropicProvider(
                         put("thinking", msg.reasoningContent ?: "")
                     })
                 }
+                for (block in signed) contentArray.put(block)
                 for (part in msg.contentParts) {
                     when (part) {
                         is AgentContentPart.Text -> {
@@ -735,6 +921,16 @@ class AnthropicProvider(
                         })
                     }
                     obj.put("content", contentArray)
+                } else if (signed.isNotEmpty()) {
+                    val contentArray = JSONArray()
+                    for (block in signed) contentArray.put(block)
+                    if (msg.content.isNotEmpty()) {
+                        contentArray.put(JSONObject().apply {
+                            put("type", "text")
+                            put("text", msg.content)
+                        })
+                    }
+                    obj.put("content", contentArray)
                 } else {
                     obj.put("content", msg.content)
                 }
@@ -804,10 +1000,9 @@ class AnthropicProvider(
                 // this hoists every synthesized thinking block ahead of the text
                 // so the merged turn still leads with thinking.
                 if (role == "assistant") {
-                    val thinking = contentBlocks.filter { it.optString("type") == "thinking" }
+                    val thinking = contentBlocks.filter { isThinkingBlock(it) }
                     val other = contentBlocks.filter {
-                        val t = it.optString("type")
-                        t != "thinking" && t != "tool_use"
+                        !isThinkingBlock(it) && it.optString("type") != "tool_use"
                     }
                     val toolUse = contentBlocks.filter { it.optString("type") == "tool_use" }
                     contentBlocks.clear()
@@ -909,6 +1104,66 @@ class AnthropicProvider(
         else -> true
     }
 
+    private fun isThinkingBlock(block: JSONObject): Boolean =
+        when (block.optString("type")) {
+            "thinking", "redacted_thinking" -> true
+            else -> false
+        }
+
+    /**
+     * [T-anthropic-signed-thinking] Decode the blocks stored on
+     * [LLMMessage.anthropicThinkingBlocks]. Only blocks that can be replayed
+     * are returned: `thinking` with a non-empty `signature`, or
+     * `redacted_thinking` with non-empty `data` — an empty/truncated signature
+     * is a hard 400 ("Invalid `signature` in `thinking` block").
+     */
+    private fun parseSignedThinkingBlocks(raw: String?): List<JSONObject> {
+        if (raw.isNullOrEmpty()) return emptyList()
+        val arr = try { JSONArray(raw) } catch (_: Exception) { return emptyList() }
+        val out = ArrayList<JSONObject>(arr.length())
+        for (i in 0 until arr.length()) {
+            val b = arr.optJSONObject(i) ?: continue
+            when (b.optString("type")) {
+                "thinking" -> if (b.optString("signature").isNotEmpty()) {
+                    out.add(JSONObject().apply {
+                        put("type", "thinking")
+                        put("thinking", b.optString("thinking"))
+                        put("signature", b.optString("signature"))
+                    })
+                }
+                "redacted_thinking" -> if (b.optString("data").isNotEmpty()) {
+                    out.add(JSONObject().apply {
+                        put("type", "redacted_thinking")
+                        put("data", b.optString("data"))
+                    })
+                }
+            }
+        }
+        return out
+    }
+
+    /**
+     * [T-anthropic-no-prefill] Claude 4.6+ reject a request whose last message
+     * is an assistant turn ("This model does not support assistant message
+     * prefill. The conversation must end with a user message."), and earlier
+     * models reject it while thinking is on. Minis never prefills on purpose;
+     * a trailing assistant only appears when sanitizing removed the final user
+     * turn (orphan tool_results / empty content). Close it with a minimal user
+     * turn instead of sending a request that can only fail.
+     */
+    private fun ensureEndsWithUserTurn(messages: JSONArray) {
+        if (messages.length() == 0) return
+        val last = messages.getJSONObject(messages.length() - 1)
+        if (last.optString("role") != "assistant") return
+        messages.put(JSONObject().apply {
+            put("role", "user")
+            put("content", JSONArray().put(JSONObject().apply {
+                put("type", "text")
+                put("text", "Continue.")
+            }))
+        })
+    }
+
     companion object {
         /**
          * Parse the `-<major>-<minor>` (or `/<major>.<minor>`) version out of a Claude id.
@@ -1007,9 +1262,64 @@ class AnthropicProvider(
          * this is a generation-wide API contract change, and an allowlist would
          * 400 again on the next Claude 5 variant nobody remembered to add.
          */
-        fun modelAcceptsExplicitThinkingDisabled(modelId: String): Boolean {
+        fun modelAcceptsExplicitThinkingDisabled(modelId: String): Boolean =
+            when (thinkingOffMode(modelId)) {
+                ThinkingOffMode.DISABLED, ThinkingOffMode.DISABLED_5X -> true
+                else -> false
+            }
+
+        /** API minimum for legacy `budget_tokens` (extended-thinking docs). */
+        const val MIN_THINKING_BUDGET = 1024
+
+        /** How a thinking-OFF request is encoded for a given model. */
+        enum class ThinkingOffMode {
+            /** Send nothing: model is off by default (<= 4.5) or not Claude. */
+            OMIT,
+            /** `{"type":"disabled"}` — Claude 4.6-4.x (on/adaptive by default). */
+            DISABLED,
+            /** `{"type":"disabled"}` — Claude Opus 5, Sonnet 5, Haiku 5.5. */
+            DISABLED_5X,
+            /** `{"type":"between_tools"}` — Claude Sonnet 5.5 only. */
+            BETWEEN_TOOLS,
+            /** Thinking can't be turned off; lower `effort` to "low" instead. */
+            LOW_EFFORT,
+        }
+
+        /** Family word of a Claude id (opus / sonnet / haiku / fable / mythos). */
+        internal fun claudeFamily(modelId: String): String? =
+            Regex("(opus|sonnet|haiku|fable|mythos)").find(modelId.lowercase())?.value
+
+        /**
+         * [T-anthropic-thinking-off-by-model] Source: platform.claude.com
+         * "Troubleshooting thinking" → per-model table. Opus 5, Sonnet 5 and
+         * Haiku 5.5 accept `disabled` (at effort <= high, which is what an OFF
+         * request runs at); Sonnet 5.5 takes `between_tools`; Fable 5 / 5.1,
+         * Mythos 5 / 5.1 and Opus 5.5 are always-on. Unknown future 5+/6+ ids
+         * default to the always-on handling (effort only), which no adaptive
+         * model rejects.
+         */
+        fun thinkingOffMode(modelId: String): ThinkingOffMode {
+            val (major, minor) = parseClaudeVersion(modelId) ?: return ThinkingOffMode.OMIT
+            if (major < 4 || (major == 4 && minor < 6)) return ThinkingOffMode.OMIT
+            if (major == 4) return ThinkingOffMode.DISABLED
+            val family = claudeFamily(modelId)
+            if (major == 5) {
+                when {
+                    minor == 0 && (family == "opus" || family == "sonnet") -> return ThinkingOffMode.DISABLED_5X
+                    minor == 5 && family == "haiku" -> return ThinkingOffMode.DISABLED_5X
+                    minor == 5 && family == "sonnet" -> return ThinkingOffMode.BETWEEN_TOOLS
+                }
+            }
+            return ThinkingOffMode.LOW_EFFORT
+        }
+
+        /**
+         * `xhigh` effort exists on Claude 4.7+ (Opus 4.7 / 4.8 and every 5.x);
+         * Opus 4.6 / Sonnet 4.6 top out at `max` without `xhigh`.
+         */
+        fun modelSupportsXhighEffort(modelId: String): Boolean {
             val (major, minor) = parseClaudeVersion(modelId) ?: return false
-            return major == 4 && minor >= 6
+            return major > 4 || (major == 4 && minor >= 7)
         }
 
         /**
@@ -1032,6 +1342,8 @@ class AnthropicProvider(
 
         /** Calculate thinking budget tokens based on level (legacy <=4.5 protocol). */
         fun thinkingBudget(maxTokens: Int, level: ThinkingLevel): Int {
+            // Below the API floor there is no valid budget at all.
+            if (maxTokens <= MIN_THINKING_BUDGET) return 0
             val cap = when (level) {
                 ThinkingLevel.OFF -> 0
                 ThinkingLevel.LOW -> 8192
@@ -1058,6 +1370,10 @@ class AnthropicProvider(
          * `xhigh` maps to "max" — both 4.6 and 4.7 advertise "max" universally; 4.7 also
          * lists "xhigh" but we standardize on "max" for cross-version compatibility.
          */
+        fun thinkingEffort(level: ThinkingLevel, modelId: String, allowXhigh: Boolean = true): String =
+            if (level == ThinkingLevel.XHIGH && allowXhigh && modelSupportsXhighEffort(modelId)) "xhigh"
+            else thinkingEffort(level)
+
         fun thinkingEffort(level: ThinkingLevel): String = when (level) {
             ThinkingLevel.OFF -> "low"  // unreached: caller checks isEnabled
             ThinkingLevel.LOW -> "low"
@@ -1281,9 +1597,6 @@ class AnthropicProvider(
     }
 
     private fun mapHttpError(statusCode: Int, body: String): LLMError {
-        if (statusCode == 401 || statusCode == 403) return LLMError.InvalidApiKey()
-        if (statusCode == 429) return LLMError.RateLimited()
-
         val message = try {
             val json = JSONObject(body)
             val error = json.optJSONObject("error")
@@ -1293,6 +1606,13 @@ class AnthropicProvider(
         } catch (_: Exception) {
             "HTTP $statusCode: ${body.take(500)}"
         }
+        // Keep the server's explanation on auth errors: relays answer 401/403
+        // for quota, disabled groups, model not allowed etc., and a bare
+        // "Invalid API key" sent users hunting for a key problem that wasn't.
+        if (statusCode == 401 || statusCode == 403) {
+            return LLMError.InvalidApiKey(if (body.isBlank()) "" else message)
+        }
+        if (statusCode == 429) return LLMError.RateLimited()
 
         val transientCodes = setOf(500, 502, 503, 504, 529)
         if (statusCode in transientCodes) {

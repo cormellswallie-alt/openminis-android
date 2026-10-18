@@ -402,13 +402,24 @@ class ThinkingPassbackMatrixTest {
      */
     @Test
     fun `claude 5 off does not send the disabled literal`() {
-        for (id in listOf("claude-sonnet-5", "claude-opus-5", "claude-fable-5", "claude-fable-5-1")) {
+        // [T-anthropic-thinking-off-by-model] Always-on models (Fable 5 / 5.1,
+        // Opus 5.5) reject the literal: OFF lowers effort instead.
+        for (id in listOf("claude-fable-5", "claude-fable-5-1", "claude-opus-5-5")) {
             val body = captureAnthropic(model(id, supportsReasoning = true), ThinkingLevel.OFF)
             assertNull(
-                "Claude 5 OFF must omit the thinking field entirely, or the API 400s: $id -> $body",
+                "always-on Claude 5 OFF must omit the thinking field, or the API 400s: $id -> $body",
                 body.optJSONObject("thinking")?.optString("type"),
             )
+            assertEquals("low", body.optJSONObject("output_config")?.optString("effort"))
         }
+        // Opus 5 / Sonnet 5 / Haiku 5.5 accept it (default ON, so OFF must be explicit).
+        for (id in listOf("claude-sonnet-5", "claude-opus-5", "claude-haiku-5-5")) {
+            val body = captureAnthropic(model(id, supportsReasoning = true), ThinkingLevel.OFF)
+            assertEquals("disabled", body.optJSONObject("thinking")?.optString("type"))
+        }
+        // Sonnet 5.5's off switch is between_tools.
+        val s55 = captureAnthropic(model("claude-sonnet-5-5", supportsReasoning = true), ThinkingLevel.OFF)
+        assertEquals("between_tools", s55.optJSONObject("thinking")?.optString("type"))
     }
 
     /** Control: 4.6-4.x thinks by default, so OFF MUST stay explicit there. */

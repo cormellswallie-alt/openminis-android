@@ -62,6 +62,26 @@ class ClaudeOAuthManager(context: Context, instanceId: String) : OAuthManager(co
             }
 
         /**
+         * [T-anthropic-apikey-prefix-throw] Non-throwing read of the configured
+         * prefix — empty string when the build has none.
+         *
+         * Use this everywhere the prefix is only *conditionally* needed (API-key
+         * Anthropic, Anthropic-compatible relays, the model-switch prompt
+         * rewrite that runs for every provider). Only a request that really goes
+         * out with Claude Code OAuth credentials may use the throwing
+         * [ANTHROPIC_OAUTH_IDENTIFIER_PROMPT]. Reading the throwing getter
+         * unconditionally is what made every API-key / compatible Anthropic
+         * provider fail with "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT is not
+         * configured" on builds without the secret.
+         */
+        val configuredIdentifierPrompt: String
+            get() = identifierPromptSource()
+
+        /** Test seam: lets unit tests simulate a build with/without the prefix. */
+        @Volatile
+        var identifierPromptSource: () -> String = { BuildConfig.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT }
+
+        /**
          * How long before expiry we proactively refresh. Mirrors iOS
          * `ClaudeOAuthManager.refreshBuffer` (5 minutes) — significantly tighter
          * than OAuthManager's 4-hour default, which burns refresh cycles.
@@ -330,7 +350,7 @@ class ClaudeOAuthManager(context: Context, instanceId: String) : OAuthManager(co
 
                 if (responseCode in 200..299) {
                     val json = JSONObject(responseBody)
-                    if (!json.has("refresh_token")) {
+                  n if (!json.has("refresh_token")) {
                         json.put("refresh_token", refreshTokenValue)
                     }
                     val expiresIn = json.optLong("expires_in", 0)
