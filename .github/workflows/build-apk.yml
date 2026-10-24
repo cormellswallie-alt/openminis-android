@@ -32,6 +32,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # The repo default GITHUB_TOKEN is read-only; publishing a (pre)release
+    # needs contents:write. Scoped to this job only.
+    permissions:
+      contents: write
     timeout-minutes: 90
     steps:
       - name: Checkout
