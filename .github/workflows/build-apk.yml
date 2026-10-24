@@ -12,6 +12,10 @@ on:
         description: "Override applicationId (empty = keep com.openminis.plus)"
         type: string
         default: ""
+      prerelease_tag:
+        description: "Also publish the APK as a GitHub prerelease with this tag, e.g. v1.14-noir.1 (empty = no release). Keep the v<current versionName>-<label> shape: the in-app updater strips the -suffix, so such a tag never looks newer to installed copies. Release assets do not count against the Actions artifact quota."
+        type: string
+        default: ""
   push:
     tags: ["v*"]
 
@@ -193,6 +197,9 @@ jobs:
           fi
 
       - name: Upload artifact
+        # A full account-wide artifact quota must not fail an otherwise good
+        # build — the APK is still published below when prerelease_tag is set.
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: OpenMinis-${{ env.BUILD_TYPE }}-${{ github.run_number }}
@@ -204,3 +211,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: out/*
+
+      # [T-noir-redesign] Manual builds can ship straight to a prerelease so a
+      # branch build is installable even when the artifact quota is exhausted.
+      # Marked prerelease and tagged on the dispatched commit; the in-app
+      # updater only offers it when its versionName is strictly newer.
+      - name: Publish prerelease (manual)
+        if: github.event_name == 'workflow_dispatch' && inputs.prerelease_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.prerelease_tag }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ inputs.prerelease_tag }}
+          prerelease: true
+          files: out/*.apk
