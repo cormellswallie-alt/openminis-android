@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Bildschirm wach halten</string>
     <string name="appearance_keep_awake_footer">Verhindert, dass der Bildschirm in den Ruhezustand wechselt, während eine Sitzung eine Aufgabe ausführt. Kann den Akkuverbrauch erhöhen.</string>
     <string name="appearance_keep_awake_title">Bildschirm wach halten</string>
+    <string name="appearance_section_launch_animation">Startanimation</string>
+    <string name="appearance_launch_animation_title">Startanimation</string>
+    <string name="appearance_launch_animation_footer">Spielt beim Öffnen über das Startbildschirm-Symbol die Perlen- und Schriftzug-Animation ab. Nie bei Links, Freigaben oder Verknüpfungen.</string>
     <string name="appearance_section_chat_title">Chat-Titel</string>
     <string name="appearance_show_chat_title">Chat-Titel anzeigen</string>
     <string name="appearance_show_chat_title_subtitle">Beim Scrollen eine fixierte Titelpille einblenden</string>

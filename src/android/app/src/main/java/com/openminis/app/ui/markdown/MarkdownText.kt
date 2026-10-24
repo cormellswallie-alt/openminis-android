@@ -273,7 +273,7 @@ private fun BlockquoteView(
     // blockquote uses the app systemOrange (0xFFFF9500) at full opacity.
     // The previous primary @ 0.5 alpha disappeared into theme purple on the
     // dark palette and didn't read as a quote at all in some compositions.
-    val barColor = Color(0xFFFF9500)
+    val barColor = Color(0xFFC98A3E)
     Box(
         modifier = Modifier
             .fillMaxWidth()

@@ -92,7 +92,7 @@ internal fun ChatImportSection(enabled: Boolean = true) {
     ) {
         RestoreSourceRow(
             icon = Icons.Outlined.Forum,
-            iconColor = Color(0xFF34C759),
+            iconColor = Color(0xFF6E9C7B),
             label = if (running) progressText ?: readingText else stringResource(R.string.chat_import_row),
             enabled = enabled && !running,
             onClick = {

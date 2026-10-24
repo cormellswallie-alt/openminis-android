@@ -477,7 +477,7 @@ fun SubAgentDetailScreen(agentId: String, onBack: () -> Unit) {
                     persist()
                 },
                 icon = Icons.Default.Psychology,
-                iconColor = Color(0xFFAF52DE),
+                iconColor = Color(0xFF9A7FA8),
                 showDivider = on,
             )
             if (on) {

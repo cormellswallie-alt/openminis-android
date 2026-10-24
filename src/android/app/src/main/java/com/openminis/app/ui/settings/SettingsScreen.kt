@@ -1,6 +1,7 @@
 package com.openminis.app.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
@@ -143,21 +144,21 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Outlined.Lock,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_manage_providers),
                     subtitle = stringResource(R.string.settings_manage_providers_subtitle),
                     onClick = onProvidersClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Settings,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_model_groups),
                     subtitle = stringResource(R.string.settings_model_groups_subtitle),
                     onClick = onModelGroupsClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.BarChart,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_token_usage),
                     subtitle = stringResource(R.string.settings_token_usage_subtitle),
                     onClick = onUsageClick,
@@ -172,7 +173,7 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
                 SettingsItem(
                     icon = Icons.Outlined.Palette,
-                    iconColor = Color(0xFF5856D6),
+                    iconColor = Color(0xFF7C7FA6),
                     title = stringResource(R.string.settings_section_appearance),
                     subtitle = stringResource(R.string.settings_appearance_subtitle),
                     onClick = onAppearanceClick,
@@ -195,7 +196,7 @@ fun SettingsScreen(
                 // [T-tools-granular-switches] Which optional tools the agent may use.
                 SettingsItem(
                     icon = Icons.Outlined.Handyman,
-                    iconColor = Color(0xFF5E5CE6),
+                    iconColor = Color(0xFF7C7FA6),
                     title = stringResource(R.string.settings_agent_tools),
                     subtitle = stringResource(R.string.settings_agent_tools_subtitle),
                     onClick = onAgentToolsClick,
@@ -209,7 +210,7 @@ fun SettingsScreen(
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Extension,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_skills),
                     subtitle = stringResource(R.string.settings_skills_subtitle),
                     onClick = onSkillsClick,
@@ -217,14 +218,14 @@ fun SettingsScreen(
                 // [T-soul-md] Between Skills and Memory, as on iOS.
                 SettingsItem(
                     icon = Icons.Outlined.AutoAwesome,
-                    iconColor = Color(0xFFFF9500),
+                    iconColor = Color(0xFFC98A3E),
                     title = stringResource(R.string.settings_soul),
                     subtitle = stringResource(R.string.settings_soul_subtitle),
                     onClick = onSoulClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Psychology,
-                    iconColor = Color(0xFF5856D6),
+                    iconColor = Color(0xFF7C7FA6),
                     title = stringResource(R.string.settings_memory),
                     subtitle = stringResource(R.string.settings_memory_subtitle),
                     onClick = onMemoryClick,
@@ -235,14 +236,14 @@ fun SettingsScreen(
                 // the grid reads as "multiple composed blocks/servers". teal unchanged.
                 SettingsItem(
                     icon = Icons.Outlined.Dashboard,
-                    iconColor = Color(0xFF30B0C7),
+                    iconColor = Color(0xFF6F9A9E),
                     title = stringResource(R.string.settings_mcp),
                     subtitle = stringResource(R.string.settings_mcp_subtitle),
                     onClick = onMcpClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Terminal,
-                    iconColor = Color(0xFF34C759),
+                    iconColor = Color(0xFF6E9C7B),
                     title = stringResource(R.string.settings_env_vars),
                     subtitle = stringResource(R.string.settings_env_vars_subtitle),
                     onClick = onEnvVarsClick,
@@ -254,28 +255,28 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_storage)) {
                 SettingsItem(
                     icon = Icons.Outlined.Inventory2,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_section_storage),
                     subtitle = stringResource(R.string.settings_storage_subtitle),
                     onClick = onRootfsClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Folder,
-                    iconColor = Color(0xFF34C759),
+                    iconColor = Color(0xFF6E9C7B),
                     title = stringResource(R.string.settings_shared_folders),
                     subtitle = stringResource(R.string.settings_shared_folders_subtitle),
                     onClick = onSharedFoldersClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.FolderShared,
-                    iconColor = Color(0xFFFF9500),
+                    iconColor = Color(0xFFC98A3E),
                     title = stringResource(R.string.settings_mount_external_folders),
                     subtitle = stringResource(R.string.settings_mount_external_folders_subtitle),
                     onClick = onMountedFoldersClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Backup,
-                    iconColor = Color(0xFF34C759),
+                    iconColor = Color(0xFF6E9C7B),
                     title = stringResource(R.string.settings_backup_restore),
                     subtitle = stringResource(R.string.settings_backup_restore_subtitle),
                     onClick = onBackupClick,
@@ -287,7 +288,7 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_permissions)) {
                 SettingsItem(
                     icon = Icons.Outlined.Shield,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_section_permissions),
                     subtitle = stringResource(R.string.settings_permissions_subtitle),
                     onClick = onPermissionsClick,
@@ -302,7 +303,7 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Outlined.BatteryFull,
-                    iconColor = Color(0xFFFF9500),
+                    iconColor = Color(0xFFC98A3E),
                     title = stringResource(R.string.bg_section_header),
                     subtitle = stringResource(R.string.bg_section_subtitle),
                     onClick = onBackgroundClick,
@@ -314,7 +315,7 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_logs)) {
                 SettingsItem(
                     icon = Icons.Outlined.Description,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_section_logs),
                     subtitle = stringResource(R.string.settings_logs_subtitle),
                     onClick = onLogsClick,
@@ -326,14 +327,14 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_about)) {
                 SettingsItem(
                     icon = Icons.Outlined.Info,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_about_minis),
                     subtitle = stringResource(R.string.settings_about_subtitle),
                     onClick = onAboutClick,
                 )
                 SettingsItem(
                     icon = Icons.Outlined.FrontHand,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_privacy_policy),
                     subtitle = null,
                     // iOS canonical URL — ContentView.swift / AddProviderView.swift
@@ -341,7 +342,7 @@ fun SettingsScreen(
                 )
                 SettingsItem(
                     icon = Icons.Outlined.Feedback,
-                    iconColor = Color(0xFF007AFF),
+                    iconColor = Color(0xFF9A7A48),
                     title = stringResource(R.string.settings_feedback),
                     subtitle = null,
                     onClick = { showFeedbackSheet = true },
@@ -523,45 +524,49 @@ private fun SettingsSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp),
+            .padding(top = 26.dp),
     ) {
-        // Section header
+        // [T-noir-redesign] Eyebrow header: small caps, wide tracking, mute ink.
         Text(
             text = title.uppercaseForDisplay(),
-            style = MaterialTheme.typography.labelSmall,
+            style = com.openminis.app.ui.theme.NoirEyebrow,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.5.sp,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 10.dp),
         )
 
-        // Section card
+        // Section card — raised paper/onyx with a hairline, 22dp corners.
+        val shape = RoundedCornerShape(22.dp)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(color = MaterialTheme.colorScheme.surfaceContainerLow),
+                .clip(shape)
+                .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
+                .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, shape),
         ) {
             content()
         }
 
-        // Section footer
         if (footer != null) {
             Text(
                 text = footer,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-                lineHeight = 16.sp,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                lineHeight = 17.sp,
             )
         }
     }
 }
 
 /**
- * A single settings row item with colored icon, title, optional subtitle, and chevron.
- * Styled to match iOS settings rows with SF Symbol-like colored circle icons.
+ * A single settings row: monochrome icon tile, title, optional subtitle, chevron.
+ *
+ * [T-noir-redesign] The iOS-style saturated circle (white glyph on systemBlue
+ * etc.) is replaced by a quiet rounded-square tile — sunk paper / lifted onyx
+ * with an ink/ivory glyph. [iconColor] is kept for call-site compatibility and
+ * now only tints a 4dp jewel dot in the tile corner, so sections stay
+ * scannable without colour dominating the page.
  */
 @Composable
 private fun SettingsItem(
@@ -577,37 +582,42 @@ private fun SettingsItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Colored circle icon (matching iOS settings style)
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(34.dp)
                     .background(
-                        color = iconColor,
-                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(11.dp),
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(17.dp),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(5.dp)
+                        .size(4.dp)
+                        .background(iconColor, CircleShape),
                 )
             }
 
             Spacer(Modifier.width(14.dp))
 
-            // Title + subtitle
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(1.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (subtitle != null) {
@@ -619,23 +629,22 @@ private fun SettingsItem(
                 }
             }
 
-            // Chevron
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(18.dp),
             )
         }
 
-        // Divider between items (inset to match icon alignment)
+        // Hairline divider, inset to the text column.
         if (showDivider) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 58.dp, end = 14.dp)
+                    .padding(start = 62.dp, end = 14.dp)
                     .height(0.5.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    .background(MaterialTheme.colorScheme.outlineVariant),
             )
         }
     }

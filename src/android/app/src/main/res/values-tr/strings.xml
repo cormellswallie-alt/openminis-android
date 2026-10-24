@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Ekranı Açık Tut</string>
     <string name="appearance_keep_awake_footer">Herhangi bir oturum görev çalıştırırken ekranın kapanmasını engeller. Pil tüketimini artırabilir.</string>
     <string name="appearance_keep_awake_title">Ekranı Açık Tut</string>
+    <string name="appearance_section_launch_animation">Açılış animasyonu</string>
+    <string name="appearance_launch_animation_title">Açılış animasyonu</string>
+    <string name="appearance_launch_animation_footer">Minis simgeden açıldığında inci ve logo animasyonunu oynatır. Bağlantı, paylaşım veya kısayollarla açılışta gösterilmez.</string>
     <string name="appearance_section_chat_title">Sohbet Başlığı</string>
     <string name="appearance_show_chat_title">Sohbet başlığını göster</string>
     <string name="appearance_show_chat_title_subtitle">Kaydırırken sabit bir başlık rozeti göster</string>

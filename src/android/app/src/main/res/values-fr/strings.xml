@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Garder l\'écran allumé</string>
     <string name="appearance_keep_awake_footer">Empêche l\'écran de se mettre en veille pendant qu\'une session exécute une tâche. Peut augmenter la consommation de batterie.</string>
     <string name="appearance_keep_awake_title">Garder l\'écran allumé</string>
+    <string name="appearance_section_launch_animation">Animation de démarrage</string>
+    <string name="appearance_launch_animation_title">Animation de démarrage</string>
+    <string name="appearance_launch_animation_footer">Lit l’animation de la perle et du logo à l’ouverture depuis l’icône. Jamais affichée pour les liens, partages ou raccourcis.</string>
     <string name="appearance_section_chat_title">Titre du chat</string>
     <string name="appearance_show_chat_title">Afficher le titre du chat</string>
     <string name="appearance_show_chat_title_subtitle">Afficher une pastille de titre fixe pendant le défilement</string>

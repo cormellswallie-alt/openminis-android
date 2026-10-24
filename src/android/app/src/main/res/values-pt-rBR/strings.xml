@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Manter a tela ligada</string>
     <string name="appearance_keep_awake_footer">Impede que a tela apague enquanto alguma sessão estiver executando uma tarefa. Pode aumentar o consumo de bateria.</string>
     <string name="appearance_keep_awake_title">Manter a tela ligada</string>
+    <string name="appearance_section_launch_animation">Animação de abertura</string>
+    <string name="appearance_launch_animation_title">Animação de abertura</string>
+    <string name="appearance_launch_animation_footer">Reproduz a animação da pérola e do logotipo ao abrir o Minis pelo ícone. Nunca aparece ao abrir links, compartilhamentos ou atalhos.</string>
     <string name="appearance_section_chat_title">Título da conversa</string>
     <string name="appearance_show_chat_title">Mostrar o título da conversa</string>
     <string name="appearance_show_chat_title_subtitle">Mostra uma etiqueta fixa com o título ao rolar</string>

@@ -519,6 +519,16 @@ class MainActivity : ComponentActivity() {
         // (default: the panel's highest, e.g. 120 Hz) before the first frame.
         com.openminis.app.ui.RefreshRateController.apply(this)
 
+        // [T-noir-redesign] Launch overlay: only on a true cold start from the
+        // launcher icon. Never on recreation (rotation / LMK restore), deep
+        // links, shares or shortcuts — those users are on their way somewhere.
+        val showLaunchOverlay = com.openminis.app.ui.theme.NoirLaunch.shouldShow(
+            context = this,
+            coldStart = savedInstanceState == null,
+            launcherEntry = intent?.action == Intent.ACTION_MAIN &&
+                explicitDeepLink is DeepLinkAction.Unknown,
+        )
+
         setContent {
             val prefs = remember { getAppearancePrefs(this) }
             var themeMode by remember { mutableIntStateOf(prefs.getInt(KEY_THEME_MODE, 0)) }
@@ -621,6 +631,18 @@ class MainActivity : ComponentActivity() {
                 // agent triggers a change. Mirrors iOS MinisApp.swift
                 // root-level `.sheet(item: gate.pending)`.
                 com.openminis.app.ui.settings.ConfigConfirmDialogHost()
+
+                // [T-noir-redesign] Pearl + wordmark launch sequence, drawn over
+                // the already-composing app and removed when the curtain lifts.
+                var launchOverlayVisible by remember {
+                    androidx.compose.runtime.mutableStateOf(showLaunchOverlay)
+                }
+                if (launchOverlayVisible) {
+                    com.openminis.app.ui.theme.NoirLaunchOverlay(
+                        isDark = darkTheme,
+                        onFinished = { launchOverlayVisible = false },
+                    )
+                }
             }
         }
     }

@@ -639,6 +639,9 @@
     <string name="appearance_section_keep_awake">保持螢幕開啟</string>
     <string name="appearance_keep_awake_footer">在任一工作階段執行工作時，防止螢幕進入休眠。可能會增加耗電。</string>
     <string name="appearance_keep_awake_title">保持螢幕開啟</string>
+    <string name="appearance_section_launch_animation">開屏動畫</string>
+    <string name="appearance_launch_animation_title">開屏動畫</string>
+    <string name="appearance_launch_animation_footer">從桌面圖示冷啟動時播放珍珠與字標動畫。透過連結、分享或捷徑開啟時不會播放。</string>
     <string name="appearance_section_chat_title">對話標題</string>
     <string name="appearance_show_chat_title">顯示對話標題</string>
     <string name="appearance_show_chat_title_subtitle">捲動時顯示固定的標題膠囊</string>

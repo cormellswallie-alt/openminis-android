@@ -39,6 +39,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -213,15 +214,38 @@ fun ComposerSendButton(
         }
     }
     val a11yLabel = stringResource(R.string.send_return_mode_a11y_action)
+    // [T-noir-redesign] Press = tactile spring down to 90%; the fill
+    // cross-fades between disabled and ink/ivory as text appears, and the
+    // arrow rises into place the moment there is something to send.
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val pressScale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (pressed) 0.90f else 1f,
+        animationSpec = com.openminis.app.ui.theme.NoirMotion.press(),
+        label = "sendPress",
+    )
+    val fill by androidx.compose.animation.animateColorAsState(
+        targetValue = if (canActivate) ChatColors.sendButton else ChatColors.sendButtonDisabled,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "sendFill",
+    )
+    val arrowLift by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (canActivate) 0f else 1f,
+        animationSpec = com.openminis.app.ui.theme.NoirMotion.settle(360),
+        label = "sendArrow",
+    )
     Box(
         modifier = modifier
             .size(38.dp)
-            .background(
-                if (canActivate) ChatColors.sendButton else ChatColors.sendButtonDisabled,
-                CircleShape,
-            )
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
+            .background(fill, CircleShape)
             .clip(CircleShape)
             .combinedClickable(
+                interactionSource = interaction,
+                indication = androidx.compose.material3.ripple(),
                 onClick = {
                     val since = if (lastDismissAt < 0) -1L else SystemClock.uptimeMillis() - lastDismissAt
                     if (SendReturnMode.tapShouldSend(canActivate, menuVisible, since)) onSend()
@@ -246,7 +270,9 @@ fun ComposerSendButton(
             contentDescription = "Send",
             tint = if (canActivate) ChatColors.background
             else ChatColors.primaryText.copy(alpha = 0.5f),
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier
+                .size(20.dp)
+                .graphicsLayer { translationY = 3.dp.toPx() * arrowLift },
         )
         SendReturnModeMenu(
             expanded = menuVisible,

@@ -33,16 +33,22 @@ fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        // [T-noir-redesign] Same eyebrow + 22dp hairline card as the main
+        // settings screens, so every settings page reads as one family.
         Text(
             text = title.uppercaseForDisplay(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+            style = com.openminis.app.ui.theme.NoirEyebrow,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
         )
         Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(22.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
             tonalElevation = 0.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                0.5.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+            ),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(content = content)
@@ -61,6 +67,6 @@ fun SettingsRowDivider(modifier: Modifier = Modifier) {
     HorizontalDivider(
         modifier = modifier.padding(horizontal = 16.dp),
         thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.outlineVariant,
     )
 }

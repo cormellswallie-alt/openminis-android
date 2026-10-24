@@ -379,9 +379,13 @@ internal fun UserMessageBubble(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        val textColor = if (isQueued) secondaryTextColor else MaterialTheme.colorScheme.onSurface
+                        val textColor = if (isQueued) secondaryTextColor else ChatColors.userBubbleText
                         val bubbleBg = if (isQueued) Color.Transparent else userBubbleColor
-                        val shape = RoundedCornerShape(18.dp)
+                        // [T-noir-redesign] Noir bubble: 22dp corners with a tight
+                        // 6dp "tail" corner pointing back at the sender (bottom-end).
+                        val shape = RoundedCornerShape(
+                            topStart = 22.dp, topEnd = 22.dp, bottomEnd = 6.dp, bottomStart = 22.dp,
+                        )
                         val dashedStroke = if (isQueued) {
                             Modifier.drawBehind {
                                 val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
@@ -390,7 +394,7 @@ internal fun UserMessageBubble(
                                         floatArrayOf(6.dp.toPx(), 4.dp.toPx()), 0f
                                     ),
                                 )
-                                val r = 18.dp.toPx()
+                                val r = 22.dp.toPx()
                                 drawRoundRect(
                                     color = secondaryTextColor.copy(alpha = 0.5f),
                                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
@@ -436,7 +440,7 @@ internal fun UserMessageBubble(
                                         .background(bubbleBg, shape)
                                         .clip(shape)
                                         .then(dashedStroke)
-                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                 )
                             }
                         }
@@ -454,7 +458,7 @@ internal fun UserMessageBubble(
                                 Icon(
                                     imageVector = Icons.Filled.Cancel,
                                     contentDescription = "Withdraw queued message",
-                                    tint = Color(0xFFFF3B30),
+                                    tint = Color(0xFFC8553D),
                                     modifier = Modifier.size(24.dp),
                                 )
                             }

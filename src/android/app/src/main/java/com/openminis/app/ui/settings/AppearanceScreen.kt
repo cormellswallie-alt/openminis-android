@@ -44,6 +44,7 @@ import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Launch
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.ScreenLockPortrait
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -262,6 +263,9 @@ fun AppearanceScreen(
     var launchSession by remember { mutableIntStateOf(prefs.getInt(KEY_LAUNCH_SESSION, 0)) }
     var returnKeyBehavior by remember { mutableIntStateOf(prefs.getInt(KEY_RETURN_KEY_BEHAVIOR, 0)) }
     var keepScreenAwake by remember { mutableStateOf(prefs.getBoolean(KEY_KEEP_SCREEN_AWAKE, false)) }
+    var launchAnimation by remember {
+        mutableStateOf(prefs.getBoolean(com.openminis.app.ui.theme.NoirLaunch.KEY_LAUNCH_ANIMATION, true))
+    }
     var toolPreview by remember { mutableStateOf(prefs.getBoolean(KEY_TOOL_PREVIEW, true)) }
     var autoFocusAfterReply by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_FOCUS_AFTER_REPLY, true)) }
     var autoExpandThinking by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_EXPAND_THINKING, true)) }
@@ -275,10 +279,10 @@ fun AppearanceScreen(
 
     val fontsModified = chatInputLevel != 0 || messageLevel != 0 || appBaseLevel != 0
 
-    val tilePurple = Color(0xFF5856D6)
-    val tileBlue = Color(0xFF007AFF)
-    val tileOrange = Color(0xFFFF9500)
-    val tileGreen = Color(0xFF34C759)
+    val tilePurple = Color(0xFF7C7FA6)
+    val tileBlue = Color(0xFF9A7A48)
+    val tileOrange = Color(0xFFC98A3E)
+    val tileGreen = Color(0xFF6E9C7B)
     val tileTeal = Color(0xFF5AC8FA)
 
     SettingsScaffold(title = stringResource(R.string.appearance_title), onBack = onBack) {
@@ -412,6 +416,28 @@ fun AppearanceScreen(
                 onCheckedChange = {
                     keepScreenAwake = it
                     prefs.edit().putBoolean(KEY_KEEP_SCREEN_AWAKE, it).apply()
+                },
+                showDivider = false,
+            )
+        }
+
+        // -- Launch animation --  [T-noir-redesign]
+        // Pearl + wordmark sequence on a cold start from the launcher icon.
+        // Off = the app opens straight onto the last screen.
+        SettingsSection(
+            header = stringResource(R.string.appearance_section_launch_animation),
+            footer = stringResource(R.string.appearance_launch_animation_footer),
+        ) {
+            SettingsSwitchRow(
+                icon = Icons.Outlined.AutoAwesome,
+                iconColor = tileOrange,
+                title = stringResource(R.string.appearance_launch_animation_title),
+                checked = launchAnimation,
+                onCheckedChange = {
+                    launchAnimation = it
+                    prefs.edit()
+                        .putBoolean(com.openminis.app.ui.theme.NoirLaunch.KEY_LAUNCH_ANIMATION, it)
+                        .apply()
                 },
                 showDivider = false,
             )
@@ -747,7 +773,7 @@ fun AppearanceScreen(
                                         .padding(4.dp)
                                         .size(22.dp)
                                         .background(
-                                            color = Color.White,
+                                            color = MaterialTheme.colorScheme.onPrimary,
                                             shape = CircleShape,
                                         ),
                                     contentAlignment = Alignment.Center,

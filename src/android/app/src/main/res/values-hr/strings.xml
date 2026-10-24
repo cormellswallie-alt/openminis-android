@@ -685,6 +685,9 @@
     <string name="appearance_section_keep_awake">Drži zaslon uključenim</string>
     <string name="appearance_keep_awake_footer">Spriječi uspavljivanje zaslona dok bilo koja sesija izvodi zadatak. Može povećati potrošnju baterije.</string>
     <string name="appearance_keep_awake_title">Drži zaslon uključenim</string>
+    <string name="appearance_section_launch_animation">Animacija pokretanja</string>
+    <string name="appearance_launch_animation_title">Animacija pokretanja</string>
+    <string name="appearance_launch_animation_footer">Reproducira animaciju bisera i logotipa pri otvaranju Minisa s ikone. Nikad za poveznice, dijeljenje ili prečace.</string>
     <string name="appearance_section_chat_title">Naslov razgovora</string>
     <string name="appearance_show_chat_title">Prikaži naslov razgovora</string>
     <string name="appearance_show_chat_title_subtitle">Prikaži pričvršćenu pločicu s naslovom pri pomicanju</string>

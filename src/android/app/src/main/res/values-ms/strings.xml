@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Kekalkan Skrin Menyala</string>
     <string name="appearance_keep_awake_footer">Menghalang skrin daripada tidur selagi ada sesi yang sedang menjalankan tugasan. Boleh mempercepat penggunaan bateri.</string>
     <string name="appearance_keep_awake_title">Kekalkan Skrin Menyala</string>
+    <string name="appearance_section_launch_animation">Animasi pembukaan</string>
+    <string name="appearance_launch_animation_title">Animasi pembukaan</string>
+    <string name="appearance_launch_animation_footer">Mainkan animasi mutiara dan logo apabila Minis dibuka daripada ikon. Tidak dipaparkan untuk pautan, perkongsian atau pintasan.</string>
     <string name="appearance_section_chat_title">Tajuk Sembang</string>
     <string name="appearance_show_chat_title">Paparkan tajuk sembang</string>
     <string name="appearance_show_chat_title_subtitle">Paparkan pil tajuk yang melekat semasa menatal</string>

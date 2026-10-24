@@ -1,6 +1,7 @@
 package com.openminis.app.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -223,12 +224,11 @@ fun SettingsSection(
             .padding(top = 24.dp),
     ) {
         if (header != null) {
+            // [T-noir-redesign] Eyebrow: Inter SemiBold 11sp, 0.18em tracking.
             Text(
                 text = header.uppercaseForDisplay(),
-                style = MaterialTheme.typography.labelSmall,
+                style = com.openminis.app.ui.theme.NoirEyebrow,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.5.sp,
                 // [T-android-settings-ui-md3] #5 header→card gap = 8dp (was 6dp,
                 // off-grid). Horizontal stays 32dp to align the header text with
                 // the inset card's content.
@@ -246,12 +246,15 @@ fun SettingsSection(
         // asymmetry it cost was invisible in a tall multi-row card and glaring
         // in a single-row one ("Status / Enabled", "Voice Services", the
         // thinking-rules note).
+        // [T-noir-redesign] Noir card: 22dp corners + hairline edge.
+        val cardShape = RoundedCornerShape(22.dp)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                .clip(cardShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, cardShape),
             content = content,
         )
         if (footer != null) {
@@ -310,17 +313,30 @@ fun SettingsRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
+                // [T-noir-redesign] Monochrome tile (sunk paper / lifted onyx,
+                // ink/ivory glyph). The caller's iconColor survives as a 4dp
+                // jewel dot so sections stay scannable without loud fills.
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
-                        .background(iconColor, RoundedCornerShape(8.dp)),
+                        .size(32.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            RoundedCornerShape(10.dp),
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(17.dp),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                            .size(4.dp)
+                            .background(iconColor, androidx.compose.foundation.shape.CircleShape),
                     )
                 }
                 Spacer(Modifier.width(14.dp))

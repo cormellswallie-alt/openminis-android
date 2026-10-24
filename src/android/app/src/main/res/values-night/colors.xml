@@ -6,4 +6,6 @@
       @color/ic_launcher_background (#2C3034). See values/colors.xml.
     -->
     <color name="shortcut_icon_fg">#E6E8EB</color>
+    <!-- [T-noir-redesign] Noir Onyx - first OS-painted frame matches Compose background -->
+    <color name="noir_window_bg">#FF0B0B0C</color>
 </resources>

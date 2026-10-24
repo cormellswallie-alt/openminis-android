@@ -713,6 +713,9 @@
     <string name="appearance_section_keep_awake">Keep Screen Awake</string>
     <string name="appearance_keep_awake_footer">Prevent the screen from sleeping while any session is running a task. May increase battery drain.</string>
     <string name="appearance_keep_awake_title">Keep Screen Awake</string>
+    <string name="appearance_section_launch_animation">Launch Animation</string>
+    <string name="appearance_launch_animation_title">Launch Animation</string>
+    <string name="appearance_launch_animation_footer">Play the pearl and wordmark sequence when Minis opens from the launcher. Never shown for links, shares or shortcuts.</string>
     <string name="appearance_section_chat_title">Chat Title</string>
     <string name="appearance_show_chat_title">Show chat title</string>
     <string name="appearance_show_chat_title_subtitle">Show a sticky title pill while scrolling</string>

@@ -614,6 +614,9 @@
     <string name="appearance_section_keep_awake">Panatilihing Gising ang Screen</string>
     <string name="appearance_keep_awake_footer">Pinipigilan ang screen na matulog habang may session na tumatakbo. Maaaring mas mabilis maubos ang baterya.</string>
     <string name="appearance_keep_awake_title">Panatilihing Gising ang Screen</string>
+    <string name="appearance_section_launch_animation">Animation sa pagbukas</string>
+    <string name="appearance_launch_animation_title">Animation sa pagbukas</string>
+    <string name="appearance_launch_animation_footer">I-play ang animation ng perlas at logo kapag binuksan ang Minis mula sa icon. Hindi ipinapakita kapag binuksan mula sa link, share o shortcut.</string>
     <string name="appearance_section_chat_title">Pamagat ng Chat</string>
     <string name="appearance_show_chat_title">Ipakita ang pamagat ng chat</string>
     <string name="appearance_show_chat_title_subtitle">Magpakita ng nakadikit na title pill habang nagsi-scroll</string>

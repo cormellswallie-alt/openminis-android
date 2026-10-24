@@ -289,7 +289,7 @@ fun MountedFoldersScreen(
                         item {
                             Text(
                                 text = stringResource(R.string.mount_folders_limit_reached),
-                                color = Color(0xFFFF9500),
+                                color = Color(0xFFC98A3E),
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                             )
@@ -525,7 +525,7 @@ private fun ListHeader(count: Int, atCapacity: Boolean) {
         Text(
             text = "$count / ${MountedFoldersStore.MAX_MOUNTS}",
             style = MaterialTheme.typography.labelSmall,
-            color = if (atCapacity) Color(0xFFFF9500) else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (atCapacity) Color(0xFFC98A3E) else MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
         )
     }
@@ -546,7 +546,7 @@ private fun MountRow(
         Icon(
             imageVector = Icons.Outlined.Folder,
             contentDescription = null,
-            tint = Color(0xFF007AFF),
+            tint = Color(0xFF9A7A48),
             modifier = Modifier.size(28.dp),
         )
         Spacer(Modifier.width(12.dp))
@@ -594,9 +594,9 @@ private fun MountRow(
 @Composable
 private fun AccessBadge(entry: MountedFoldersStore.Entry) {
     val (text, color) = when {
-        !entry.isWritable -> stringResource(R.string.mount_badge_readonly) to Color(0xFFFF9500)
-        !entry.userAllowWrite -> stringResource(R.string.mount_badge_locked) to Color(0xFFAF52DE)
-        else -> stringResource(R.string.mount_badge_rw) to Color(0xFF34C759)
+        !entry.isWritable -> stringResource(R.string.mount_badge_readonly) to Color(0xFFC98A3E)
+        !entry.userAllowWrite -> stringResource(R.string.mount_badge_locked) to Color(0xFF9A7FA8)
+        else -> stringResource(R.string.mount_badge_rw) to Color(0xFF6E9C7B)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

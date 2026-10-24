@@ -190,7 +190,7 @@ fun MountDetailScreen(
             Spacer(Modifier.height(20.dp))
             ActionRow(
                 icon = Icons.Outlined.Folder,
-                tint = Color(0xFF007AFF),
+                tint = Color(0xFF9A7A48),
                 label = stringResource(R.string.mount_detail_browse_files),
                 onClick = onBrowseFiles,
             )
@@ -251,7 +251,7 @@ private fun HeaderCard(entry: MountedFoldersStore.Entry) {
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFFF9500)),
+                    .background(Color(0xFFC98A3E)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

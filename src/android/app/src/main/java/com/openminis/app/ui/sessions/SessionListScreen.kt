@@ -180,6 +180,7 @@ import com.openminis.app.R
 import com.openminis.app.data.db.ChatSessionEntity
 import com.openminis.app.data.db.FolderEntity
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.drawNoirPearl
 import com.openminis.app.ui.theme.minisFabColor
 import com.openminis.app.data.repository.ChatRepository
 import com.openminis.app.data.repository.ProviderRepository
@@ -202,23 +203,23 @@ private data class CategoryStyle(val icon: ImageVector, val color: Color)
 // 16 categories matching iOS (ContentView.swift:1897-1916)
 private fun categoryStyle(category: String?): CategoryStyle {
     return when (category?.lowercase()) {
-        "code"         -> CategoryStyle(Icons.Outlined.Code, Color(0xFFF09A37))
-        "writing"      -> CategoryStyle(Icons.Outlined.Description, Color(0xFF3478F6))
-        "research"     -> CategoryStyle(Icons.Outlined.Language, Color(0xFF30B0C7))
-        "analysis"     -> CategoryStyle(Icons.Outlined.BarChart, Color(0xFF5856D6))
-        "creative"     -> CategoryStyle(Icons.Outlined.Brush, Color(0xFFFF2D55))
-        "chat"         -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF34C759))
+        "code"         -> CategoryStyle(Icons.Outlined.Code, Color(0xFFC98A3E))
+        "writing"      -> CategoryStyle(Icons.Outlined.Description, Color(0xFF9A7A48))
+        "research"     -> CategoryStyle(Icons.Outlined.Language, Color(0xFF6F9A9E))
+        "analysis"     -> CategoryStyle(Icons.Outlined.BarChart, Color(0xFF7C7FA6))
+        "creative"     -> CategoryStyle(Icons.Outlined.Brush, Color(0xFFC2677A))
+        "chat"         -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF6E9C7B))
         "math"         -> CategoryStyle(Icons.Outlined.Calculate, Color(0xFF9B59B6))
         "translation"  -> CategoryStyle(Icons.Outlined.Translate, Color(0xFF00BCD4))
-        "health"       -> CategoryStyle(Icons.Outlined.Favorite, Color(0xFFFF3B30))
-        "finance"      -> CategoryStyle(Icons.Outlined.Payments, Color(0xFF00C7BE))
-        "travel"       -> CategoryStyle(Icons.Outlined.Map, Color(0xFFF09A37))
-        "education"    -> CategoryStyle(Icons.Outlined.Book, Color(0xFF3478F6))
-        "design"       -> CategoryStyle(Icons.Outlined.Palette, Color(0xFFFF2D55))
-        "productivity" -> CategoryStyle(Icons.Outlined.CalendarMonth, Color(0xFFFFCC00))
+        "health"       -> CategoryStyle(Icons.Outlined.Favorite, Color(0xFFC8553D))
+        "finance"      -> CategoryStyle(Icons.Outlined.Payments, Color(0xFF6F9A9E))
+        "travel"       -> CategoryStyle(Icons.Outlined.Map, Color(0xFFC98A3E))
+        "education"    -> CategoryStyle(Icons.Outlined.Book, Color(0xFF9A7A48))
+        "design"       -> CategoryStyle(Icons.Outlined.Palette, Color(0xFFC2677A))
+        "productivity" -> CategoryStyle(Icons.Outlined.CalendarMonth, Color(0xFFCDAE74))
         "support"      -> CategoryStyle(Icons.Outlined.Settings, Color(0xFF8B6914))
-        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF8E8E93))
-        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF8E8E93))
+        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF8F8A80))
+        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF8F8A80))
     }
 }
 
@@ -835,11 +836,26 @@ fun SessionListScreen(
                             fontSize = 20.sp,
                         )
                     } else {
-                        Text(
-                            stringResource(R.string.app_name),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                        )
+                        // [T-noir-redesign] Wordmark: small pearl + "Minis" set in
+                        // Instrument Serif, the same pair the launch sequence
+                        // lands on, so the curtain hands off to this exact spot.
+                        val wordmarkDark = ChatColors.isDark
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .drawBehind { drawNoirPearl(wordmarkDark) },
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                stringResource(R.string.app_name),
+                                style = com.openminis.app.ui.theme.NoirDisplay.copy(
+                                    fontSize = 28.sp,
+                                    lineHeight = 30.sp,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
                     }
                 },
                 navigationIcon = {
@@ -1009,6 +1025,20 @@ fun SessionListScreen(
                         )
                     }
                 } else {
+                    // [T-noir-redesign] One-time entrance cascade: the first
+                    // screenful of rows rises 14dp and fades in, 35ms apart.
+                    // Saveable, so it never replays on back-navigation, and
+                    // rows that scroll in later start fully settled. Driven
+                    // per-row by an Animatable read only in graphicsLayer —
+                    // no recomposition per frame.
+                    var noirIntroDone by androidx.compose.runtime.saveable.rememberSaveable {
+                        mutableStateOf(false)
+                    }
+                    val noirIntroOrder = remember { HashMap<String, Int>() }
+                    LaunchedEffect(Unit) {
+                        kotlinx.coroutines.delay(900)
+                        noirIntroDone = true
+                    }
                     LazyColumn(
                         // [T-android-newchat-list-autoscroll] Hoisted state so
                         // the new-session autoscroll effect above can drive it.
@@ -1082,6 +1112,19 @@ fun SessionListScreen(
                                 // popping — the iOS easeInOut(0.25) equivalent
                                 // (monotonic tween on purpose; a spring's
                                 // oscillation read as jitter on iOS).
+                                val introOrder = if (noirIntroDone) -1
+                                else noirIntroOrder.getOrPut(session.id) { noirIntroOrder.size }
+                                val intro = remember(session.id) {
+                                    androidx.compose.animation.core.Animatable(
+                                        if (introOrder in 0..11) 0f else 1f,
+                                    )
+                                }
+                                LaunchedEffect(session.id) {
+                                    if (intro.value < 1f) {
+                                        kotlinx.coroutines.delay(60L + 35L * introOrder.coerceAtLeast(0))
+                                        intro.animateTo(1f, com.openminis.app.ui.theme.NoirMotion.settle(560))
+                                    }
+                                }
                                 Box(
                                     modifier = Modifier
                                         .animateItem(
@@ -1089,6 +1132,11 @@ fun SessionListScreen(
                                             fadeOutSpec = tween(250),
                                             placementSpec = tween(250),
                                         )
+                                        .graphicsLayer {
+                                            val v = intro.value
+                                            alpha = v
+                                            translationY = (1f - v) * 14.dp.toPx()
+                                        }
                                         .then(rowModifier),
                                 ) {
                                 SessionItemContent(
@@ -1691,7 +1739,7 @@ private fun DualFabRow(
                     .shadow(8.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.2f)),
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
             ) {
-                Icon(Icons.Outlined.Forum, contentDescription = "New Chat", tint = Color.White, modifier = Modifier.size(24.dp))
+                Icon(Icons.Outlined.Forum, contentDescription = "New Chat", tint = ChatColors.background, modifier = Modifier.size(24.dp))
             }
             DropdownMenu(
                 expanded = showGroupMenu,
@@ -1942,8 +1990,8 @@ private fun SectionHeader(title: String) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .padding(top = 4.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .padding(top = 10.dp),
     ) {
         if (isPinned) {
             Icon(
@@ -1956,10 +2004,10 @@ private fun SectionHeader(title: String) {
             )
             Spacer(modifier = Modifier.width(4.dp))
         }
+        // [T-noir-redesign] Eyebrow: tracked small caps in mute ink.
         Text(
-            text = title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            text = title.uppercase(),
+            style = com.openminis.app.ui.theme.NoirEyebrow,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -3131,7 +3179,7 @@ private fun SessionBadgeOverlay(
                     .background(
                         // Solid system-orange. Picked over yellow so the
                         // alert reads as "attention" rather than "info".
-                        color = Color(0xFFFF9500),
+                        color = Color(0xFFC98A3E),
                         shape = CircleShape,
                     )
                     .border(
@@ -3307,7 +3355,7 @@ private fun SetupStepCard(
             modifier = Modifier
                 .size(32.dp)
                 .background(
-                    color = if (isDone) Color(0xFF34C759) else MaterialTheme.colorScheme.primary,
+                    color = if (isDone) Color(0xFF6E9C7B) else MaterialTheme.colorScheme.primary,
                     shape = CircleShape,
                 ),
             contentAlignment = Alignment.Center,
@@ -3322,7 +3370,7 @@ private fun SetupStepCard(
             } else {
                 Text(
                     text = "$number",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

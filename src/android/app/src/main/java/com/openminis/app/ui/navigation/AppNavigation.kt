@@ -1,10 +1,5 @@
 package com.openminis.app.ui.navigation
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -78,12 +73,7 @@ import com.openminis.app.sandbox.TerminalSession
 import com.openminis.app.ui.terminal.TerminalScreen
 import com.openminis.app.ui.onboarding.OnboardingModelSelectionScreen
 
-// T342: Material 3 motion easing curves. Compose-Material3 (1.3.x) ships
-// `MotionScheme` only in 1.4-alpha; mirror the spec values directly so we
-// don't take a dependency-bump tax just for two CubicBezierEasing instances.
-// Source: m3.material.io/styles/motion/easing-and-duration/tokens-specs
-private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
-private val EmphasizedAccelerate = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
+// [T-noir-redesign] Page-transition curves now live in ui/theme/NoirMotion.kt.
 
 object Routes {
     const val SESSION_LIST = "sessions"
@@ -547,30 +537,17 @@ fun AppNavigation(
         // modifier above (T333) still defend against rapid-tap white
         // flashes; the slightly longer enter spec (300ms vs 220ms) is
         // covered by the same guard.
-        enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(300, easing = EmphasizedDecelerate),
-            ) + fadeIn(animationSpec = tween(300, easing = EmphasizedDecelerate))
-        },
-        exitTransition = {
-            slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(200, easing = EmphasizedAccelerate),
-            ) + fadeOut(animationSpec = tween(200, easing = EmphasizedAccelerate))
-        },
-        popEnterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(300, easing = EmphasizedDecelerate),
-            ) + fadeIn(animationSpec = tween(300, easing = EmphasizedDecelerate))
-        },
-        popExitTransition = {
-            slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(200, easing = EmphasizedAccelerate),
-            ) + fadeOut(animationSpec = tween(200, easing = EmphasizedAccelerate))
-        },
+        // [T-noir-redesign] Noir "depth" transition replaces the M3
+        // shared-axis slide: the arriving page drifts in ~10% and settles on
+        // an expo-out curve while the covered page recedes (6% parallax,
+        // 1.5% scale-down, fade). Shorter travel reads calmer and keeps the
+        // T333/T342 rapid-tap guarantees — the exit leg (220ms) is still
+        // shorter than the enter leg, so safeNavigate's RESUMED guard is
+        // released before a second tap can land on a half-gone page.
+        enterTransition = { com.openminis.app.ui.theme.NoirMotion.pushEnter() },
+        exitTransition = { com.openminis.app.ui.theme.NoirMotion.pushExit() },
+        popEnterTransition = { com.openminis.app.ui.theme.NoirMotion.popEnter() },
+        popExitTransition = { com.openminis.app.ui.theme.NoirMotion.popExit() },
     ) {
         // [T-android-tablet-split] SESSION_LIST and CHAT both render the same
         // ChatSplitScaffold; they differ only in which session it opens with.

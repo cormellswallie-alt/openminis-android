@@ -619,6 +619,9 @@
     <string name="appearance_section_keep_awake">Jaga Layar Tetap Menyala</string>
     <string name="appearance_keep_awake_footer">Mencegah layar mati selama ada sesi yang sedang menjalankan tugas. Dapat mempercepat pemakaian baterai.</string>
     <string name="appearance_keep_awake_title">Jaga Layar Tetap Menyala</string>
+    <string name="appearance_section_launch_animation">Animasi pembuka</string>
+    <string name="appearance_launch_animation_title">Animasi pembuka</string>
+    <string name="appearance_launch_animation_footer">Putar animasi mutiara dan logo saat Minis dibuka dari ikon. Tidak ditampilkan saat membuka tautan, berbagi, atau pintasan.</string>
     <string name="appearance_section_chat_title">Judul Obrolan</string>
     <string name="appearance_show_chat_title">Tampilkan judul obrolan</string>
     <string name="appearance_show_chat_title_subtitle">Tampilkan pil judul yang menempel saat menggulir</string>

@@ -29,12 +29,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openminis.app.R
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.drawNoirPearl
 import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.components.decorativePhase
 import com.openminis.app.ui.components.decorativePingPong
@@ -149,43 +152,77 @@ internal fun CompactProgressIndicator(
     }
 }
 
-// ─── Typing Indicator (three dots pulsing) ────────────────────────────────────
+// ─── Typing Indicator ─────────────────────────────────────────────────────────
 
+/**
+ * [T-noir-redesign] "Minis is thinking" — a breathing pearl beside the label,
+ * with a soft gold light sweeping across the text.
+ *
+ * Perf contract is unchanged from [T-android-decorative-anim-perf]: one shared
+ * 30 fps [rememberDecorativeTick], read ONLY inside draw/layer lambdas, so the
+ * indicator never recomposes or re-lays-out per frame. The shimmer is drawn
+ * with [BlendMode.SrcAtop] over an offscreen layer, i.e. it tints the glyphs
+ * only — no per-frame TextStyle/Brush allocation in composition.
+ */
 @Composable
 internal fun TypingIndicator() {
-    // [T-android-decorative-anim-perf] Shared 30 fps tick instead of a private
-    // 90 fps infinite transition; the layer-lambda read below was already right.
     val tick = rememberDecorativeTick()
     // Live Soul name → "<custom name> is thinking…" when the user renamed
-    // the assistant in Soul settings. SoulStore.cachedMetadata is a StateFlow
-    // that's updated on save (SoulSettingsScreen) and at app start
-    // (MinisApp.onCreate via refreshCache); collectAsState makes Compose
-    // recompose the indicator immediately when it changes.
+    // the assistant in Soul settings (SoulStore.cachedMetadata StateFlow).
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
     val soulName = soulMeta.name.trim().ifEmpty { "Minis" }
+    val isDark = ChatColors.isDark
+    val gold = com.openminis.app.ui.theme.Noir.Gold
 
     Row(
-        modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.Bottom,
+        modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Breathing pearl: 1.6s in/out scale + halo, layer-only.
+        Box(
+            modifier = Modifier
+                .size(16.dp)
+                .drawBehind {
+                    val p = decorativePingPong(decorativePhase(tick.value, 1600, 0))
+                    drawCircle(
+                        color = gold.copy(alpha = 0.10f + 0.16f * p),
+                        radius = size.minDimension * (0.62f + 0.22f * p),
+                    )
+                }
+                .graphicsLayer {
+                    val p = decorativePingPong(decorativePhase(tick.value, 1600, 0))
+                    val k = 0.9f + 0.1f * p
+                    scaleX = k
+                    scaleY = k
+                }
+                .drawBehind { drawNoirPearl(isDark) },
+        )
+        androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
         Text(
-            text = stringResource(R.string.chat_typing_indicator, soulName),
+            text = stringResource(R.string.chat_typing_indicator, soulName) + "…",
             fontSize = 15.sp,
             color = ChatColors.tertiaryText,
-        )
-        // Animated bouncing dots
-        val dots = listOf(".", ".", ".")
-        dots.forEachIndexed { index, dot ->
-            Text(
-                text = dot,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = ChatColors.tertiaryText,
-                modifier = Modifier.graphicsLayer {
-                    val p = decorativePingPong(decorativePhase(tick.value, 800, index * 150))
-                    translationY = -6.dp.toPx() * p
+            modifier = Modifier
+                .graphicsLayer {
+                    compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
+                }
+                .drawWithContent {
+                    drawContent()
+                    // 2.2s sweep, band 40% of width, travelling past both ends.
+                    val t = decorativePhase(tick.value, 2200, 0)
+                    val band = size.width * 0.4f
+                    val x = -band + (size.width + 2 * band) * t
+                    drawRect(
+                        brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            0f to Color.Transparent,
+                            0.5f to gold.copy(alpha = if (isDark) 0.95f else 0.85f),
+                            1f to Color.Transparent,
+                            startX = x - band / 2,
+                            endX = x + band / 2,
+                        ),
+                        blendMode = androidx.compose.ui.graphics.BlendMode.SrcAtop,
+                    )
                 },
-            )
-        }
+        )
     }
 }

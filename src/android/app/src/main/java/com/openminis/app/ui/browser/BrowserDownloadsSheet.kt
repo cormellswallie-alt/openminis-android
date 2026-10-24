@@ -133,7 +133,7 @@ private fun DownloadRow(
             BrowserTabPool.DownloadState.DOWNLOADING ->
                 Icons.Default.Download to MaterialTheme.colorScheme.primary
             BrowserTabPool.DownloadState.COMPLETED ->
-                Icons.Default.CheckCircle to androidx.compose.ui.graphics.Color(0xFF34C759)
+                Icons.Default.CheckCircle to androidx.compose.ui.graphics.Color(0xFF6E9C7B)
             BrowserTabPool.DownloadState.FAILED ->
                 Icons.Default.ErrorOutline to MaterialTheme.colorScheme.error
         }

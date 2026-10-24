@@ -615,6 +615,9 @@
     <string name="appearance_section_keep_awake">ไม่ให้หน้าจอดับ</string>
     <string name="appearance_keep_awake_footer">ป้องกันไม่ให้หน้าจอดับขณะที่มีเซสชันกำลังทำงานอยู่ อาจทำให้แบตเตอรี่หมดเร็วขึ้น</string>
     <string name="appearance_keep_awake_title">ไม่ให้หน้าจอดับ</string>
+    <string name="appearance_section_launch_animation">แอนิเมชันเปิดแอป</string>
+    <string name="appearance_launch_animation_title">แอนิเมชันเปิดแอป</string>
+    <string name="appearance_launch_animation_footer">เล่นแอนิเมชันไข่มุกและโลโก้เมื่อเปิด Minis จากไอคอน จะไม่แสดงเมื่อเปิดจากลิงก์ การแชร์ หรือทางลัด</string>
     <string name="appearance_section_chat_title">ชื่อแชท</string>
     <string name="appearance_show_chat_title">แสดงชื่อแชท</string>
     <string name="appearance_show_chat_title_subtitle">แสดงป้ายชื่อแบบติดหนึบขณะเลื่อนดู</string>

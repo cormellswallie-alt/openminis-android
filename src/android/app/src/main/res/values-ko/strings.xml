@@ -615,6 +615,9 @@
     <string name="appearance_section_keep_awake">화면 켜짐 유지</string>
     <string name="appearance_keep_awake_footer">세션이 작업을 실행하는 동안 화면이 절전되는 것을 방지합니다. 배터리 소모가 증가할 수 있습니다.</string>
     <string name="appearance_keep_awake_title">화면 켜짐 유지</string>
+    <string name="appearance_section_launch_animation">시작 애니메이션</string>
+    <string name="appearance_launch_animation_title">시작 애니메이션</string>
+    <string name="appearance_launch_animation_footer">홈 화면에서 앱을 열 때 진주와 워드마크 애니메이션을 재생합니다. 링크, 공유, 바로가기로 열 때는 표시되지 않습니다.</string>
     <string name="appearance_section_chat_title">채팅 제목</string>
     <string name="appearance_show_chat_title">채팅 제목 표시</string>
     <string name="appearance_show_chat_title_subtitle">스크롤하는 동안 제목 알약을 고정해서 표시합니다</string>

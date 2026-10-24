@@ -194,7 +194,7 @@ internal fun StorageManagementScreen(
             item(key = "overview") {
                 SettingsSection(header = stringResource(R.string.storage_section_overview)) {
                     StorageOverviewRow(
-                        color = Color(0xFF8E8E93),
+                        color = Color(0xFF8F8A80),
                         label = stringResource(R.string.storage_overview_shell),
                         value = Formatter.formatFileSize(context, state.shellSize),
                         onClick = {
@@ -204,19 +204,19 @@ internal fun StorageManagementScreen(
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFF007AFF),
+                        color = Color(0xFF9A7A48),
                         label = stringResource(R.string.storage_overview_database),
                         value = Formatter.formatFileSize(context, state.dbSize),
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFF5856D6),
+                        color = Color(0xFF7C7FA6),
                         label = stringResource(R.string.storage_overview_sessions),
                         value = Formatter.formatFileSize(context, state.totalSessionSize),
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFFFF9500),
+                        color = Color(0xFFC98A3E),
                         label = stringResource(R.string.storage_overview_logs_caches),
                         value = Formatter.formatFileSize(context, state.logsCachesSize),
                         showDivider = false,

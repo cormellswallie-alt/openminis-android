@@ -60,7 +60,7 @@ fun CopilotDisclaimerDialog(
             Icon(
                 Icons.Default.Warning,
                 contentDescription = null,
-                tint = Color(0xFFFF9500),
+                tint = Color(0xFFC98A3E),
                 modifier = Modifier.size(36.dp),
             )
         },

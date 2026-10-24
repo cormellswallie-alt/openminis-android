@@ -615,6 +615,9 @@
     <string name="appearance_section_keep_awake">Menține ecranul aprins</string>
     <string name="appearance_keep_awake_footer">Împiedică stingerea ecranului cât timp o sesiune execută o sarcină. Poate crește consumul de baterie.</string>
     <string name="appearance_keep_awake_title">Menține ecranul aprins</string>
+    <string name="appearance_section_launch_animation">Animație la pornire</string>
+    <string name="appearance_launch_animation_title">Animație la pornire</string>
+    <string name="appearance_launch_animation_footer">Redă animația perlei și a siglei când Minis este deschis din pictogramă. Nu apare la linkuri, partajări sau comenzi rapide.</string>
     <string name="appearance_section_chat_title">Titlul conversației</string>
     <string name="appearance_show_chat_title">Afișează titlul conversației</string>
     <string name="appearance_show_chat_title_subtitle">Arată o etichetă fixă cu titlul în timpul derulării</string>

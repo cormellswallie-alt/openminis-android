@@ -54,17 +54,17 @@ internal fun formatStepDuration(seconds: Long, stillRunning: Boolean): String {
 
 // Helper: tool accent color
 internal fun toolAccentColor(toolName: String): Color = when (toolName) {
-    "shell_execute" -> Color(0xFF34C759)
-    "file_read" -> Color(0xFF32ADE6)
-    "file_write" -> Color(0xFF007AFF)
-    "file_edit" -> Color(0xFFFF9500)
-    "browser_use" -> Color(0xFF007AFF)
-    "read_image" -> Color(0xFFAF52DE)
-    "memory_write", "memory_get" -> Color(0xFFFF2D55)
-    "web_search" -> Color(0xFF32ADE6)    // iOS: .cyan for search
+    "shell_execute" -> Color(0xFF6E9C7B)
+    "file_read" -> Color(0xFF6F9A9E)
+    "file_write" -> Color(0xFF9A7A48)
+    "file_edit" -> Color(0xFFC98A3E)
+    "browser_use" -> Color(0xFF9A7A48)
+    "read_image" -> Color(0xFF9A7FA8)
+    "memory_write", "memory_get" -> Color(0xFFC2677A)
+    "web_search" -> Color(0xFF6F9A9E)    // iOS: .cyan for search
     // [T-sub-agents-v1] Current name + the pre-rename one still in shipped transcripts.
     "subagent_task", "delegate_task", "agent_status" -> HelperAccentStatic  // iOS: HelperAccent.color (electric violet)
-    else -> Color(0xFF8E8E93)
+    else -> Color(0xFF8F8A80)
 }
 
 // Helper: tool icon (iOS: distinct SF Symbols per tool type)

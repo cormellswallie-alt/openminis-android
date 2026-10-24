@@ -616,6 +616,9 @@
     <string name="appearance_section_keep_awake">Nie wygaszaj ekranu</string>
     <string name="appearance_keep_awake_footer">Zapobiega wygaszaniu ekranu, gdy jakakolwiek sesja wykonuje zadanie. Może zwiększyć zużycie baterii.</string>
     <string name="appearance_keep_awake_title">Nie wygaszaj ekranu</string>
+    <string name="appearance_section_launch_animation">Animacja startowa</string>
+    <string name="appearance_launch_animation_title">Animacja startowa</string>
+    <string name="appearance_launch_animation_footer">Odtwarza animację perły i logo przy otwieraniu Minis z ikony. Nigdy przy linkach, udostępnianiu ani skrótach.</string>
     <string name="appearance_section_chat_title">Tytuł czatu</string>
     <string name="appearance_show_chat_title">Pokaż tytuł czatu</string>
     <string name="appearance_show_chat_title_subtitle">Pokazuj przypiętą plakietkę z tytułem podczas przewijania</string>

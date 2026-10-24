@@ -436,7 +436,7 @@ private fun CompactSpeaker(
                 fontSize = 9.sp,
                 lineHeight = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier

@@ -8,8 +8,8 @@
      transitions. -->
 <resources>
     <style name="Theme.Minis" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:colorBackground">@android:color/white</item>
+        <item name="android:windowBackground">@color/noir_window_bg</item>
+        <item name="android:colorBackground">@color/noir_window_bg</item>
     </style>
 </resources>
 

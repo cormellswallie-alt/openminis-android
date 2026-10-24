@@ -84,8 +84,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val StatusGreen = Color(0xFF34C759)
-private val StatusRed = Color(0xFFFF3B30)
+private val StatusGreen = Color(0xFF6E9C7B)
+private val StatusRed = Color(0xFFC8553D)
 
 /**
  * [T-scheduled-task-detail] The page a scheduled-task card opens: the task's

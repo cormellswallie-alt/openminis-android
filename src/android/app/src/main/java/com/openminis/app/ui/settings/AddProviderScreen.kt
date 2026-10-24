@@ -197,7 +197,7 @@ private val providerDisplayOrder = listOf(
 
 /** Icon and color per provider type, matching iOS SF Symbols. */
 private fun providerIcon(type: ProviderType): Pair<ImageVector, Color> = when (type) {
-    ProviderType.openAI -> Icons.Default.Hub to Color(0xFF4CAF50)           // green
+    ProviderType.openAI -> Icons.Default.Hub to Color(0xFF6E9C7B)           // green
     ProviderType.anthropic -> Icons.Default.AutoAwesome to Color(0xFFAB47BC) // purple
     ProviderType.gemini -> Icons.Default.Diamond to Color(0xFF42A5F5)        // blue
     ProviderType.openRouter -> Icons.Default.AltRoute to Color(0xFF00BCD4)    // cyan
@@ -209,7 +209,7 @@ private fun providerIcon(type: ProviderType): Pair<ImageVector, Color> = when (t
     // [T-android-provider-type-parity] Types that arrive only from an iOS
     // package / newer build; never offered in addableProviderTypes, but the
     // icon helper is also used to render an already-restored instance.
-    ProviderType.openAIResponses -> Icons.Default.Hub to Color(0xFF4CAF50)
+    ProviderType.openAIResponses -> Icons.Default.Hub to Color(0xFF6E9C7B)
     ProviderType.antigravity,
     ProviderType.unsupported -> Icons.Default.Cloud to Color(0xFF9E9E9E)
 }
@@ -807,7 +807,7 @@ private fun ColumnScope.OAuthConfigSection(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF34C759),
+                        tint = Color(0xFF6E9C7B),
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))

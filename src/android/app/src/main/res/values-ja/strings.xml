@@ -619,6 +619,9 @@
     <string name="appearance_section_keep_awake">画面を常にオン</string>
     <string name="appearance_keep_awake_footer">セッションがタスクを実行している間、画面のスリープを防ぎます。電池消費が増える可能性があります。</string>
     <string name="appearance_keep_awake_title">画面を常にオン</string>
+    <string name="appearance_section_launch_animation">起動アニメーション</string>
+    <string name="appearance_launch_animation_title">起動アニメーション</string>
+    <string name="appearance_launch_animation_footer">ホーム画面から起動したときにパールとロゴのアニメーションを再生します。リンク・共有・ショートカットからの起動では表示されません。</string>
     <string name="appearance_section_chat_title">チャットのタイトル</string>
     <string name="appearance_show_chat_title">チャットのタイトルを表示</string>
     <string name="appearance_show_chat_title_subtitle">スクロール中もタイトルのピルを固定表示します</string>

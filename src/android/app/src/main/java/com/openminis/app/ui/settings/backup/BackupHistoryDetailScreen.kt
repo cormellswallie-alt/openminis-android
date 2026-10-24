@@ -422,11 +422,11 @@ private fun StatusValue(status: BackupHistory.Status) {
         BackupHistory.Status.RUNNING ->
             Triple(null, MaterialTheme.colorScheme.onSurfaceVariant, R.string.backup_history_running)
         BackupHistory.Status.SUCCEEDED ->
-            Triple(Icons.Outlined.CheckCircle, Color(0xFF34C759), R.string.backup_status_succeeded)
+            Triple(Icons.Outlined.CheckCircle, Color(0xFF6E9C7B), R.string.backup_status_succeeded)
         BackupHistory.Status.COMPLETED_WITH_ISSUES ->
-            Triple(Icons.Outlined.Warning, Color(0xFFFF9500), R.string.backup_status_issues)
+            Triple(Icons.Outlined.Warning, Color(0xFFC98A3E), R.string.backup_status_issues)
         BackupHistory.Status.FAILED ->
-            Triple(Icons.Outlined.ErrorOutline, Color(0xFFFF3B30), R.string.backup_status_failed)
+            Triple(Icons.Outlined.ErrorOutline, Color(0xFFC8553D), R.string.backup_status_failed)
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (icon != null) {
@@ -458,7 +458,7 @@ private fun DestinationOutcomeRow(
             Icon(
                 if (outcome.succeeded) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
                 contentDescription = null,
-                tint = if (outcome.succeeded) Color(0xFF34C759) else Color(0xFFFF3B30),
+                tint = if (outcome.succeeded) Color(0xFF6E9C7B) else Color(0xFFC8553D),
                 modifier = Modifier.size(22.dp),
             )
             Spacer(Modifier.width(12.dp))

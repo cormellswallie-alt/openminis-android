@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [T-noir-redesign] API 31+: same window theme as values/themes.xml plus the
+     system splash, painted on the Noir ground with the pearl at centre. -->
+<resources>
+    <style name="Theme.Minis" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/noir_window_bg</item>
+        <item name="android:colorBackground">@color/noir_window_bg</item>
+        <item name="android:windowSplashScreenBackground">@color/noir_window_bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/noir_splash_pearl</item>
+    </style>
+</resources>

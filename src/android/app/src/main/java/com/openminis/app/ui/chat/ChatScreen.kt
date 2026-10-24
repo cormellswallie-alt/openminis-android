@@ -305,11 +305,11 @@ import com.openminis.app.ui.theme.ChatColors
 import com.openminis.app.ui.components.MinisTextButton
 
 // iOS ChatColors equivalent
-internal val ToolCheckColor = Color(0xFF34C759) // iOS .green
-internal val ToolErrorColor = Color(0xFFFF3B30) // iOS .red
-internal val ToolCancelColor = Color(0xFFFFCC00) // iOS .yellow
+internal val ToolCheckColor = Color(0xFF6E9C7B) // iOS .green
+internal val ToolErrorColor = Color(0xFFC8553D) // iOS .red
+internal val ToolCancelColor = Color(0xFFCDAE74) // iOS .yellow
 // Memory tool accent — matches iOS `.pink` on SF Symbols.
-internal val ToolMemoryAccent = Color(0xFFFF2D55)
+internal val ToolMemoryAccent = Color(0xFFC2677A)
 // Sparkle gradient colors (iOS uses linear gradient)
 internal val SparkleColor1 = Color(0xFFB8B096) // rgb(0.72, 0.69, 0.59)
 internal val SparkleColor2 = Color(0xFF99998C) // rgb(0.6, 0.6, 0.55)
@@ -2930,7 +2930,7 @@ fun ChatScreen(
                                         modifier = Modifier
                                             .size(6.dp)
                                             .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF34C759) else Color(0xFFFF9500),
+                                                if (modelName.isNotEmpty()) Color(0xFF6E9C7B) else Color(0xFFC98A3E),
                                                 CircleShape,
                                             ),
                                     )
@@ -3081,7 +3081,7 @@ fun ChatScreen(
                                                 contentAlignment = Alignment.Center,
                                                 modifier = Modifier
                                                     .size(11.dp)
-                                                    .background(Color(0xFFFF9500), CircleShape),
+                                                    .background(Color(0xFFC98A3E), CircleShape),
                                             ) {
                                                 Icon(
                                                     Icons.Default.Bolt,
@@ -7333,7 +7333,7 @@ fun ChatScreen(
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .background(Color(0xFFFF3B30), CircleShape)
+                                    .background(Color(0xFFC8553D), CircleShape)
                                     .clip(CircleShape)
                                     .clickable { viewModel.cancelStream() },
                                 contentAlignment = Alignment.Center,

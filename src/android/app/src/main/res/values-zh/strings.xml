@@ -640,6 +640,9 @@
     <string name="appearance_section_keep_awake">屏幕常亮</string>
     <string name="appearance_keep_awake_footer">有会话任务运行时保持屏幕不熄灭，可能增加电量损耗。</string>
     <string name="appearance_keep_awake_title">屏幕常亮</string>
+    <string name="appearance_section_launch_animation">开屏动画</string>
+    <string name="appearance_launch_animation_title">开屏动画</string>
+    <string name="appearance_launch_animation_footer">从桌面图标冷启动时播放珍珠与字标动画。通过链接、分享或快捷方式打开时不会播放。</string>
     <string name="appearance_section_chat_title">会话标题</string>
     <string name="appearance_show_chat_title">显示会话标题</string>
     <string name="appearance_show_chat_title_subtitle">滚动时显示当前会话标题</string>
