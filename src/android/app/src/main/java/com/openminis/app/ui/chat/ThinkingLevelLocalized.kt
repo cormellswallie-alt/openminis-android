@@ -11,17 +11,21 @@ import com.openminis.app.data.model.ThinkingLevel
  * provides the user-facing translation for the slash panel + Thinking
  * level chips, threading through Context to reach strings.xml.
  */
-fun ThinkingLevel.localizedName(context: Context): String =
-    context.getString(
-        when (this) {
-            ThinkingLevel.OFF -> R.string.thinking_level_off
-            ThinkingLevel.LOW -> R.string.thinking_level_low
-            ThinkingLevel.MEDIUM -> R.string.thinking_level_medium
-            ThinkingLevel.HIGH -> R.string.thinking_level_high
-            // [T-android-thinking-level-arch] XHIGH now has its own label; "Max"
-            // moved to the new MAX case, plus ULTRA.
-            ThinkingLevel.XHIGH -> R.string.thinking_level_xhigh
-            ThinkingLevel.MAX -> R.string.thinking_level_max
-            ThinkingLevel.ULTRA -> R.string.thinking_level_ultra
-        },
-    )
+// [T-spectra-v3-composer] Depth names are designed in English (product
+// decision) — every surface (composer chip, depth slider, list sheet, slash
+// panel) shows the same word. The per-locale strings stay in strings.xml and
+// are still referenced below so a future switch back is one line.
+@Suppress("UNUSED_PARAMETER")
+fun ThinkingLevel.localizedName(context: Context): String = displayName
+
+@Suppress("unused")
+internal fun ThinkingLevel.localizedNameRes(): Int =
+    when (this) {
+        ThinkingLevel.OFF -> R.string.thinking_level_off
+        ThinkingLevel.LOW -> R.string.thinking_level_low
+        ThinkingLevel.MEDIUM -> R.string.thinking_level_medium
+        ThinkingLevel.HIGH -> R.string.thinking_level_high
+        ThinkingLevel.XHIGH -> R.string.thinking_level_xhigh
+        ThinkingLevel.MAX -> R.string.thinking_level_max
+        ThinkingLevel.ULTRA -> R.string.thinking_level_ultra
+    }

@@ -1079,6 +1079,9 @@ fun SessionListScreen(
                             // welded container (iOS FolderMemberRowBackground);
                             // ungrouped rows stay full-bleed.
                             inFolder: Boolean = false,
+                            // [T-spectra-v3-home] Date buckets weld their rows
+                            // into one white card (v3 `.list`).
+                            carded: Boolean = false,
                         ) {
                             items(rows, key = { it.id }) { session ->
                                 val activeQuery =
@@ -1087,7 +1090,7 @@ fun SessionListScreen(
                                     val isLast = session.id == rows.last().id
                                     Modifier
                                         .padding(
-                                            start = 6.dp, end = 6.dp,
+                                            start = 16.dp, end = 16.dp,
                                             bottom = if (isLast) 4.dp else 0.dp,
                                         )
                                         .folderSurface(
@@ -1096,6 +1099,7 @@ fun SessionListScreen(
                                             fill = folderFillColor(),
                                             edge = folderEdgeColor(),
                                         )
+                                        .spectraRowDivider(spectraDividerColor())
                                         // AFTER folderSurface so the drawn
                                         // fill/border stay outside the clip;
                                         // inside it, the row's press ripple is
@@ -1111,6 +1115,32 @@ fun SessionListScreen(
                                             } else {
                                                 RoundedCornerShape(0.dp)
                                             },
+                                        )
+                                } else if (carded) {
+                                    val isFirst = session.id == rows.first().id
+                                    val isLast = session.id == rows.last().id
+                                    val seg = when {
+                                        isFirst && isLast -> FolderSegment.LONE
+                                        isFirst -> FolderSegment.TOP
+                                        isLast -> FolderSegment.BOTTOM
+                                        else -> FolderSegment.MIDDLE
+                                    }
+                                    val r = 16.dp
+                                    Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .folderSurface(
+                                            segment = seg,
+                                            fill = folderFillColor(),
+                                            edge = folderEdgeColor(),
+                                        )
+                                        .then(if (!isFirst) Modifier.spectraRowDivider(spectraDividerColor()) else Modifier)
+                                        .clip(
+                                            RoundedCornerShape(
+                                                topStart = if (isFirst) r else 0.dp,
+                                                topEnd = if (isFirst) r else 0.dp,
+                                                bottomStart = if (isLast) r else 0.dp,
+                                                bottomEnd = if (isLast) r else 0.dp,
+                                            ),
                                         )
                                 } else {
                                     Modifier
@@ -1188,10 +1218,12 @@ fun SessionListScreen(
                                     rowBackground = when {
                                         session.id == selectedSessionId ->
                                             MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                        inFolder -> Color.Transparent
+                                        inFolder || carded -> Color.Transparent
                                         else -> null
                                     },
-                                    isFolderMember = inFolder,
+                                    // Carded rows are welded exactly like folder
+                                    // members (inset tint, segment-shaped ripple).
+                                    isFolderMember = inFolder || carded,
                                 )
                                 }
                             }
@@ -1199,14 +1231,20 @@ fun SessionListScreen(
 
                         leadingDateGroups.forEach { (period, periodSessions) ->
                             item(key = "header_${period.name}") {
-                                SectionHeader(title = stringResource(R.string.sessionlist_section_pinned))
+                                SectionHeader(
+                                    title = stringResource(R.string.sessionlist_section_pinned),
+                                    count = periodSessions.size,
+                                )
                             }
-                            renderSessionRows(periodSessions)
+                            renderSessionRows(periodSessions, carded = true)
                         }
 
                         if (folderBlocks.isNotEmpty()) {
                             item(key = "header_groups") {
-                                SectionHeader(title = stringResource(R.string.group_section_header))
+                                SectionHeader(
+                                    title = stringResource(R.string.group_section_header),
+                                    count = folderBlocks.size,
+                                )
                             }
                             folderBlocks.forEach { block ->
                                 item(key = "folder_${block.folder.id}") {
@@ -1261,9 +1299,9 @@ fun SessionListScreen(
                                     DatePeriod.THIS_WEEK -> R.string.sessionlist_section_this_week
                                     DatePeriod.THIS_MONTH -> R.string.sessionlist_section_this_month
                                     DatePeriod.EARLIER -> R.string.sessionlist_section_earlier
-                                }))
+                                }), count = periodSessions.size)
                             }
-                            renderSessionRows(periodSessions)
+                            renderSessionRows(periodSessions, carded = true)
                         }
                     }
                 }
@@ -1990,35 +2028,40 @@ private fun SelectionToolbar(
 // ─── Section Header (matching iOS .subheadline.weight(.semibold)) ───────────
 
 @Composable
-private fun SectionHeader(title: String) {
+private fun SectionHeader(title: String, count: Int? = null) {
     // T172: title may now be a localized string, so compare against the
     // localized "Pinned" rather than the hardcoded enum label.
     val isPinned = title == stringResource(R.string.sessionlist_section_pinned)
+    // [T-spectra-v3-home] v3 `.sec`: 17sp title left, quiet count right.
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp, vertical = 8.dp)
-            .padding(top = 14.dp),
+            .padding(start = 22.dp, end = 22.dp, top = 24.dp, bottom = 10.dp),
     ) {
         if (isPinned) {
             Icon(
                 imageVector = Icons.Default.PushPin,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(14.dp)
-                    .padding(end = 0.dp),
+                modifier = Modifier.size(15.dp),
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(5.dp))
         }
-        // [T-spectra-v3] Plain section title — no tracked caps.
         Text(
             text = title,
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
         )
+        if (count != null && count > 0) {
+            Text(
+                text = count.toString(),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -2335,8 +2378,26 @@ private enum class FolderSegment { LONE, TOP, MIDDLE, BOTTOM }
  */
 @Composable
 private fun folderEdgeColor(): Color =
-    if (ChatColors.isDark) Color.White.copy(alpha = 0.30f)
-    else Color.Black.copy(alpha = 0.08f)
+    if (ChatColors.isDark) Color.White.copy(alpha = 0.10f)
+    else Color.Black.copy(alpha = 0.07f)
+
+/** [T-spectra-v3-home] Hairline between welded rows (v3 `.it` border). */
+@Composable
+private fun spectraDividerColor(): Color =
+    if (ChatColors.isDark) Color.White.copy(alpha = 0.07f)
+    else Color.Black.copy(alpha = 0.06f)
+
+/** Draws a hairline across the TOP of a welded row, inset 16dp each side. */
+private fun Modifier.spectraRowDivider(color: Color): Modifier = drawBehind {
+    val inset = 16.dp.toPx()
+    val y = 0.5.dp.toPx()
+    drawLine(
+        color = color,
+        start = Offset(inset, y),
+        end = Offset(size.width - inset, y),
+        strokeWidth = 1.dp.toPx(),
+    )
+}
 
 @Composable
 private fun folderFillColor(): Color = MaterialTheme.colorScheme.surfaceContainerLow
@@ -2510,7 +2571,7 @@ private fun FolderCard(
             // session rows at a glance). 6 outer + 10 inner = 16 — the folder
             // icon sits exactly on the session rows' alignment grid.
             .padding(
-                start = 6.dp, end = 6.dp, top = 4.dp,
+                start = 16.dp, end = 16.dp, top = 4.dp,
                 bottom = if (isExpandedWithRows) 0.dp else 4.dp,
             )
             .folderSurface(
@@ -2961,7 +3022,7 @@ private fun SessionRow(
                 // to 22dp — 6dp right of the folder card's own icon (6 outer
                 // + 10 inner = 16). 10dp restores one shared 16dp icon grid
                 // for the card, its members, and ungrouped rows alike.
-                horizontal = 10.dp,
+                horizontal = if (inFolder) 16.dp else 10.dp,
                 // [T-android-selection-no-reflow] Back to the original 12dp.
                 //
                 // This was briefly 16dp and then 10dp while chasing "even
@@ -2971,7 +3032,7 @@ private fun SessionRow(
                 // tinted rectangle looked. Row metrics are left exactly as they
                 // were; the pill's proportions are handled by the inset of the
                 // drawn tint instead (see the drawBehind above).
-                vertical = 12.dp,
+                vertical = 14.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -2980,86 +3041,69 @@ private fun SessionRow(
             leadingIcon()
         }
 
-        // Category icon in colored circle (18% opacity matching iOS)
-        // [T-android-sidebar-subagent-running] See the folder aggregate above:
-        // running sub agents count as this session working.
+        // [T-sidebar-subagent-running] Running sub agents count as this
+        // session working (see the folder aggregate above).
         val activeSessions by SessionActivityTracker.activeSessions.collectAsState()
         val agentWorkParents by AgentJobRegistry.parentsWithAgentWork.collectAsState()
         val isActive = session.id in activeSessions || session.id in agentWorkParents
-        // [T-android-session-paused-badge] Head of this session's badge queue
-        // — null for the common case. Renders as an overlay in the icon's
-        // bottom-right corner, mirroring where iOS's iCloud badge sits so
-        // future ICLOUD_SYNCING uses the same anchor.
+        // [T-android-session-paused-badge] Head of this session's badge queue.
         val badgeMap by com.openminis.app.service.SessionBadgeStore.byId.collectAsState()
         val badgeHead = badgeMap[session.id]?.firstOrNull()
-        Box(
-            modifier = Modifier.size(44.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        color = style.color.copy(alpha = 0.18f),
-                        shape = CircleShape,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = style.icon,
-                    contentDescription = null,
-                    tint = style.color,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            if (isActive) {
+
+        // [T-spectra-v3-home] v3 row: no icon disc. Line 1 = category mark
+        // (or the live orb while running) + title + time; line 2 = preview,
+        // aligned under the title.
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .align(Alignment.Center),
                     contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(16.dp),
                 ) {
-                    SpinningRing(
-                        color = style.color,
-                        modifier = Modifier.size(42.dp),
+                    if (isActive) {
+                        com.openminis.app.ui.theme.SpectraOrb(
+                            size = 15.dp,
+                            state = com.openminis.app.ui.theme.OrbState.Live,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = style.icon,
+                            contentDescription = null,
+                            tint = style.color,
+                            modifier = Modifier.size(15.dp),
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                val titleText = session.title ?: "New Chat"
+                Text(
+                    text = if (searchQuery.isNotBlank()) {
+                        highlightedAnnotatedString(titleText, searchQuery)
+                    } else {
+                        androidx.compose.ui.text.AnnotatedString(titleText)
+                    },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (badgeHead != null) {
+                    SessionBadgeOverlay(
+                        state = badgeHead,
+                        modifier = Modifier.padding(start = 6.dp, end = 4.dp),
                     )
                 }
-            }
-            if (badgeHead != null) {
-                SessionBadgeOverlay(
-                    state = badgeHead,
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                )
-            }
-        }
-
-        // Title + last message (or highlighted snippet during search)
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(1.dp),
-        ) {
-            val titleText = session.title ?: "New Chat"
-            if (searchQuery.isNotBlank()) {
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = highlightedAnnotatedString(titleText, searchQuery),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = timeText,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            } else {
-                Text(
-                    text = titleText,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
             }
             // During an active search, prefer the matched message snippet
-            // (content hit) over the generic lastMessage preview. Falls back
-            // to lastMessage when match was title-only (snippet is null).
+            // (content hit) over the generic lastMessage preview.
             if (searchQuery.isNotBlank() && searchSnippet != null) {
                 Text(
                     text = highlightedAnnotatedString(searchSnippet, searchQuery),
@@ -3067,6 +3111,7 @@ private fun SessionRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 24.dp, top = 4.dp),
                 )
             } else {
                 Text(
@@ -3075,16 +3120,10 @@ private fun SessionRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 24.dp, top = 4.dp),
                 )
             }
         }
-
-        // Relative timestamp
-        Text(
-            text = timeText,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

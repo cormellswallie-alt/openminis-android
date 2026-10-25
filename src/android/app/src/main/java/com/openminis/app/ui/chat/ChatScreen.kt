@@ -940,6 +940,8 @@ fun ChatScreen(
     // (opened by tapping the navbar thinking badge) is presented. Mirrors iOS
     // AIChatView.showThinkingLevelSheet.
     var showThinkingLevelSheet by remember { mutableStateOf(false) }
+    // [T-spectra-v3-composer] Inline depth slider inside the composer card.
+    var showDepthTray by remember { mutableStateOf(false) }
     var showAttachMenu by remember { mutableStateOf(false) }
     var showChatMenu by remember { mutableStateOf(false) }
     var showSkillsSheet by remember { mutableStateOf(false) }
@@ -2795,6 +2797,44 @@ fun ChatScreen(
         // map (which is last-writer-wins across sessions).
         LocalMarkdownSessionId provides sessionId,
     ) {
+    // [T-spectra-v3-composer] Hoisted from the header: the fallback pulse now
+    // flashes the composer's model chip, where the model switch lives.
+        // Fallback pulse animation (iOS: 3× red pulse on model switch)
+        val fallbackTrigger by viewModel.fallbackTrigger.collectAsState()
+        val fallbackPulseAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
+        // [T-android-fallback-pulse-replay] Only pulse for a
+        // fallback that happens while this screen is on show.
+        //
+        // `fallbackTrigger` is a monotonic counter that is never
+        // reset, and ChatViewModel is reused across visits to a
+        // session (ChatViewModelStore caches up to 4 normal /
+        // 6 child VMs), so a session that fell back during an
+        // EARLIER turn hands us a non-zero value the moment the
+        // screen is composed. `LaunchedEffect(key)` runs on
+        // first composition as well as on change, so the old
+        // `== 0` guard only suppressed sessions that had never
+        // fallen back at all: re-entering a session that had
+        // recovered onto a working model replayed the red pulse
+        // every time, reading as "it is switching models again"
+        // when nothing was happening. (The model itself was
+        // restored correctly from the persisted binding's
+        // `lastEntryId` — this was purely the animation.)
+        //
+        // iOS does not have the bug because `.onChange(of:)`
+        // ignores the initial value; baselining the counter at
+        // first composition reproduces that semantic. Keyed on
+        // `viewModel` so re-binding this composable to another
+        // session's VM re-takes the baseline.
+        val fallbackPulseBaseline = remember(viewModel) {
+            viewModel.fallbackTrigger.value
+        }
+        LaunchedEffect(fallbackTrigger) {
+            if (!shouldPulse(fallbackTrigger, fallbackPulseBaseline)) return@LaunchedEffect
+            repeat(3) {
+                fallbackPulseAlpha.animateTo(1f, animationSpec = androidx.compose.animation.core.tween(350))
+                fallbackPulseAlpha.animateTo(0f, animationSpec = androidx.compose.animation.core.tween(350))
+            }
+        }
     Scaffold(
         containerColor = ChatColors.background,
         contentWindowInsets = WindowInsets(0),
@@ -2824,47 +2864,10 @@ fun ChatScreen(
                         val noFontPad = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
                         )
-                        // Fallback pulse animation (iOS: 3× red pulse on model switch)
-                        val fallbackTrigger by viewModel.fallbackTrigger.collectAsState()
-                        val fallbackPulseAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
-                        // [T-android-fallback-pulse-replay] Only pulse for a
-                        // fallback that happens while this screen is on show.
-                        //
-                        // `fallbackTrigger` is a monotonic counter that is never
-                        // reset, and ChatViewModel is reused across visits to a
-                        // session (ChatViewModelStore caches up to 4 normal /
-                        // 6 child VMs), so a session that fell back during an
-                        // EARLIER turn hands us a non-zero value the moment the
-                        // screen is composed. `LaunchedEffect(key)` runs on
-                        // first composition as well as on change, so the old
-                        // `== 0` guard only suppressed sessions that had never
-                        // fallen back at all: re-entering a session that had
-                        // recovered onto a working model replayed the red pulse
-                        // every time, reading as "it is switching models again"
-                        // when nothing was happening. (The model itself was
-                        // restored correctly from the persisted binding's
-                        // `lastEntryId` — this was purely the animation.)
-                        //
-                        // iOS does not have the bug because `.onChange(of:)`
-                        // ignores the initial value; baselining the counter at
-                        // first composition reproduces that semantic. Keyed on
-                        // `viewModel` so re-binding this composable to another
-                        // session's VM re-takes the baseline.
-                        val fallbackPulseBaseline = remember(viewModel) {
-                            viewModel.fallbackTrigger.value
-                        }
-                        LaunchedEffect(fallbackTrigger) {
-                            if (!shouldPulse(fallbackTrigger, fallbackPulseBaseline)) return@LaunchedEffect
-                            repeat(3) {
-                                fallbackPulseAlpha.animateTo(1f, animationSpec = androidx.compose.animation.core.tween(350))
-                                fallbackPulseAlpha.animateTo(0f, animationSpec = androidx.compose.animation.core.tween(350))
-                            }
-                        }
                         Column(
                             horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color.Red.copy(alpha = 0.35f * fallbackPulseAlpha.value))
                                 // [T-android-topbar-shrink] vertical 4dp→2dp.
                                 // Combined with the expandedHeight drop below,
                                 // closes the dead-space gap between the model
@@ -2913,252 +2916,16 @@ fun ChatScreen(
                                     }
                                     .padding(horizontal = 4.dp, vertical = 2.dp),
                             )
-                            // Model picker subtitle: green dot + group +
-                            // provider/model. Tap opens the model picker —
-                            // separated from the title above so tapping the
-                            // title rows opens the rename sheet instead.
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier
-                                    .padding(start = 2.dp, top = 3.dp)
-                                    .clip(RoundedCornerShape(50))
-                                    .background(ChatColors.toolCapsuleBg)
-                                    // [T-android-modelpicker-stuck-ripple] Own the
-                                    // interaction source so the press can be
-                                    // released explicitly. Opening the picker
-                                    // sheet puts a modal window over this row, so
-                                    // the pointer's UP never reaches the clickable:
-                                    // Compose emits PressInteraction.Press with no
-                                    // matching Release and the ripple stays lit
-                                    // behind the sheet — still there after the
-                                    // sheet closes, reading as a permanent grey
-                                    // highlight on the title bar.
-                                    .clickable(
-                                        interactionSource = modelPickerInteraction,
-                                        indication = ripple(),
-                                    ) { showModelPicker = true }
-                                    .padding(start = 8.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
-                            ) {
-                                // Line 1: green dot + the active group OR
-                                // model name + dropdown arrow
-                                // (iOS: "● Default ⌄" / "● GPT-6 Astra ⌄")
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF23A26D) else Color(0xFFEE8A2A),
-                                                CircleShape,
-                                            ),
-                                    )
-                                    // T-android-topbar-group-name-fallback:
-                                    // _selectedGroupName is empty during the
-                                    // brief window before loadSession's group
-                                    // resolve runs, or whenever a binding
-                                    // resolve fails. Falling straight to the
-                                    // "Default" badge string masks the
-                                    // active group's real name (e.g. the
-                                    // onboarding-created "Default Models" or
-                                    // any user-renamed group). Insert a real
-                                    // fallback chain: collected VM value →
-                                    // active/default group name from the live
-                                    // config → terminal badge string. Mirrors
-                                    // the #476 TopBar title fallback pattern
-                                    // (commit b4c88775).
-                                    //
-                                    // [T-android-group-resolve-skip-uncredentialed]
-                                    // ...but only while a group is ACTUALLY
-                                    // bound. This chain used to run
-                                    // unconditionally, so a session that failed
-                                    // to resolve its group — and was therefore
-                                    // running on a model from the new-chat
-                                    // default chain, unrelated to any group —
-                                    // still displayed the default group's name.
-                                    // The header then contradicted the model
-                                    // line right below it and made a real
-                                    // routing failure read as normal operation,
-                                    // which is what made that bug hard to spot.
-                                    // Mirrors iOS, which keys the group glyph
-                                    // off the binding (`isGroupBound`) rather
-                                    // than off a name lookup.
-                                    //
-                                    // [T-android-topbar-manual-entry-name] What
-                                    // this row shows when NO group is bound.
-                                    // Returning "" there dropped the label and
-                                    // the chevron both, so picking a model by
-                                    // hand (which is exactly what unbinds the
-                                    // group) left a bare green dot with no text
-                                    // beside it — the row went blank precisely
-                                    // when the user had just made an explicit
-                                    // choice, and the only way back to the
-                                    // picker was tapping an unlabelled dot.
-                                    //
-                                    // iOS renders one always-populated label
-                                    // here: the group's name when bound, the
-                                    // MODEL's name on a direct-entry pick, and
-                                    // "No model selected" when nothing resolves
-                                    // (SessionModelPicker.displayName(for:)),
-                                    // marking the group case with an extra
-                                    // stack glyph rather than by swapping the
-                                    // text out. Match that chain so the row
-                                    // always names something.
-                                    val groupNameDisplay = selectedGroupName.ifEmpty {
-                                        if (selectedGroupId == null) {
-                                            // Direct-entry pick: name the model
-                                            // that is actually in effect.
-                                            modelName
-                                        } else {
-                                            val defaultGroupId = providerRepository.defaultPrimaryGroupId
-                                            // The full word, not the picker's
-                                            // model_picker_default_badge: that
-                                            // one is abbreviated in some locales
-                                            // to fit its capsule ("Predet.").
-                                            availableGroups.firstOrNull { it.id == defaultGroupId }?.name
-                                                ?: stringResource(R.string.common_default)
-                                        }
-                                    }.ifEmpty {
-                                        // Nothing bound and no model resolved
-                                        // yet. Still name the state instead of
-                                        // collapsing to a dot, so the picker
-                                        // keeps a visible, tappable label.
-                                        stringResource(R.string.model_picker_no_model_selected)
-                                    }
-                                    if (groupNameDisplay.isNotEmpty()) {
-                                        // [T-android-topbar-manual-entry-name]
-                                        // Row 1 now names a model as readily as
-                                        // a group, so the two cases would read
-                                        // identically without this. iOS marks
-                                        // the group case with a stack glyph
-                                        // ahead of the label; Layers is the
-                                        // same stand-in the model pickers here
-                                        // already use for `square.stack.3d.up`.
-                                        if (selectedGroupId != null) {
-                                            Icon(
-                                                Icons.Default.Layers,
-                                                contentDescription = null,
-                                                tint = ChatColors.tertiaryText,
-                                                modifier = Modifier.size(10.dp),
-                                            )
-                                        }
-                                        Text(
-                                            text = groupNameDisplay,
-                                            fontSize = 12.sp,
-                                            lineHeight = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = ChatColors.secondaryText,
-                                            maxLines = 1,
-                                            style = noFontPad,
-                                        )
-                                        Icon(
-                                            Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
-                                            tint = ChatColors.tertiaryText,
-                                            modifier = Modifier.size(14.dp),
-                                        )
-                                    }
-                                }
-                                // Line 2: "provider · model" (iOS: "MiniMax ·
-                                // MiniMax-M2.7") + the thinking-level badge laid
-                                // out as a Row of two SEPARATE tappable siblings
-                                // (mirrors iOS AIChatView row-2 HStack).
-                                //
-                                // [T-android-thinking-badge-navbar] Gesture
-                                // separation: the whole subtitle Column above owns
-                                // `clickable { showModelPicker = true }`, so a tap
-                                // on the model text still opens the model picker.
-                                // The badge declares its OWN `clickable` (see
-                                // ThinkingLevelBadge), and in Compose the innermost
-                                // clickable consumes the down/up events — so a tap
-                                // that lands on the badge opens the thinking sheet
-                                // and never bubbles up to the Column's model-picker
-                                // handler. Two hit targets, zero gesture conflict,
-                                // no pointerInput plumbing needed.
-                                //
-                                // Sizing: the model text takes `weight(1f, fill =
-                                // false)` so it truncates first (Ellipsis) when the
-                                // navbar is narrow; the badge has no weight, so it
-                                // keeps its intrinsic width and always renders in
-                                // full — the level label never gets clipped.
-                                if (providerName.isNotEmpty() || modelName.isNotEmpty()) {
-                                    val thinkingLevelBadgeState by viewModel.thinkingLevel.collectAsState()
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        // Shares the chip's row: yields width first.
-                                        modifier = Modifier.weight(1f, fill = false),
-                                    ) {
-                                        // [T-codex-fast-mode] ⚡ badge ahead of the
-                                        // resolved model name — small orange circle
-                                        // + white bolt, shown only while Fast Mode
-                                        // is enabled AND the active model is
-                                        // eligible (iOS 9e3c76ef row-3 placement,
-                                        // 09944220 9pt sizing).
-                                        val fastBadgeEligible by viewModel.showFastModeToggle.collectAsState()
-                                        val fastBadgeOn by viewModel.fastModeEnabled.collectAsState()
-                                        if (fastBadgeEligible && fastBadgeOn) {
-                                            Box(
-                                                contentAlignment = Alignment.Center,
-                                                modifier = Modifier
-                                                    .size(11.dp)
-                                                    .background(Color(0xFFEE8A2A), CircleShape),
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Bolt,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(9.dp),
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            text = if (providerName.isNotEmpty() && modelName.isNotEmpty()) {
-                                                "$providerName · $modelName"
-                                            } else {
-                                                modelName.ifEmpty { providerName }
-                                            },
-                                            fontSize = 11.sp,
-                                            lineHeight = 13.sp,
-                                            color = ChatColors.tertiaryText,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = noFontPad,
-                                            // Yield first when space is tight; the
-                                            // badge to the right stays intrinsic.
-                                            modifier = Modifier.weight(1f, fill = false),
-                                        )
-                                        // Show the badge whenever thinking is on,
-                                        // and ALSO when it's Off but the active
-                                        // model supports deep thinking (iOS
-                                        // parity, e6bd75efc): the icon + "Off"
-                                        // pill is then a discoverable tap target
-                                        // for enabling thinking via the level
-                                        // sheet. The Off pill is gated on
-                                        // currentModelSupportsReasoning so
-                                        // non-reasoning models don't grow a dead
-                                        // toggle; an enabled level still shows
-                                        // unconditionally (user may have opted in
-                                        // on an unknown-capability model).
-                                        if (viewModel.availableThinkingLevels.isNotEmpty() &&
-                                            (
-                                                thinkingLevelBadgeState.isEnabled ||
-                                                    viewModel.currentModelSupportsReasoning
-                                            )
-                                        ) {
-                                            ThinkingLevelBadge(
-                                                level = thinkingLevelBadgeState,
-                                                onClick = { showThinkingLevelSheet = true },
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            // [T-spectra-v3-composer] The model chip + thinking
+                            // badge moved into the composer (SpectraModelChip /
+                            // SpectraDepthChip). The header is the chat's name
+                            // and, while a turn runs, its live status.
+                            SpectraLiveChip(
+                                isStreaming = isStreaming,
+                                modifier = Modifier.padding(start = 4.dp, top = 3.dp),
+                            )
                         }
                     }
-                        SpectraLiveChip(isStreaming = isStreaming, modifier = Modifier.padding(start = 6.dp))
                     }
                 },
                 navigationIcon = {
@@ -3516,7 +3283,7 @@ fun ChatScreen(
                 // user-configured font scale on xhdpi/xxhdpi without
                 // re-clipping (T-topbar-model-row-clip regression check).
                 // Font sizes + lineHeights stay untouched per spec.
-                expandedHeight = 62.dp,
+                expandedHeight = 58.dp,
             )
             }
         },
@@ -6839,6 +6606,24 @@ fun ChatScreen(
                         )
                     }
 
+                    // [T-spectra-v3-composer] Thinking depth slider (inline tray).
+                    val composerThinkingLevel by viewModel.thinkingLevel.collectAsState()
+                    val composerDepthEligible = viewModel.availableThinkingLevels.isNotEmpty() &&
+                        (composerThinkingLevel.isEnabled || viewModel.currentModelSupportsReasoning)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showDepthTray && composerDepthEligible,
+                        enter = androidx.compose.animation.expandVertically(tween(240)) +
+                            androidx.compose.animation.fadeIn(tween(200)),
+                        exit = androidx.compose.animation.shrinkVertically(tween(200)) +
+                            androidx.compose.animation.fadeOut(tween(150)),
+                    ) {
+                        SpectraDepthTray(
+                            current = composerThinkingLevel,
+                            available = viewModel.availableThinkingLevels,
+                            onSelect = { viewModel.setThinkingLevel(it) },
+                        )
+                    }
+
                     // Button row below text field (iOS layout: + / ... mic send)
                     Row(
                         modifier = Modifier
@@ -6926,6 +6711,39 @@ fun ChatScreen(
                             )
                         }
 
+                        // [T-spectra-v3-composer] Model switch + thinking depth.
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f).padding(start = 8.dp),
+                        ) {
+                            val chipFastEligible by viewModel.showFastModeToggle.collectAsState()
+                            val chipFastOn by viewModel.fastModeEnabled.collectAsState()
+                            val chipLabel = modelName.ifEmpty { selectedGroupName }.ifEmpty {
+                                stringResource(R.string.model_picker_no_model_selected)
+                            }
+                            SpectraModelChip(
+                                label = chipLabel,
+                                groupBound = selectedGroupId != null,
+                                resolved = modelName.isNotEmpty(),
+                                fastOn = chipFastEligible && chipFastOn,
+                                pulse = fallbackPulseAlpha.value,
+                                interactionSource = modelPickerInteraction,
+                                onClick = { showModelPicker = true },
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                            if (composerDepthEligible) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                SpectraDepthChip(
+                                    level = composerThinkingLevel,
+                                    stops = listOf(com.openminis.app.data.model.ThinkingLevel.OFF) +
+                                        viewModel.availableThinkingLevels,
+                                    open = showDepthTray,
+                                    onClick = { showDepthTray = !showDepthTray },
+                                    onLongClick = { showThinkingLevelSheet = true },
+                                )
+                            }
+                        }
+
                         // T187: Exit Edit Mode pill, only while editingMessageId
                         // is non-null. Tap clears the edit flag + composer text
                         // without truncating history. iOS parity:
@@ -6950,7 +6768,7 @@ fun ChatScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(6.dp))
 
                         // Right: Mic button — only renders when a speech engine
                         // is actually available on this device (handles the
