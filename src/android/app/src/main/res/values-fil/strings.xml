@@ -1831,4 +1831,19 @@
     <string name="noir_steps_done">%1$d hakbang</string>
     <string name="noir_steps_failed">%1$d nabigo</string>
     <string name="noir_step_thinking">Pag-iisip</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">Nag-iisip</string>
+    <string name="spectra_thinking_done">Proseso ng pag-iisip</string>
+    <string name="spectra_thinking_done_secs">Nag-isip nang %1$d s</string>
+    <string name="spectra_thinking_chars">%1$s karakter</string>
+    <string name="spectra_thinking_copy">Kopyahin</string>
+    <string name="spectra_thinking_full">Buong teksto</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">Magandang umaga</string>
+    <string name="spectra_greet_noon">Magandang tanghali</string>
+    <string name="spectra_greet_afternoon">Magandang hapon</string>
+    <string name="spectra_greet_evening">Magandang gabi</string>
+    <string name="spectra_home_question">Ano ang gagawin natin ngayon?</string>
+    <string name="spectra_home_sessions">%1$d chat</string>
+    <string name="spectra_home_scheduled">%1$d naka-iskedyul</string>
 </resources>

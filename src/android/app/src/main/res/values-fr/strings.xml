@@ -1857,4 +1857,19 @@
     <string name="noir_steps_done">%1$d étapes</string>
     <string name="noir_steps_failed">%1$d en échec</string>
     <string name="noir_step_thinking">Réflexion</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">Réflexion</string>
+    <string name="spectra_thinking_done">Raisonnement</string>
+    <string name="spectra_thinking_done_secs">Réflexion : %1$d s</string>
+    <string name="spectra_thinking_chars">%1$s caractères</string>
+    <string name="spectra_thinking_copy">Copier</string>
+    <string name="spectra_thinking_full">Texte intégral</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">Bonjour</string>
+    <string name="spectra_greet_noon">Bonjour</string>
+    <string name="spectra_greet_afternoon">Bon après-midi</string>
+    <string name="spectra_greet_evening">Bonsoir</string>
+    <string name="spectra_home_question">Que faisons-nous aujourd’hui ?</string>
+    <string name="spectra_home_sessions">%1$d discussions</string>
+    <string name="spectra_home_scheduled">%1$d planifiées</string>
 </resources>

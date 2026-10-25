@@ -1,0 +1,197 @@
+/*
+ * [T-spectra-v3] Launch sequence "Ignition".
+ *
+ * The OS splash (API 31+) paints only a hairline circle at window centre.
+ * This overlay starts from that exact frame and lights it:
+ *
+ *   0.00–0.40  a spectrum arc draws the ring clockwise from 12 o'clock;
+ *              a small bright spark rides the leading tip
+ *   0.30–0.52  the pearl core swells in and the ring closes into the orb
+ *   0.44–0.74  one soft ripple leaves the orb and fades; halo breathes once
+ *   0.42–0.68  "Minis" rises letter by letter below the orb
+ *   0.74–1.00  exit: orb lifts and shrinks, wordmark fades, ground dissolves
+ *
+ * Only graphicsLayer / draw lambdas read the clock, so nothing recomposes
+ * per frame. Tap skips to the exit. Same gating as before (cold launcher
+ * start + setting on + system animations on).
+ */
+@Composable
+fun NoirLaunchOverlay(
+    isDark: Boolean,
+    onFinished: () -> Unit,
+) {
+    val progress = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val finish by rememberUpdatedState(onFinished)
+    var done by remember { mutableStateOf(false) }
+    val complete = {
+        if (!done) {
+            done = true
+            finish()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        progress.animateTo(1f, tween(NoirLaunch.TOTAL_MS, easing = LinearEasing))
+        complete()
+    }
+
+    val ground = if (isDark) Noir.Onyx else Noir.PaperCard
+    val ink = if (isDark) Noir.Ivory else Noir.Ink
+    val hairline = if (isDark) Color(0x33FFFFFF) else Color(0x1F0A0A0B)
+    val word = stringResource(R.string.app_name)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                alpha = 1f - EaseInOutQuart.transform(seg(progress.value, 0.80f, 1f))
+            }
+            .drawBehind { drawRect(ground) }
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    if (progress.value < NoirLaunch.EXIT) {
+                        scope.launch {
+                            progress.snapTo(NoirLaunch.EXIT)
+                            progress.animateTo(1f, tween(360, easing = LinearEasing))
+                            complete()
+                        }
+                    }
+                }
+            },
+    ) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+            // ---- Orb (72dp at exact window centre, matches the splash ring) ----
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(72.dp)
+                    .graphicsLayer {
+                        val e = EaseInOutQuart.transform(seg(progress.value, NoirLaunch.EXIT, 1f))
+                        val s = 1f - 0.22f * e
+                        scaleX = s
+                        scaleY = s
+                        translationY = -56.dp.toPx() * e
+                    }
+                    .drawBehind {
+                        val t = progress.value
+                        val r = size.minDimension / 2f
+                        val c = center
+                        val ringW = r * 0.24f
+                        val arc = EaseOutExpo.transform(seg(t, 0.04f, 0.40f))
+                        val coreIn = EaseOutExpo.transform(seg(t, 0.30f, 0.52f))
+                        val spin = 360f * t * 0.55f
+
+                        // Ripple + halo (outside bounds on purpose).
+                        val rp = seg(t, 0.44f, 0.74f)
+                        if (rp > 0f && rp < 1f) {
+                            val rr = r * (1f + 1.9f * EaseOutExpo.transform(rp))
+                            rotate(spin, pivot = c) {
+                                drawCircle(
+                                    brush = Brush.sweepGradient(Noir.Spectrum, center = c),
+                                    radius = rr,
+                                    center = c,
+                                    alpha = 0.55f * (1f - rp),
+                                    style = Stroke(width = 1.5.dp.toPx()),
+                                )
+                            }
+                        }
+                        val glow = seg(t, 0.36f, 0.62f).let { if (it < 0.5f) it * 2f else (1f - it) * 2f }
+                        if (glow > 0f) {
+                            val hr = r * 2.1f
+                            drawCircle(
+                                brush = Brush.radialGradient(
+                                    0f to Color(0xFF9CBBFF).copy(alpha = 0.30f * glow),
+                                    0.5f to Color(0xFFC5B2FF).copy(alpha = 0.12f * glow),
+                                    1f to Color.Transparent,
+                                    center = c,
+                                    radius = hr,
+                                ),
+                                radius = hr,
+                                center = c,
+                            )
+                        }
+
+                        // Hairline circle — identical to the OS splash frame.
+                        drawCircle(
+                            color = hairline,
+                            radius = r - ringW / 2f,
+                            center = c,
+                            alpha = 1f - coreIn,
+                            style = Stroke(width = 1.dp.toPx()),
+                        )
+
+                        if (coreIn < 1f) {
+                            // Drawing phase: spectrum arc along the ring track.
+                            if (arc > 0f) {
+                                rotate(spin - 90f, pivot = c) {
+                                    drawArc(
+                                        brush = Brush.sweepGradient(Noir.Spectrum, center = c),
+                                        startAngle = 0f,
+                                        sweepAngle = 360f * arc,
+                                        useCenter = false,
+                                        topLeft = Offset(c.x - r + ringW / 2f, c.y - r + ringW / 2f),
+                                        size = androidx.compose.ui.geometry.Size(2f * r - ringW, 2f * r - ringW),
+                                        style = Stroke(width = ringW, cap = StrokeCap.Round),
+                                    )
+                                }
+                                // Spark on the leading tip.
+                                if (arc < 0.999f) {
+                                    val a = Math.toRadians((spin - 90f + 360f * arc).toDouble())
+                                    val tr = r - ringW / 2f
+                                    val tip = Offset(c.x + tr * kotlin.math.cos(a).toFloat(), c.y + tr * kotlin.math.sin(a).toFloat())
+                                    drawCircle(
+                                        brush = Brush.radialGradient(
+                                            listOf(Color.White.copy(alpha = 0.95f), Color(0x00C5B2FF)),
+                                            center = tip,
+                                            radius = ringW * 1.6f,
+                                        ),
+                                        radius = ringW * 1.6f,
+                                        center = tip,
+                                    )
+                                }
+                            }
+                        }
+                        if (coreIn > 0f) {
+                            // Closing phase: the full orb fades/swells in over the arc.
+                            val s = 0.86f + 0.14f * coreIn
+                            scale(s, pivot = c) {
+                                drawContext.canvas.saveLayer(
+                                    androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height).inflate(r),
+                                    androidx.compose.ui.graphics.Paint().apply { alpha = coreIn },
+                                )
+                                drawSpectraOrb(OrbState.Idle, isDark, 210f + spin, 0f)
+                                drawContext.canvas.restore()
+                            }
+                        }
+                    },
+            )
+
+            // ---- Wordmark: letters rise one by one ----
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = maxHeight / 2 + 36.dp + 26.dp)
+                    .graphicsLayer {
+                        val e = EaseInOutQuart.transform(seg(progress.value, NoirLaunch.EXIT, 0.92f))
+                        alpha = 1f - e
+                        translationY = -40.dp.toPx() * e
+                    },
+            ) {
+                word.forEachIndexed { i, ch ->
+                    val start = 0.42f + i * 0.035f
+                    Text(
+                        text = ch.toString(),
+                        style = NoirDisplay.copy(fontSize = 30.sp, lineHeight = 36.sp),
+                        color = ink,
+                        modifier = Modifier.graphicsLayer {
+                            val w = EaseOutExpo.transform(seg(progress.value, start, start + 0.16f))
+                            alpha = w
+                            translationY = 12.dp.toPx() * (1f - w)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}

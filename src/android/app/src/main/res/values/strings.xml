@@ -2340,4 +2340,19 @@
     <string name="noir_steps_done">%1$d steps</string>
     <string name="noir_steps_failed">%1$d failed</string>
     <string name="noir_step_thinking">Thinking</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">Thinking</string>
+    <string name="spectra_thinking_done">Thought process</string>
+    <string name="spectra_thinking_done_secs">Thought for %1$d s</string>
+    <string name="spectra_thinking_chars">%1$s chars</string>
+    <string name="spectra_thinking_copy">Copy</string>
+    <string name="spectra_thinking_full">Full text</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">Good morning</string>
+    <string name="spectra_greet_noon">Good afternoon</string>
+    <string name="spectra_greet_afternoon">Good afternoon</string>
+    <string name="spectra_greet_evening">Good evening</string>
+    <string name="spectra_home_question">What shall we do today?</string>
+    <string name="spectra_home_sessions">%1$d chats</string>
+    <string name="spectra_home_scheduled">%1$d scheduled</string>
 </resources>

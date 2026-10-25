@@ -1894,4 +1894,19 @@
     <string name="noir_steps_done">%1$d ステップ完了</string>
     <string name="noir_steps_failed">%1$d 件失敗</string>
     <string name="noir_step_thinking">思考</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">考え中</string>
+    <string name="spectra_thinking_done">思考プロセス</string>
+    <string name="spectra_thinking_done_secs">%1$d 秒考えました</string>
+    <string name="spectra_thinking_chars">%1$s 文字</string>
+    <string name="spectra_thinking_copy">コピー</string>
+    <string name="spectra_thinking_full">全文</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">おはようございます</string>
+    <string name="spectra_greet_noon">こんにちは</string>
+    <string name="spectra_greet_afternoon">こんにちは</string>
+    <string name="spectra_greet_evening">こんばんは</string>
+    <string name="spectra_home_question">今日は何をしましょう？</string>
+    <string name="spectra_home_sessions">%1$d 件の会話</string>
+    <string name="spectra_home_scheduled">%1$d 件の予約</string>
 </resources>

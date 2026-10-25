@@ -723,9 +723,11 @@ fun SessionListScreen(
     val pinnedFirst = groupedSessions.firstOrNull()?.first == DatePeriod.PINNED
     val leadingDateGroups = if (pinnedFirst) groupedSessions.take(1) else emptyList()
     val trailingDateGroups = if (pinnedFirst) groupedSessions.drop(1) else groupedSessions
-    val folderHeaderIndices = remember(leadingDateGroups, folderBlocks) {
+    // [T-spectra-v3] Greeting hero occupies list index 0 while browsing.
+    val showHomeHero = !isSearchActive && !isSelecting && sessions.isNotEmpty()
+    val folderHeaderIndices = remember(leadingDateGroups, folderBlocks, showHomeHero) {
         buildMap {
-            var idx = 0
+            var idx = if (showHomeHero) 1 else 0
             leadingDateGroups.forEach { (_, rows) -> idx += 1 + rows.size }
             if (folderBlocks.isNotEmpty()) {
                 idx += 1 // the "分组" section header item
@@ -840,22 +842,16 @@ fun SessionListScreen(
                         // Instrument Serif, the same pair the launch sequence
                         // lands on, so the curtain hands off to this exact spot.
                         val wordmarkDark = ChatColors.isDark
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .drawBehind { drawNoirPearl(wordmarkDark) },
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                stringResource(R.string.app_name),
-                                style = com.openminis.app.ui.theme.NoirDisplay.copy(
-                                    fontSize = 28.sp,
-                                    lineHeight = 30.sp,
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
+                        @Suppress("UNUSED_VARIABLE") val wm = wordmarkDark
+                        // [T-spectra-v3] Plain MiSans wordmark; the orb lives in the hero below.
+                        Text(
+                            stringResource(R.string.app_name),
+                            style = com.openminis.app.ui.theme.NoirDisplay.copy(
+                                fontSize = 22.sp,
+                                lineHeight = 26.sp,
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
                 },
                 navigationIcon = {
@@ -1058,6 +1054,14 @@ fun SessionListScreen(
                         // trailing are hoisted above the LazyColumn so the
                         // accordion anchor + mini-bar share them; keep the
                         // builder and folderHeaderIndices in lockstep.
+                        if (showHomeHero) {
+                            item(key = "__spectra_hero__", contentType = "spectra_hero") {
+                                SpectraHomeHero(
+                                    sessionCount = sessions.size,
+                                    scheduledCount = scheduledTaskCount,
+                                )
+                            }
+                        }
 
                         // [T-android-session-grouping] Membership is "points at a
                         // group that exists", matching partitionByFolder. Hoisted
@@ -1990,8 +1994,8 @@ private fun SectionHeader(title: String) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
-            .padding(top = 10.dp),
+            .padding(horizontal = 22.dp, vertical = 8.dp)
+            .padding(top = 14.dp),
     ) {
         if (isPinned) {
             Icon(
@@ -2004,11 +2008,12 @@ private fun SectionHeader(title: String) {
             )
             Spacer(modifier = Modifier.width(4.dp))
         }
-        // [T-noir-redesign] Eyebrow: tracked small caps in mute ink.
+        // [T-spectra-v3] Plain section title — no tracked caps.
         Text(
-            text = title.uppercase(),
-            style = com.openminis.app.ui.theme.NoirEyebrow,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = title,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -3074,7 +3079,7 @@ private fun SessionRow(
         Text(
             text = timeText,
             fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -3698,3 +3703,68 @@ private fun exportSession(
     }
 }
 
+
+
+/**
+ * [T-spectra-v3] Home hero: the Spectra orb with a time-of-day greeting,
+ * then two quiet counters. Pure layout — no state of its own beyond the clock
+ * hour read once per composition.
+ */
+@Composable
+private fun SpectraHomeHero(sessionCount: Int, scheduledCount: Int) {
+    val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val greeting = stringResource(
+        when (hour) {
+            in 5..10 -> R.string.spectra_greet_morning
+            in 11..13 -> R.string.spectra_greet_noon
+            in 14..17 -> R.string.spectra_greet_afternoon
+            else -> R.string.spectra_greet_evening
+        }
+    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 18.dp, bottom = 14.dp),
+    ) {
+        com.openminis.app.ui.theme.SpectraOrb(
+            size = 64.dp,
+            state = com.openminis.app.ui.theme.OrbState.Idle,
+        )
+        Spacer(Modifier.height(18.dp))
+        Text(
+            text = greeting,
+            fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = stringResource(R.string.spectra_home_question),
+            fontSize = 24.sp,
+            lineHeight = 32.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SpectraHeroChip(stringResource(R.string.spectra_home_sessions, sessionCount))
+            if (scheduledCount > 0) {
+                SpectraHeroChip(stringResource(R.string.spectra_home_scheduled, scheduledCount))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpectraHeroChip(text: String) {
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
+}

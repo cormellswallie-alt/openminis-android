@@ -28,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -66,9 +68,9 @@ import com.openminis.app.ui.theme.Noir
 internal const val STEP_RUN_COLLAPSE_MIN = 3
 
 /** Node geometry shared by rows and the rail. */
-internal val StepNodeSize: Dp = 26.dp
-internal val StepRowHeight: Dp = 38.dp
-internal val StepTextIndent: Dp = 36.dp // node + gap: where row text starts
+internal val StepNodeSize: Dp = 28.dp
+internal val StepRowHeight: Dp = 46.dp
+internal val StepTextIndent: Dp = 40.dp // node + gap: where row text starts
 
 /** The rows between two LazyColumn items — see the item wrapper in ChatScreen. */
 internal val StepItemGap: Dp = 2.dp
@@ -83,6 +85,8 @@ internal data class StepRunSummary(
     val nodeTools: List<String>,
     /** Distinct tool titles in order, for the subtitle. */
     val titles: List<String>,
+    /** [T-spectra-v3] Every step in order: tool name (null = thinking) and its duration. */
+    val segments: List<Pair<String?, Long>> = emptyList(),
 )
 
 internal data class StepRunInfo(
@@ -157,6 +161,13 @@ internal fun computeStepRuns(
             nodeTools = tools.map { it.block.toolName }.take(4),
             titles = tools.map { it.block.toolTitle.ifEmpty { it.block.toolName } }
                 .distinct().take(6),
+            segments = run.mapNotNull { item ->
+                when (item) {
+                    is FlatChatItem.AssistantToolUse -> item.block.toolName to item.block.durationMs
+                    is FlatChatItem.AssistantThinking -> null to item.block.durationMs
+                    else -> null
+                }
+            },
         )
         val runId = run.first().key
         run.forEachIndexed { idx, item ->
@@ -221,7 +232,7 @@ internal fun Modifier.stepRail(
 ): Modifier = if (!railUp && !railDown) this else drawBehind {
     val x = (StepNodeSize / 2).toPx()
     val cy = nodeCenterY.toPx()
-    val gapAroundNode = (StepNodeSize / 2 + 3.dp).toPx()
+    val gapAroundNode = (StepNodeSize / 2 + 4.dp).toPx()
     val stroke = 1.dp.toPx()
     if (railUp) {
         drawLine(color, Offset(x, -StepItemGap.toPx()), Offset(x, cy - gapAroundNode), stroke)
@@ -233,7 +244,7 @@ internal fun Modifier.stepRail(
 
 @Composable
 internal fun stepRailColor(): Color =
-    if (ChatColors.isDark) Noir.OnyxHairlineStrong else Noir.PaperHairlineStrong
+    if (ChatColors.isDark) Noir.OnyxHairline else Noir.PaperHairline
 
 /** Thinking ink: gold that holds contrast on both grounds. */
 @Composable
@@ -251,17 +262,22 @@ internal fun StepNode(
     modifier: Modifier = Modifier,
     size: Dp = StepNodeSize,
 ) {
-    val fillAlpha = if (ChatColors.isDark) 0.20f else 0.13f
+    // [T-spectra-v3] Neutral squircle; the tool hue lives only in the glyph.
+    // No glow, no coloured disc — colour marks type, motion marks state.
+    val dark = ChatColors.isDark
+    val shape = RoundedCornerShape(size * 0.34f)
+    val fill = if (dark) Noir.Onyx2 else Noir.PaperSunk
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .size(size)
-                .background(accent.copy(alpha = fillAlpha), CircleShape),
+                .clip(shape)
+                .background(fill, shape),
         )
         if (running) {
             DecorativeSpinner(
-                color = accent,
-                modifier = Modifier.size(size),
+                color = if (dark) Noir.Ivory else Noir.Ink,
+                modifier = Modifier.size(size + 6.dp),
                 strokeWidth = 1.5.dp,
             )
         }
@@ -271,6 +287,30 @@ internal fun StepNode(
             tint = accent,
             modifier = Modifier.size(size * 0.54f),
         )
+    }
+}
+
+/** Fingerprint bar: one segment per step, width ∝ duration, colour = tool type. */
+@Composable
+internal fun StepFingerprint(
+    segments: List<Pair<String?, Long>>,
+    modifier: Modifier = Modifier,
+    height: Dp = 5.dp,
+) {
+    if (segments.isEmpty()) return
+    val think = thinkingInk()
+    Row(modifier = modifier.height(height), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        segments.forEach { (tool, ms) ->
+            // Floor so instant steps still show; cap so one long build does not erase the rest.
+            val w = (ms.coerceAtLeast(0L) / 1000f).coerceIn(0.8f, 12f)
+            Box(
+                modifier = Modifier
+                    .weight(w)
+                    .height(height)
+                    .clip(RoundedCornerShape(height / 2))
+                    .background(if (tool == null) think else toolAccentColor(tool)),
+            )
+        }
     }
 }
 
@@ -284,111 +324,92 @@ internal fun formatStepRunDuration(ms: Long): String? {
     }
 }
 
-/** Folded run: overlapping coloured nodes, count, titles, total time. */
+/** [T-spectra-v3] Folded run: check · "N steps · time" · fingerprint bar · titles. */
 @Composable
 internal fun StepRunSummaryCard(
     summary: StepRunSummary,
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
+    val dark = ChatColors.isDark
     val shape = RoundedCornerShape(18.dp)
-    val cardBg = if (ChatColors.isDark) Noir.Onyx1 else Noir.PaperCard
-    val hairline = if (ChatColors.isDark) Noir.OnyxHairline else Noir.PaperHairline
+    val cardBg = if (dark) Noir.Onyx1 else Noir.PaperCard
+    val hairline = if (dark) Noir.OnyxHairline else Noir.PaperHairline
+    val okColor = if (summary.failedCount > 0) (if (dark) Noir.ErrOnOnyx else Noir.Err)
+        else (if (dark) Noir.OkOnOnyx else Noir.Ok)
     val chevron by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = tween(240),
         label = "stepRunChevron",
     )
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp)
+            .padding(vertical = 4.dp)
+            .shadow(if (dark) 0.dp else 6.dp, shape, ambientColor = Color(0x140A0A0B), spotColor = Color(0x1F0A0A0B))
             .clip(shape)
             .background(cardBg, shape)
             .border(0.5.dp, hairline, shape)
             .clickable(onClick = onToggle)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 13.dp),
     ) {
-        // Node stack — each node ringed in the card colour so overlaps read clean.
-        val nodes = buildList<Pair<ImageVector, Color>> {
-            summary.nodeTools.forEach { add(toolIconFor(it) to toolAccentColor(it)) }
-            if (summary.thinkingCount > 0 && size < 4) add(Icons.Default.Psychology to thinkingInk())
-            if (isEmpty()) add(Icons.Default.Check to Noir.Stone)
-        }
-        Box(modifier = Modifier.width(22.dp + 14.dp * (nodes.size - 1)).height(26.dp)) {
-            nodes.forEachIndexed { idx, (icon, accent) ->
-                Box(
-                    modifier = Modifier
-                        .offset(x = 14.dp * idx, y = 2.dp)
-                        .size(22.dp)
-                        .background(cardBg, CircleShape)
-                        .padding(1.5.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(19.dp)
-                            .background(
-                                // Opaque mix so the ring underneath never shows through.
-                                lerpOver(cardBg, accent, if (ChatColors.isDark) 0.28f else 0.18f),
-                                CircleShape,
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(11.dp))
-                    }
-                }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(okColor.copy(alpha = if (dark) 0.18f else 0.12f), RoundedCornerShape(7.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null, tint = okColor, modifier = Modifier.size(14.dp))
             }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.noir_steps_done, summary.stepCount),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+            formatStepRunDuration(summary.totalMs)?.let {
                 Text(
-                    text = stringResource(R.string.noir_steps_done, summary.stepCount),
+                    text = "  " + it,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                )
-                if (summary.failedCount > 0) {
-                    Text(
-                        text = "  ·  " + stringResource(R.string.noir_steps_failed, summary.failedCount),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Noir.Ember,
-                        maxLines = 1,
-                    )
-                }
-            }
-            if (summary.titles.isNotEmpty()) {
-                Text(
-                    text = summary.titles.joinToString("  ·  "),
-                    fontSize = 12.5.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
+                    softWrap = false,
                 )
             }
-        }
-        formatStepRunDuration(summary.totalMs)?.let {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = it,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                maxLines = 1,
-                softWrap = false,
+            if (summary.failedCount > 0) {
+                Text(
+                    text = "  ·  " + stringResource(R.string.noir_steps_failed, summary.failedCount),
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = okColor,
+                    maxLines = 1,
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp).rotate(chevron),
             )
         }
-        Spacer(modifier = Modifier.width(6.dp))
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            modifier = Modifier.size(18.dp).rotate(chevron),
+        StepFingerprint(
+            segments = summary.segments.ifEmpty { summary.nodeTools.map { it to 1000L } },
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
         )
+        if (summary.titles.isNotEmpty()) {
+            Text(
+                text = summary.titles.joinToString("  ·  "),
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
     }
 }
 

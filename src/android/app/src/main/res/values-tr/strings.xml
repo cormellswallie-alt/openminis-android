@@ -1831,4 +1831,19 @@
     <string name="noir_steps_done">%1$d adım</string>
     <string name="noir_steps_failed">%1$d başarısız</string>
     <string name="noir_step_thinking">Düşünme</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">Düşünüyor</string>
+    <string name="spectra_thinking_done">Düşünme süreci</string>
+    <string name="spectra_thinking_done_secs">%1$d sn düşündü</string>
+    <string name="spectra_thinking_chars">%1$s karakter</string>
+    <string name="spectra_thinking_copy">Kopyala</string>
+    <string name="spectra_thinking_full">Tam metin</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">Günaydın</string>
+    <string name="spectra_greet_noon">İyi günler</string>
+    <string name="spectra_greet_afternoon">İyi günler</string>
+    <string name="spectra_greet_evening">İyi akşamlar</string>
+    <string name="spectra_home_question">Bugün ne yapalım?</string>
+    <string name="spectra_home_sessions">%1$d sohbet</string>
+    <string name="spectra_home_scheduled">%1$d zamanlanmış</string>
 </resources>

@@ -2081,4 +2081,19 @@
     <string name="noir_steps_done">Koraka: %1$d</string>
     <string name="noir_steps_failed">Neuspjelo: %1$d</string>
     <string name="noir_step_thinking">Razmišljanje</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">Razmišlja</string>
+    <string name="spectra_thinking_done">Tijek razmišljanja</string>
+    <string name="spectra_thinking_done_secs">Razmišljao %1$d s</string>
+    <string name="spectra_thinking_chars">%1$s znakova</string>
+    <string name="spectra_thinking_copy">Kopiraj</string>
+    <string name="spectra_thinking_full">Cijeli tekst</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">Dobro jutro</string>
+    <string name="spectra_greet_noon">Dobar dan</string>
+    <string name="spectra_greet_afternoon">Dobar dan</string>
+    <string name="spectra_greet_evening">Dobra večer</string>
+    <string name="spectra_home_question">Što ćemo danas?</string>
+    <string name="spectra_home_sessions">%1$d razgovora</string>
+    <string name="spectra_home_scheduled">%1$d zakazano</string>
 </resources>

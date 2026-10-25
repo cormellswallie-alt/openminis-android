@@ -1832,4 +1832,19 @@
     <string name="noir_steps_done">%1$d ขั้นตอน</string>
     <string name="noir_steps_failed">ล้มเหลว %1$d</string>
     <string name="noir_step_thinking">กำลังคิด</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">กำลังคิด</string>
+    <string name="spectra_thinking_done">กระบวนการคิด</string>
+    <string name="spectra_thinking_done_secs">คิดอยู่ %1$d วินาที</string>
+    <string name="spectra_thinking_chars">%1$s อักขระ</string>
+    <string name="spectra_thinking_copy">คัดลอก</string>
+    <string name="spectra_thinking_full">ข้อความเต็ม</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">สวัสดีตอนเช้า</string>
+    <string name="spectra_greet_noon">สวัสดีตอนกลางวัน</string>
+    <string name="spectra_greet_afternoon">สวัสดีตอนบ่าย</string>
+    <string name="spectra_greet_evening">สวัสดีตอนเย็น</string>
+    <string name="spectra_home_question">วันนี้ให้ช่วยอะไรดี?</string>
+    <string name="spectra_home_sessions">%1$d แชต</string>
+    <string name="spectra_home_scheduled">%1$d ตั้งเวลา</string>
 </resources>

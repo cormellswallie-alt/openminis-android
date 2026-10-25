@@ -18,31 +18,28 @@ import androidx.compose.ui.unit.sp
 
 // [T-noir-redesign] Minis Noir colour schemes.
 //
-// Round 3 ("Iris"): cool neutrals, one accent.
+// Round 4 ("Spectra v3"): pure white / ink.
 //
-//   light  page #F6F7F9, card/chat #FFFFFF, sunk #EFF1F5, ink #0F1115
-//   dark   page #0D0E12, card #16171D, raised #1E2028, text #ECEEF4
-//   accent Iris — #4A47D9 on paper, #8E90FF on onyx; violet for thinking
+//   light  page #F7F7F8, card/chat #FFFFFF, sunk #F4F4F6, ink #0A0A0B
+//   dark   page #0A0A0B, card #151517, raised #1C1C1F, text #F4F4F5
 //
-// `primary` is the accent now (switches, buttons, links, progress), so the
-// app carries one clear hue instead of the earlier ink/ivory monochrome
-// with hand-placed gold. Contrast: IrisDeep on white 6.6:1, white on
-// IrisDeep 6.6:1, IrisBright on onyx 6.4:1.
+// `primary` is ink (ivory in dark): switches, buttons, progress are
+// monochrome. The only hue in the chrome is the assistant orb.
 
 private val NoirLight = lightColorScheme(
-    primary = Noir.IrisDeep,
+    primary = Noir.Ink,
     onPrimary = Color.White,
-    primaryContainer = Noir.IrisSoft,
-    onPrimaryContainer = Color(0xFF1E1B6B),
-    inversePrimary = Noir.IrisBright,
+    primaryContainer = Noir.PaperSunk,
+    onPrimaryContainer = Noir.Ink,
+    inversePrimary = Noir.Ivory,
     secondary = Noir.InkSoft,
-    onSecondary = Noir.Paper,
+    onSecondary = Color.White,
     secondaryContainer = Noir.PaperSunk,
     onSecondaryContainer = Noir.Ink,
     tertiary = Noir.ThinkOnPaper,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFF1EBFF),
-    onTertiaryContainer = Color(0xFF2E1868),
+    tertiaryContainer = Color(0xFFF1EEFF),
+    onTertiaryContainer = Color(0xFF2A1C72),
     background = Noir.Paper,
     onBackground = Noir.Ink,
     surface = Noir.Paper,
@@ -52,10 +49,10 @@ private val NoirLight = lightColorScheme(
     surfaceTint = Color.Transparent,
     inverseSurface = Noir.Ink,
     inverseOnSurface = Noir.Ivory,
-    error = Color(0xFFD93A44),
+    error = Noir.Err,
     onError = Color.White,
-    errorContainer = Color(0xFFFDE4E5),
-    onErrorContainer = Color(0xFF5A0D13),
+    errorContainer = Color(0xFFFDECEC),
+    onErrorContainer = Color(0xFF6B1316),
     outline = Noir.PaperHairlineStrong,
     outlineVariant = Noir.PaperHairline,
     scrim = Color(0xFF000000),
@@ -69,19 +66,19 @@ private val NoirLight = lightColorScheme(
 )
 
 private val NoirDark = darkColorScheme(
-    primary = Noir.IrisBright,
-    onPrimary = Color(0xFF0E0F3A),
-    primaryContainer = Noir.IrisSoftDark,
-    onPrimaryContainer = Color(0xFFDCDDFF),
-    inversePrimary = Noir.IrisDeep,
+    primary = Noir.Ivory,
+    onPrimary = Noir.Onyx,
+    primaryContainer = Noir.Onyx3,
+    onPrimaryContainer = Noir.Ivory,
+    inversePrimary = Noir.Ink,
     secondary = Noir.IvorySoft,
     onSecondary = Noir.Onyx,
     secondaryContainer = Noir.Onyx3,
     onSecondaryContainer = Noir.Ivory,
     tertiary = Noir.ThinkOnOnyx,
-    onTertiary = Color(0xFF1E0F45),
-    tertiaryContainer = Color(0xFF2E2350),
-    onTertiaryContainer = Color(0xFFE6DCFF),
+    onTertiary = Color(0xFF1B1240),
+    tertiaryContainer = Color(0xFF2A2350),
+    onTertiaryContainer = Color(0xFFE6DFFF),
     background = Noir.Onyx,
     onBackground = Noir.Ivory,
     surface = Noir.Onyx,
@@ -91,10 +88,10 @@ private val NoirDark = darkColorScheme(
     surfaceTint = Color.Transparent,
     inverseSurface = Noir.Ivory,
     inverseOnSurface = Noir.Onyx,
-    error = Color(0xFFFF7A80),
+    error = Noir.ErrOnOnyx,
     onError = Noir.Onyx,
-    errorContainer = Color(0xFF3D171B),
-    onErrorContainer = Color(0xFFFFD5D7),
+    errorContainer = Color(0xFF3A1517),
+    onErrorContainer = Color(0xFFFFD6D7),
     outline = Noir.OnyxHairlineStrong,
     outlineVariant = Noir.OnyxHairline,
     scrim = Color(0xFF000000),
@@ -116,11 +113,11 @@ fun minisFabColor(): Color = LocalChatPalette.current.fabAccent
 // Noir shape system — soft, continuous-looking corners. Larger than M3
 // defaults so cards and sheets read as objects rather than panels.
 private val MinisShapes = Shapes(
-    extraSmall = RoundedCornerShape(14.dp),   // DropdownMenu, Tooltip, OutlinedTextField default
+    extraSmall = RoundedCornerShape(12.dp),   // DropdownMenu, Tooltip, OutlinedTextField default
     small = RoundedCornerShape(14.dp),        // Chip, TextField
-    medium = RoundedCornerShape(22.dp),       // Card, Snackbar
-    large = RoundedCornerShape(26.dp),        // NavigationDrawer
-    extraLarge = RoundedCornerShape(32.dp),   // Dialog, BottomSheet
+    medium = RoundedCornerShape(20.dp),       // Card, Snackbar
+    large = RoundedCornerShape(24.dp),        // NavigationDrawer
+    extraLarge = RoundedCornerShape(28.dp),   // Dialog, BottomSheet
 )
 
 @Composable
@@ -152,29 +149,31 @@ private fun TextStyle.scale(factor: Float): TextStyle =
  * tracking are tuned for Inter (titles tighter, labels slightly open).
  */
 private fun noirTypography(): Typography {
+    // [T-spectra-v3] MiSans for every role. Sizes stay on the M3 scale so
+    // layouts keep their rhythm; weights are lifted one step for MiSans
+    // (its Regular is 330) and large roles get tighter tracking.
     val b = Typography()
-    fun TextStyle.sans(w: FontWeight? = null, track: Float? = null) = copy(
-        fontFamily = NoirSans,
+    fun TextStyle.ms(w: FontWeight? = null, track: Float? = null) = copy(
+        fontFamily = SpectraSans,
         fontWeight = w ?: fontWeight,
         letterSpacing = track?.em ?: letterSpacing,
     )
-    fun TextStyle.serif() = copy(fontFamily = NoirSerif, fontWeight = FontWeight.Normal, letterSpacing = (-0.01).em)
     return Typography(
-        displayLarge = b.displayLarge.serif(),
-        displayMedium = b.displayMedium.serif(),
-        displaySmall = b.displaySmall.serif(),
-        headlineLarge = b.headlineLarge.serif(),
-        headlineMedium = b.headlineMedium.serif(),
-        headlineSmall = b.headlineSmall.serif(),
-        titleLarge = b.titleLarge.sans(FontWeight.SemiBold, -0.01f),
-        titleMedium = b.titleMedium.sans(FontWeight.SemiBold, -0.005f),
-        titleSmall = b.titleSmall.sans(FontWeight.SemiBold, 0f),
-        bodyLarge = b.bodyLarge.sans(track = -0.005f),
-        bodyMedium = b.bodyMedium.sans(track = 0f),
-        bodySmall = b.bodySmall.sans(track = 0.005f),
-        labelLarge = b.labelLarge.sans(FontWeight.Medium, 0.005f),
-        labelMedium = b.labelMedium.sans(FontWeight.Medium, 0.02f),
-        labelSmall = b.labelSmall.sans(FontWeight.Medium, 0.04f).copy(fontSize = 11.sp),
+        displayLarge = b.displayLarge.ms(FontWeight.Bold, -0.025f),
+        displayMedium = b.displayMedium.ms(FontWeight.Bold, -0.025f),
+        displaySmall = b.displaySmall.ms(FontWeight.Bold, -0.02f),
+        headlineLarge = b.headlineLarge.ms(FontWeight.Bold, -0.02f),
+        headlineMedium = b.headlineMedium.ms(FontWeight.SemiBold, -0.015f),
+        headlineSmall = b.headlineSmall.ms(FontWeight.SemiBold, -0.01f),
+        titleLarge = b.titleLarge.ms(FontWeight.SemiBold, -0.01f),
+        titleMedium = b.titleMedium.ms(FontWeight.SemiBold, 0f),
+        titleSmall = b.titleSmall.ms(FontWeight.Medium, 0f),
+        bodyLarge = b.bodyLarge.ms(FontWeight.Normal, 0f),
+        bodyMedium = b.bodyMedium.ms(FontWeight.Normal, 0f),
+        bodySmall = b.bodySmall.ms(FontWeight.Normal, 0f).copy(fontSize = 13.sp, lineHeight = 18.sp),
+        labelLarge = b.labelLarge.ms(FontWeight.Medium, 0f),
+        labelMedium = b.labelMedium.ms(FontWeight.Medium, 0f).copy(fontSize = 12.5.sp),
+        labelSmall = b.labelSmall.ms(FontWeight.Medium, 0.01f).copy(fontSize = 12.sp),
     )
 }
 

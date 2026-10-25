@@ -2146,4 +2146,19 @@
     <string name="noir_steps_done">已完成 %1$d 个步骤</string>
     <string name="noir_steps_failed">%1$d 个失败</string>
     <string name="noir_step_thinking">思考</string>
+    <!-- [T-spectra-v3] thinking card -->
+    <string name="spectra_thinking_live">正在思考</string>
+    <string name="spectra_thinking_done">思考过程</string>
+    <string name="spectra_thinking_done_secs">思考了 %1$d 秒</string>
+    <string name="spectra_thinking_chars">%1$s 字</string>
+    <string name="spectra_thinking_copy">复制</string>
+    <string name="spectra_thinking_full">全文</string>
+    <!-- [T-spectra-v3] home hero -->
+    <string name="spectra_greet_morning">早上好</string>
+    <string name="spectra_greet_noon">中午好</string>
+    <string name="spectra_greet_afternoon">下午好</string>
+    <string name="spectra_greet_evening">晚上好</string>
+    <string name="spectra_home_question">今天想让我做点什么？</string>
+    <string name="spectra_home_sessions">%1$d 个对话</string>
+    <string name="spectra_home_scheduled">%1$d 个定时任务</string>
 </resources>

@@ -4553,7 +4553,9 @@ fun ChatScreen(
                                 },
                             )
                             } // close UserBubble SideEffect + UserMessageBubble block
-                            is FlatChatItem.AssistantHeader -> AssistantHeader()
+                            is FlatChatItem.AssistantHeader -> AssistantHeader(
+                                live = isStreaming && item === flatItems.lastOrNull { it is FlatChatItem.AssistantHeader },
+                            )
                             is FlatChatItem.AssistantText -> BoundsTrackedBlock(
                                 messageId = item.messageId,
                                 slotKey = "text:${item.block.id}",

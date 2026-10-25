@@ -172,30 +172,16 @@ internal fun TypingIndicator() {
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
     val soulName = soulMeta.name.trim().ifEmpty { "Minis" }
     val isDark = ChatColors.isDark
-    val gold = com.openminis.app.ui.theme.Noir.Iris
+    val gold = com.openminis.app.ui.theme.Noir.ThinkOnPaper.let { if (isDark) com.openminis.app.ui.theme.Noir.ThinkOnOnyx else it }
 
     Row(
         modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Breathing pearl: 1.6s in/out scale + halo, layer-only.
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .drawBehind {
-                    val p = decorativePingPong(decorativePhase(tick.value, 1600, 0))
-                    drawCircle(
-                        color = gold.copy(alpha = 0.10f + 0.16f * p),
-                        radius = size.minDimension * (0.62f + 0.22f * p),
-                    )
-                }
-                .graphicsLayer {
-                    val p = decorativePingPong(decorativePhase(tick.value, 1600, 0))
-                    val k = 0.9f + 0.1f * p
-                    scaleX = k
-                    scaleY = k
-                }
-                .drawBehind { drawNoirPearl(isDark) },
+        // [T-spectra-v3] Thinking orb: rotating violet ring + breathing halo.
+        com.openminis.app.ui.theme.SpectraOrb(
+            size = 18.dp,
+            state = com.openminis.app.ui.theme.OrbState.Think,
         )
         androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
         Text(

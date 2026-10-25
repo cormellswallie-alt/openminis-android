@@ -252,6 +252,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.openminis.app.offload.OffloadPermissionManager
@@ -315,16 +316,16 @@ internal fun UserMessageBubble(
             // together with the assistant trailing-block bottom + LazyColumn
             // spacedBy(2). Bottom stays 4dp: the User→Assistant boundary is
             // user.bottom(4) + spacedBy(2) + AssistantHeader.top(10) = 16.
-            .padding(top = if (precededByUser) 14.dp else 10.dp, bottom = 4.dp),
+            .padding(start = 2.dp, top = if (precededByUser) 16.dp else 18.dp, bottom = 6.dp),
     ) {
         // Cap the bubble at 80% of the LazyColumn's available width (mirrors iOS
         // proportional sizing; prevents single-line messages from spanning the
         // full row and losing their "trailing bubble" shape).
-        val bubbleMaxWidth = this.maxWidth * 0.8f
+        // [T-spectra-v3] The question is the page heading: full width, left aligned.
+        val bubbleMaxWidth = this.maxWidth
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Spacer(modifier = Modifier.weight(1f).widthIn(min = 60.dp))
         Box(
             modifier = Modifier
                 .widthIn(max = bubbleMaxWidth)
@@ -355,8 +356,8 @@ internal fun UserMessageBubble(
         ) {
             // iOS: VStack(alignment: .trailing, spacing: 6) { attachments; text bubble }
             Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // Attachments ABOVE the text bubble, right-aligned FlowRow (iOS UserAttachmentList)
                 val hasAttachments = message.imageUris.isNotEmpty() || message.attachmentNames.isNotEmpty()
@@ -380,7 +381,8 @@ internal fun UserMessageBubble(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         val textColor = if (isQueued) secondaryTextColor else ChatColors.userBubbleText
-                        val bubbleBg = if (isQueued) Color.Transparent else userBubbleColor
+                        @Suppress("UNUSED_VARIABLE") val legacyBubble = userBubbleColor
+                        val bubbleBg = Color.Transparent
                         // [T-noir-redesign] Noir bubble: 22dp corners with a tight
                         // 6dp "tail" corner pointing back at the sender (bottom-end).
                         val shape = RoundedCornerShape(
@@ -394,7 +396,7 @@ internal fun UserMessageBubble(
                                         floatArrayOf(6.dp.toPx(), 4.dp.toPx()), 0f
                                     ),
                                 )
-                                val r = 22.dp.toPx()
+                                val r = 16.dp.toPx()
                                 drawRoundRect(
                                     color = secondaryTextColor.copy(alpha = 0.5f),
                                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
@@ -432,15 +434,29 @@ internal fun UserMessageBubble(
                                 isStreaming = false,
                                 stableKey = "user:${message.id}",
                             ) {
+                                // Short questions read as a heading (19sp
+                                // SemiBold); long pastes drop to 16sp Medium
+                                // so a log dump never becomes a wall of bold.
+                                val isShort = message.content.length <= 160 &&
+                                    message.content.count { it == '\n' } < 4
                                 Text(
                                     text = message.content,
                                     color = textColor,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.5.sp),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = if (isShort) 19.sp else 16.sp,
+                                        lineHeight = if (isShort) 28.sp else 25.sp,
+                                        fontWeight = if (isShort) androidx.compose.ui.text.font.FontWeight.SemiBold
+                                        else androidx.compose.ui.text.font.FontWeight.Medium,
+                                        letterSpacing = if (isShort) (-0.01).em else 0.em,
+                                    ),
                                     modifier = bubbleModifier
                                         .background(bubbleBg, shape)
                                         .clip(shape)
                                         .then(dashedStroke)
-                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        .padding(
+                                            horizontal = if (isQueued) 14.dp else 2.dp,
+                                            vertical = if (isQueued) 10.dp else 2.dp,
+                                        ),
                                 )
                             }
                         }
@@ -602,7 +618,7 @@ internal fun UserAttachmentList(
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.Start),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         imageUris.forEachIndexed { idx, uri ->
