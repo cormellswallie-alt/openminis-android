@@ -6,6 +6,10 @@ package com.openminis.app.ui.chat
 // formatToolDetailsForClipboard, ToolCallPill, ThinkingBlock.
 // Full import block copied (unused=warnings); externally-called ones internal.
 
+import androidx.compose.animation.using
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.filled.Translate
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -1045,9 +1049,8 @@ internal fun ThinkingBlock(
     // [T-noir-step-timeline] rail to neighbouring steps.
     railUp: Boolean = false,
     railDown: Boolean = false,
-    // [T-spectra-v4-thought] Inside a thinking card: the card owns the header
-    // and the expand/collapse, so this renders as ONE step of the card's
-    // timeline — a violet dot on the rail, the text, then the underline.
+    // [T-spectra-v4-thought] Inside a thinking card the card owns header and
+    // expand/collapse; this renders one step of the card's timeline.
     embedded: Boolean = false,
 ) {
     // Per-block expand state, keyed by block.id so a manual toggle on an
@@ -1066,7 +1069,6 @@ internal fun ThinkingBlock(
         // One-shot auto-collapse when streaming for this block ends.
         if (shouldAutoCollapseThinking(isStreaming, userIntent)) expanded = false
     }
-    val thinkingInkColor = thinkingInk()
     val charCount = block.content.length
     val charLabel = when {
         charCount >= 1000 -> "${charCount / 1000}K"
@@ -1077,32 +1079,33 @@ internal fun ThinkingBlock(
     val overHardCap = charCount > thinkingHardCap
     var showFullContent by remember(block.id) { mutableStateOf(false) }
     val liveThinking = isStreaming && block.toolStatus != ToolBlockStatus.SUCCESS
-    val dark = ChatColors.isDark
 
     if (embedded) {
+        // [T-spectra-v5-thought] One step of a thinking card: a spark on the
+        // rail, then the note.
         val railColor = stepRailColor()
+        val ink = thinkingInk()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .drawBehind {
-                    // Rail through the dot (dot centre = 6dp pad + 12dp).
                     val x = (StepNodeSize / 2).toPx()
-                    val cy = 18.dp.toPx()
-                    val gap = 8.dp.toPx()
+                    val cy = 20.dp.toPx()
+                    val gap = 11.dp.toPx()
                     val stroke = 1.dp.toPx()
                     if (railUp) drawLine(railColor, Offset(x, 0f), Offset(x, cy - gap), stroke)
                     if (railDown) drawLine(railColor, Offset(x, cy + gap), Offset(x, size.height), stroke)
                 }
-                .padding(top = 6.dp, bottom = 10.dp),
+                .padding(top = 8.dp, bottom = 14.dp),
         ) {
             Box(
                 modifier = Modifier.width(StepNodeSize).height(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                ThinkingDot(live = liveThinking, color = thinkingInkColor)
+                ThoughtSpark(live = liveThinking, color = ink)
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f).padding(end = 4.dp)) {
+            Column(modifier = Modifier.weight(1f).padding(end = 2.dp)) {
                 ThinkingBody(
                     block = block,
                     live = liveThinking,
@@ -1118,15 +1121,8 @@ internal fun ThinkingBlock(
         return
     }
 
-    // Live one-liner beside the label: O(600) per token, never the whole block.
+    // ── Standalone (thinking cards off): a one-step Folio card ──
     val preview = remember(block.id, charCount) { thinkingPreviewLine(block.content) }
-    val chevronAngle by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(240),
-        label = "thinkingChevron",
-    )
-    // Elapsed time is measured locally (blocks carry no timing): live while
-    // streaming, frozen when done.
     val startedAt = remember(block.id) { android.os.SystemClock.elapsedRealtime() }
     var frozenSecs by remember(block.id) { mutableStateOf<Long?>(null) }
     var liveSecs by remember(block.id) { mutableStateOf(0L) }
@@ -1140,120 +1136,98 @@ internal fun ThinkingBlock(
             frozenSecs = (android.os.SystemClock.elapsedRealtime() - startedAt) / 1000
         }
     }
-    val secs = frozenSecs ?: liveSecs.takeIf { liveThinking }
     val title = when {
         liveThinking -> stringResource(R.string.spectra_thinking_live)
-        secs != null && secs > 0 -> stringResource(R.string.spectra_thinking_done_secs, secs.toInt())
+        (frozenSecs ?: 0L) > 0 -> stringResource(R.string.spectra_thinking_done_secs, (frozenSecs ?: 0L).toInt())
         else -> stringResource(R.string.spectra_thinking_done)
     }
-    val meta = buildString {
-        if (liveThinking && secs != null) append("${secs}s")
-        if (charCount > 0) { if (isNotEmpty()) append(" · "); append(stringResource(R.string.spectra_thinking_chars, charLabel)) }
+    val meta = if (charCount > 0) stringResource(R.string.spectra_thinking_chars, charLabel) else ""
+    val cardFill = thoughtCardFill()
+    val arrive = remember(block.id) {
+        androidx.compose.animation.core.Animatable(
+            if (liveThinking && ThoughtMotion.firstSight("${block.id}#arrive")) 0f else 1f,
+        )
     }
-    // [T-spectra-v4-thought] Standalone thinking (cards off) is a single-step
-    // thinking card: same surface, header and body as the card.
-    val cardBg = thoughtCardFill()
-    val cardShape = RoundedCornerShape(ThoughtCardRadius)
+    LaunchedEffect(block.id) {
+        if (arrive.value < 1f) {
+            arrive.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 260f))
+        }
+    }
+    val inkC = thinkingInk()
+    val settle = remember(block.id) { androidx.compose.animation.core.Animatable(0f) }
+    var wasLive by remember(block.id) { mutableStateOf(liveThinking) }
+    LaunchedEffect(liveThinking) {
+        if (wasLive && !liveThinking) {
+            settle.snapTo(1f)
+            settle.animateTo(0f, androidx.compose.animation.core.tween(1400))
+        }
+        wasLive = liveThinking
+    }
+    val edge = androidx.compose.ui.graphics.lerp(thoughtCardEdge(), inkC, 0.55f * settle.value)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .stepRail(railUp, railDown, stepRailColor())
-            .padding(vertical = 4.dp)
-            .clip(cardShape)
-            .background(cardBg, cardShape)
-            .border(1.dp, thoughtCardEdge(), cardShape)
-            .padding(start = 12.dp, end = 10.dp),
+            .padding(vertical = 6.dp)
+            .thoughtArrive { arrive.value }
+            .thoughtPaper(ThoughtSeg.LONE, cardFill, edge, thoughtShadow())
+            .padding(start = 14.dp, end = 12.dp),
     ) {
-        // Header row — only the header reacts to taps (a drag-release in the
-        // inner scroller must not toggle).
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .clickable {
-                    // [T-android-thinking-collapse-latch] Record the direction.
-                    if (!overHardCap) userIntent = !expanded
-                    if (overHardCap) showFullContent = true
-                    else expanded = !expanded
+        ThoughtHeader(
+            orb = if (liveThinking) com.openminis.app.ui.theme.OrbState.Think else com.openminis.app.ui.theme.OrbState.Done,
+            title = title,
+            meta = meta,
+            liveSecs = if (liveThinking) liveSecs else null,
+            preview = preview,
+            expanded = expanded && !overHardCap,
+            failed = null,
+            tools = emptyList(),
+            toolsKey = block.id,
+            animateTools = false,
+            trailing = if (overHardCap) {
+                {
+                    Text(
+                        text = stringResource(R.string.thinking_view_full),
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = inkC,
+                    )
                 }
-                .padding(top = 12.dp, bottom = 12.dp),
+            } else null,
+            onClick = {
+                // [T-android-thinking-collapse-latch] Record the direction.
+                if (overHardCap) {
+                    showFullContent = true
+                } else {
+                    userIntent = !expanded
+                    expanded = !expanded
+                }
+            },
+        )
+        AnimatedVisibility(
+            visible = expanded && !overHardCap,
+            enter = androidx.compose.animation.expandVertically(
+                androidx.compose.animation.core.tween(340, easing = ThoughtEase),
+            ) + androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(260, delayMillis = 60)),
+            exit = androidx.compose.animation.shrinkVertically(
+                androidx.compose.animation.core.tween(260, easing = ThoughtEase),
+            ) + androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)),
         ) {
-            Box(modifier = Modifier.size(StepNodeSize), contentAlignment = Alignment.Center) {
-                com.openminis.app.ui.theme.SpectraOrb(
-                    size = 22.dp,
-                    state = if (liveThinking) com.openminis.app.ui.theme.OrbState.Think
-                    else com.openminis.app.ui.theme.OrbState.Done,
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = title,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                    )
-                    if (meta.isNotEmpty()) {
-                        Text(
-                            text = "  $meta",
-                            fontSize = 12.5.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    }
-                }
-                if (!expanded && preview.isNotEmpty()) {
-                    Text(
-                        text = preview,
-                        fontSize = 13.5.sp,
-                        lineHeight = 19.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 3.dp),
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)) {
+                ThoughtTrace(live = liveThinking, color = inkC, restAlpha = 0.18f)
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.padding(start = StepTextIndent, end = 2.dp)) {
+                    ThinkingBody(
+                        block = block,
+                        live = liveThinking,
+                        fadeColor = cardFill,
+                        overHardCap = false,
+                        onShowFull = { showFullContent = true },
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(6.dp))
-            if (overHardCap) {
-                Text(
-                    text = stringResource(R.string.thinking_view_full),
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = thinkingInkColor,
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp).rotate(chevronAngle),
-                )
-            }
         }
-
-        AnimatedVisibility(visible = expanded && !overHardCap) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = StepTextIndent, end = 4.dp, bottom = 12.dp),
-            ) {
-                ThinkingBody(
-                    block = block,
-                    live = liveThinking,
-                    fadeColor = cardBg,
-                    overHardCap = false,
-                    onShowFull = { showFullContent = true },
-                )
-            }
-        }
-
         // [T-thinking-render-perf-android] Hard-cap full-content viewer.
         if (showFullContent) {
             ThinkingFullContentDialog(
@@ -1264,41 +1238,65 @@ internal fun ThinkingBlock(
     }
 }
 
-/** [T-spectra-v4-thought] The thinking step's node: a small violet dot that breathes while live. */
+/**
+ * [T-spectra-v5-thought] The thinking step's node: a four-point spark.
+ * Live: turns a quarter every 2.4 s and breathes inside a soft halo.
+ */
 @Composable
-private fun ThinkingDot(live: Boolean, color: Color) {
-    if (live) {
-        val tick = com.openminis.app.ui.components.rememberDecorativeTick()
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .drawBehind {
-                    val p = com.openminis.app.ui.components.decorativePingPong(
-                        com.openminis.app.ui.components.decorativePhase(tick.value, 1600, 0),
+internal fun ThoughtSpark(live: Boolean, color: Color, modifier: Modifier = Modifier) {
+    val tick = if (live) com.openminis.app.ui.components.rememberDecorativeTick() else null
+    Box(
+        modifier = modifier
+            .size(22.dp)
+            .drawBehind {
+                val c = center
+                var rot = 0f
+                var breath = 0f
+                if (tick != null) {
+                    val t = tick.value
+                    rot = 90f * ThoughtEase.transform(com.openminis.app.ui.components.decorativePhase(t, 2400, 0))
+                    breath = com.openminis.app.ui.components.decorativePingPong(
+                        com.openminis.app.ui.components.decorativePhase(t, 1800, 0),
                     )
-                    drawCircle(color.copy(alpha = 0.14f + 0.16f * p), radius = 4.dp.toPx() + 4.dp.toPx() * p)
-                    drawCircle(color, radius = 3.5.dp.toPx())
-                },
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .size(7.dp)
-                .background(color.copy(alpha = 0.85f), CircleShape),
-        )
-    }
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            0f to color.copy(alpha = 0.26f + 0.14f * breath),
+                            1f to color.copy(alpha = 0f),
+                            center = c,
+                            radius = size.minDimension / 2f,
+                        ),
+                        radius = size.minDimension / 2f,
+                    )
+                }
+                val r = (if (tick != null) 5.6f + 1.2f * breath else 5.2f) * density
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(c.x, c.y - r)
+                    quadraticTo(c.x, c.y, c.x + r, c.y)
+                    quadraticTo(c.x, c.y, c.x, c.y + r)
+                    quadraticTo(c.x, c.y, c.x - r, c.y)
+                    quadraticTo(c.x, c.y, c.x, c.y - r)
+                    close()
+                }
+                drawContext.canvas.save()
+                drawContext.transform.rotate(rot, c)
+                drawPath(path, color.copy(alpha = if (tick != null) 1f else 0.78f))
+                drawContext.canvas.restore()
+            },
+    )
 }
 
 /**
- * [T-spectra-v4-thought] Thinking text — shared by the card step and the
- * standalone block.
+ * [T-spectra-v5-thought] Thinking text — shared by the card step and the
+ * standalone card.
  *
- *  • Note typography: 14.5sp / 24sp in soft ink (was 15 / 27 — too loud).
- *  • Live: a 7-line tail window that follows the stream (pauses while the
- *    user drags), with a soft top fade.
- *  • Done: up to 8 lines, "Show more" opens the rest in place.
- *  • Ends with the thinking underline; actions sit on its right end:
- *    show more · Translate (English only, on device) · copy · full text.
+ *  • Type: English is set in Newsreader 16/25 (a screen text serif), Chinese
+ *    stays MiSans 14.5/24. `**Heading**` lines become small sans heads.
+ *  • Live: 7-line tail window following the stream (pauses while the user
+ *    drags), fresh words develop from faint ink, violet caret, comet trace.
+ *  • Done: 6 lines with a soft fade; the trace draws itself in once; the
+ *    action capsule hangs off its right end (more · translate · copy · full).
+ *  • Translate: on-device EN→ZH, cross-fades; a shimmer sweeps the text
+ *    while the language pack downloads / translation runs.
  */
 @Composable
 private fun ThinkingBody(
@@ -1311,54 +1309,65 @@ private fun ThinkingBody(
     val context = LocalContext.current
     val dark = ChatColors.isDark
     val ink = thinkingInk()
-    val bodyColor = if (dark) Noir.IvorySoft else Noir.InkSoft
+    val bodyColor = thoughtBodyColor()
     val metaColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val underline = ink.copy(alpha = if (dark) 0.40f else 0.30f)
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
-    val bodySize = 14.5.sp
-    val bodyLine = 24.sp
+    val charCount = block.content.length
+
+    // Trace reveal: the underline draws itself in when this block finishes.
+    val reveal = remember(block.id) { androidx.compose.animation.core.Animatable(1f) }
+    var wasLive by remember(block.id) { mutableStateOf(live) }
+    LaunchedEffect(live) {
+        if (wasLive && !live) {
+            reveal.snapTo(0f)
+            reveal.animateTo(1f, androidx.compose.animation.core.tween(720, easing = ThoughtEase))
+        }
+        wasLive = live
+    }
 
     if (overHardCap) {
         Text(
             text = remember(block.id) { thinkingPreviewLine(block.content) },
-            fontSize = bodySize,
-            lineHeight = bodyLine,
+            style = thoughtSansStyle(),
             color = bodyColor,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
         ) {
-            Box(Modifier.weight(1f).height(1.dp).background(underline))
-            Spacer(modifier = Modifier.width(6.dp))
-            ThinkingActionChip(
-                icon = Icons.Default.OpenInFull,
-                label = stringResource(R.string.thinking_view_full),
-                onClick = onShowFull,
-            )
+            ThoughtTrace(live = false, color = ink, modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(8.dp))
+            ThoughtActionCapsule {
+                ThoughtCapsuleItem(
+                    icon = Icons.Default.OpenInFull,
+                    label = stringResource(R.string.thinking_view_full),
+                    onClick = onShowFull,
+                )
+            }
         }
         return
     }
 
-    val charCount = block.content.length
-    // [T-thinking-render-perf-android] Tail window: render at most the last
-    // 8000 chars inline (cut at a line boundary when one is close).
-    val windowSize = 8000
-    val isTruncated = charCount > windowSize
-    val displayContent = remember(block.id, charCount) {
-        if (isTruncated) {
-            val full = block.content
-            val start = charCount - windowSize
-            val nl = full.indexOf('\n', start)
-            if (nl in start until start + 200) full.substring(nl + 1) else full.substring(start)
-        } else {
-            block.content
-        }
+    // Serif when the thinking is (mostly) English — decided once per ~500 chars.
+    val serif = remember(block.id, charCount / 500) {
+        isMostlyLatin(block.content.take(600))
     }
+    val bodyStyle = if (serif) thoughtSerifStyle() else thoughtSansStyle()
 
     if (live) {
+        // Only ~7 lines are visible: keep the live window small so per-token
+        // work stays O(window), cut at a line boundary.
+        val tail = remember(block.id, charCount) {
+            val full = block.content
+            if (charCount <= 2400) full else {
+                val start = charCount - 2400
+                val nl = full.indexOf('\n', start)
+                if (nl in start until start + 160) full.substring(nl + 1) else full.substring(start)
+            }
+        }
+        val rich = rememberThoughtRich(tail, serif)
         val scrollState = rememberScrollState()
         var userScrolledAway by remember(block.id) { mutableStateOf(false) }
         LaunchedEffect(scrollState, block.id) {
@@ -1373,19 +1382,20 @@ private fun ThinkingBody(
             }
         }
         LaunchedEffect(scrollState, block.id) {
-            snapshotFlow { block.content.length }.collect {
-                if (!userScrolledAway) scrollState.scrollTo(scrollState.maxValue)
+            snapshotFlow { scrollState.maxValue }.collect {
+                if (!userScrolledAway) scrollState.animateScrollTo(it, androidx.compose.animation.core.tween(260, easing = ThoughtEase))
             }
         }
         Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = displayContent,
-                fontSize = bodySize,
-                lineHeight = bodyLine,
+            StreamingThoughtText(
+                rich = rich,
+                totalLen = charCount,
+                style = bodyStyle,
                 color = bodyColor,
+                caret = ink,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 168.dp)
+                    .heightIn(max = if (serif) 175.dp else 168.dp)
                     .verticalScroll(scrollState),
             )
             if (scrollState.value > 0) {
@@ -1393,7 +1403,7 @@ private fun ThinkingBody(
                     modifier = Modifier
                         .matchParentSize()
                         .drawBehind {
-                            val h = 32.dp.toPx().coerceAtMost(size.height)
+                            val h = 40.dp.toPx().coerceAtMost(size.height)
                             drawRect(
                                 brush = Brush.verticalGradient(
                                     0f to fadeColor, 1f to fadeColor.copy(alpha = 0f),
@@ -1405,17 +1415,25 @@ private fun ThinkingBody(
                 )
             }
         }
-        Box(
-            modifier = Modifier
-                .padding(top = 10.dp)
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(underline),
-        )
+        ThoughtTrace(live = true, color = ink, modifier = Modifier.padding(top = 12.dp))
         return
     }
 
-    // ── Finished: clamp + actions + on-device translation ──
+    // ── Finished ──
+    // [T-thinking-render-perf-android] Tail window: render at most the last
+    // 8000 chars inline (cut at a line boundary when one is close).
+    val windowSize = 8000
+    val isTruncated = charCount > windowSize
+    val displayContent = remember(block.id, charCount) {
+        if (isTruncated) {
+            val full = block.content
+            val start = charCount - windowSize
+            val nl = full.indexOf('\n', start)
+            if (nl in start until start + 200) full.substring(nl + 1) else full.substring(start)
+        } else {
+            block.content
+        }
+    }
     val autoTranslate = com.openminis.app.ui.settings
         .rememberAppearanceFlag(com.openminis.app.ui.settings.KEY_THINKING_AUTO_TRANSLATE, false).value
     val englishy = remember(block.id, charCount) { ThinkingTranslator.looksEnglish(displayContent) }
@@ -1448,97 +1466,205 @@ private fun ThinkingBody(
 
     var bodyOpen by remember(block.id) { mutableStateOf(false) }
     var overflowing by remember(block.id) { mutableStateOf(false) }
-    val shown = if (showTranslated) translated ?: displayContent else displayContent
 
     if (isTruncated) {
         Text(
             text = stringResource(R.string.thinking_truncated_hint, displayContent.length / 1000, charCount / 1000),
             fontSize = 12.5.sp,
             color = metaColor,
-            modifier = Modifier.padding(bottom = 6.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
         )
     }
-    if (showTranslated && translated != null) {
-        Text(
-            text = stringResource(R.string.spectra_thinking_translated_tag),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = ink,
-            modifier = Modifier.padding(bottom = 4.dp),
-        )
+    val viewTranslated = showTranslated && translated != null
+    androidx.compose.animation.AnimatedContent(
+        targetState = viewTranslated,
+        transitionSpec = {
+            (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(320, delayMillis = 90)) +
+                androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(380, easing = ThoughtEase)) { 18 })
+                .togetherWith(androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150)))
+                .using(androidx.compose.animation.SizeTransform(clip = false) { _, _ -> androidx.compose.animation.core.tween(340, easing = ThoughtEase) })
+        },
+        label = "thoughtTranslate",
+    ) { tr ->
+        val text = if (tr) translated ?: displayContent else displayContent
+        val useSerif = serif && !tr
+        val rich = rememberThoughtRich(text, useSerif)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (tr) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 6.dp)) {
+                    Box(Modifier.size(5.dp).background(ink, CircleShape))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.spectra_thinking_translated_tag),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = ink,
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(androidx.compose.animation.core.tween(360, easing = ThoughtEase)),
+            ) {
+                Text(
+                    text = rich,
+                    style = if (useSerif) thoughtSerifStyle() else thoughtSansStyle(),
+                    color = bodyColor,
+                    maxLines = if (bodyOpen) Int.MAX_VALUE else 6,
+                    overflow = TextOverflow.Clip,
+                    onTextLayout = { if (!bodyOpen) overflowing = it.hasVisualOverflow },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (overflowing && !bodyOpen) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .drawBehind {
+                                val h = 46.dp.toPx().coerceAtMost(size.height)
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        0f to fadeColor.copy(alpha = 0f), 1f to fadeColor,
+                                        startY = size.height - h, endY = size.height,
+                                    ),
+                                    topLeft = Offset(0f, size.height - h),
+                                    size = androidx.compose.ui.geometry.Size(size.width, h),
+                                )
+                            },
+                    )
+                }
+                if (phase != null) {
+                    TranslateShimmer(color = ink, modifier = Modifier.matchParentSize())
+                }
+            }
+        }
     }
-    Text(
-        text = shown,
-        fontSize = bodySize,
-        lineHeight = bodyLine,
-        color = bodyColor,
-        maxLines = if (bodyOpen) Int.MAX_VALUE else 8,
-        overflow = TextOverflow.Ellipsis,
-        onTextLayout = { if (!bodyOpen) overflowing = it.hasVisualOverflow },
-        modifier = Modifier.fillMaxWidth(),
-    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
     ) {
-        // The thinking underline — actions hang off its right end.
-        Box(Modifier.weight(1f).height(1.dp).background(underline))
-        Spacer(modifier = Modifier.width(4.dp))
-        if (overflowing || bodyOpen) {
-            ThinkingActionChip(
-                icon = null,
-                label = stringResource(if (bodyOpen) R.string.spectra_thinking_less else R.string.spectra_thinking_more),
-                onClick = { bodyOpen = !bodyOpen },
-            )
-        }
-        if (englishy && charCount > 0) {
-            ThinkingActionChip(
-                icon = Icons.Default.Translate,
-                label = when {
-                    phase == ThinkingTranslator.Phase.Downloading -> stringResource(R.string.spectra_thinking_downloading)
-                    phase == ThinkingTranslator.Phase.Translating -> stringResource(R.string.spectra_thinking_translating)
-                    showTranslated -> stringResource(R.string.spectra_thinking_original)
-                    else -> stringResource(R.string.spectra_thinking_translate)
-                },
-                tint = if (showTranslated || phase != null) ink else null,
+        ThoughtTrace(
+            live = false,
+            color = ink,
+            restAlpha = if (dark) 0.42f else 0.32f,
+            reveal = reveal.value,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        ThoughtActionCapsule {
+            if (overflowing || bodyOpen) {
+                ThoughtCapsuleItem(
+                    icon = null,
+                    label = stringResource(if (bodyOpen) R.string.spectra_thinking_less else R.string.spectra_thinking_more),
+                    onClick = { bodyOpen = !bodyOpen },
+                )
+                ThoughtCapsuleDivider()
+            }
+            if (englishy && charCount > 0) {
+                ThoughtCapsuleItem(
+                    icon = Icons.Default.Translate,
+                    label = when {
+                        phase == ThinkingTranslator.Phase.Downloading -> stringResource(R.string.spectra_thinking_downloading)
+                        phase == ThinkingTranslator.Phase.Translating -> stringResource(R.string.spectra_thinking_translating)
+                        showTranslated && translated != null -> stringResource(R.string.spectra_thinking_original)
+                        else -> null
+                    },
+                    contentDescription = stringResource(R.string.spectra_thinking_translate),
+                    tint = if (showTranslated || phase != null) ink else null,
+                    onClick = {
+                        when {
+                            phase != null -> Unit
+                            showTranslated -> showTranslated = false
+                            translated != null -> showTranslated = true
+                            else -> startTranslate()
+                        }
+                    },
+                )
+                ThoughtCapsuleDivider()
+            }
+            ThoughtCapsuleItem(
+                icon = Icons.Default.ContentCopy,
+                label = null,
+                contentDescription = stringResource(R.string.spectra_thinking_copy),
                 onClick = {
-                    when {
-                        phase != null -> Unit
-                        showTranslated -> showTranslated = false
-                        translated != null -> showTranslated = true
-                        else -> startTranslate()
-                    }
+                    clipboard.setText(
+                        androidx.compose.ui.text.AnnotatedString(
+                            if (showTranslated) translated ?: displayContent else displayContent,
+                        ),
+                    )
                 },
             )
+            ThoughtCapsuleDivider()
+            ThoughtCapsuleItem(
+                icon = Icons.Default.OpenInFull,
+                label = null,
+                contentDescription = stringResource(R.string.spectra_thinking_full),
+                onClick = onShowFull,
+            )
         }
-        ThinkingActionChip(
-            icon = Icons.Default.ContentCopy,
-            label = null,
-            contentDescription = stringResource(R.string.spectra_thinking_copy),
-            onClick = { clipboard.setText(androidx.compose.ui.text.AnnotatedString(shown)) },
-        )
-        ThinkingActionChip(
-            icon = Icons.Default.OpenInFull,
-            label = null,
-            contentDescription = stringResource(R.string.spectra_thinking_full),
-            onClick = onShowFull,
-        )
     }
-    translateError?.let {
+    AnimatedVisibility(visible = translateError != null) {
         Text(
-            text = stringResource(R.string.spectra_thinking_translate_failed, it),
+            text = stringResource(R.string.spectra_thinking_translate_failed, translateError ?: ""),
             fontSize = 12.5.sp,
             color = if (dark) Noir.ErrOnOnyx else Noir.Err,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 6.dp),
         )
     }
 }
 
-/** [T-spectra-v4-thought] Quiet text/icon action on the thinking underline. */
+/** Violet light sweeping over text while it is being translated. */
 @Composable
-private fun ThinkingActionChip(
+private fun TranslateShimmer(color: Color, modifier: Modifier = Modifier) {
+    val tick = com.openminis.app.ui.components.rememberDecorativeTick()
+    Box(
+        modifier = modifier.drawBehind {
+            val p = com.openminis.app.ui.components.decorativePhase(tick.value, 1400, 0)
+            val band = size.width * 0.45f
+            val x = -band + (size.width + band) * p
+            drawRect(
+                brush = Brush.linearGradient(
+                    0f to color.copy(alpha = 0f),
+                    0.5f to color.copy(alpha = 0.13f),
+                    1f to color.copy(alpha = 0f),
+                    start = Offset(x, 0f),
+                    end = Offset(x + band, size.height * 0.25f),
+                ),
+            )
+        },
+    )
+}
+
+/** The quiet capsule on the right end of the thinking underline. */
+@Composable
+private fun ThoughtActionCapsule(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+    val dark = ChatColors.isDark
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (dark) Noir.Onyx2 else Noir.PaperSunk)
+            .animateContentSize(androidx.compose.animation.core.spring(dampingRatio = 0.8f, stiffness = 500f))
+            .height(30.dp)
+            .padding(horizontal = 2.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun ThoughtCapsuleDivider() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(12.dp)
+            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.22f)),
+    )
+}
+
+@Composable
+private fun ThoughtCapsuleItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector?,
     label: String?,
     onClick: () -> Unit,
@@ -1549,16 +1675,16 @@ private fun ThinkingActionChip(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .heightIn(min = 30.dp)
-            .padding(horizontal = if (label == null) 7.dp else 8.dp, vertical = 5.dp),
+            .height(30.dp)
+            .padding(horizontal = if (label == null) 8.dp else 10.dp),
     ) {
         if (icon != null) {
             Icon(icon, contentDescription = contentDescription ?: label, tint = color, modifier = Modifier.size(15.dp))
         }
         if (label != null) {
-            if (icon != null) Spacer(modifier = Modifier.width(4.dp))
+            if (icon != null) Spacer(modifier = Modifier.width(5.dp))
             Text(text = label, fontSize = 12.5.sp, fontWeight = FontWeight.Medium, color = color, maxLines = 1)
         }
     }

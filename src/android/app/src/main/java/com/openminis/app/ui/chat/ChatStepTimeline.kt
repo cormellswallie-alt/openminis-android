@@ -1,5 +1,6 @@
 package com.openminis.app.ui.chat
 
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -492,12 +493,13 @@ internal fun thinkingPreviewLine(content: String): String {
 internal enum class ThoughtSeg { LONE, TOP, MIDDLE, BOTTOM }
 
 @Composable
-internal fun thoughtCardFill(): Color = if (ChatColors.isDark) Noir.Onyx1 else Color(0xFFF8F8F9)
+// [T-spectra-v5-thought] Folio: white sheet + soft shadow (light), lifted onyx (dark).
+internal fun thoughtCardFill(): Color = if (ChatColors.isDark) Noir.Onyx1 else Noir.PaperCard
 
 @Composable
-internal fun thoughtCardEdge(): Color = if (ChatColors.isDark) Noir.OnyxHairline else Noir.PaperHairline
+internal fun thoughtCardEdge(): Color = if (ChatColors.isDark) Noir.OnyxHairlineStrong else Noir.PaperHairline
 
-internal val ThoughtCardRadius: Dp = 20.dp
+internal val ThoughtCardRadius: Dp = 22.dp
 
 /** Fill + hairline of one segment; open edges extend past the clip. */
 internal fun Modifier.thoughtSurface(seg: ThoughtSeg, fill: Color, edge: Color): Modifier = drawBehind {
@@ -536,6 +538,8 @@ private fun ThoughtCardSlot(
     expandedRuns: SnapshotStateMap<String, Boolean>,
     content: @Composable (railUp: Boolean, railDown: Boolean) -> Unit,
 ) {
+    // [T-spectra-v5-thought] "Folio": a white sheet with a soft shadow, welded
+    // across the LazyColumn items of one run.
     val expanded = expandedRuns[info.runId] ?: info.defaultExpanded
     if (!expanded && !info.isHead) return
     val last = info.index == info.size - 1
@@ -546,31 +550,94 @@ private fun ThoughtCardSlot(
         else -> ThoughtSeg.MIDDLE
     }
     val closes = seg == ThoughtSeg.LONE || seg == ThoughtSeg.BOTTOM
+    val ink = thinkingInk()
+
+    // Settle: when the run finishes on screen, the card's edge breathes
+    // violet once. The head records the moment; every segment reads it.
+    val live = info.summary?.live
+    if (info.isHead && live != null) {
+        var wasLive by androidx.compose.runtime.remember(info.runId) { androidx.compose.runtime.mutableStateOf(live) }
+        androidx.compose.runtime.LaunchedEffect(live) {
+            if (wasLive && !live) ThoughtMotion.settledAt[info.runId] = android.os.SystemClock.uptimeMillis()
+            wasLive = live
+        }
+    }
+    val settledAt = ThoughtMotion.settledAt[info.runId]
+    val glow = androidx.compose.runtime.remember(info.runId) { androidx.compose.animation.core.Animatable(0f) }
+    androidx.compose.runtime.LaunchedEffect(settledAt) {
+        if (settledAt == null) return@LaunchedEffect
+        val age = android.os.SystemClock.uptimeMillis() - settledAt
+        if (age >= 1400) return@LaunchedEffect
+        glow.snapTo(1f - age / 1400f)
+        glow.animateTo(0f, tween((1400 - age).toInt()))
+    }
+    val edge = androidx.compose.ui.graphics.lerp(thoughtCardEdge(), ink, 0.6f * glow.value)
+
+    // Arrive (head of a new live card) / unfold (members after a tap or a
+    // new live step) — first sight only, never on scroll-back.
+    val enterKey = if (info.isHead) "${info.runId}#arrive" else "${info.runId}#${info.index}"
+    val unfoldedAt = ThoughtMotion.unfoldedAt[info.runId] ?: 0L
+    val recentlyUnfolded = android.os.SystemClock.uptimeMillis() - unfoldedAt < 450
+    val enter = androidx.compose.runtime.remember(enterKey, unfoldedAt) {
+        val first = ThoughtMotion.firstSight(enterKey)
+        val animate = when {
+            info.isHead -> first && live == true
+            recentlyUnfolded -> true
+            else -> first && info.defaultExpanded
+        }
+        androidx.compose.animation.core.Animatable(if (animate) 0f else 1f)
+    }
+    androidx.compose.runtime.LaunchedEffect(enter) {
+        if (enter.value < 1f) {
+            if (!info.isHead && recentlyUnfolded) kotlinx.coroutines.delay(28L * info.index.coerceAtMost(8))
+            enter.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.86f, stiffness = 300f))
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = if (info.isHead) 6.dp else 0.dp, bottom = if (closes) 6.dp else 0.dp)
-            .thoughtSurface(seg, thoughtCardFill(), thoughtCardEdge())
-            .padding(start = 12.dp, end = 10.dp, bottom = if (closes && expanded) 6.dp else 0.dp),
+            .padding(top = if (info.isHead) 8.dp else 0.dp, bottom = if (closes) 8.dp else 0.dp)
+            .then(if (info.isHead) Modifier.thoughtArrive { enter.value } else Modifier)
+            .thoughtPaper(seg, thoughtCardFill(), edge, thoughtShadow())
+            .padding(start = 14.dp, end = 12.dp, bottom = if (closes && expanded) 8.dp else 0.dp),
     ) {
         if (info.isHead && info.summary != null) {
             ThoughtCardHeader(
                 runId = info.runId,
                 summary = info.summary,
                 expanded = expanded,
-                onToggle = { expandedRuns[info.runId] = !expanded },
+                onToggle = {
+                    if (!expanded) ThoughtMotion.unfoldedAt[info.runId] = android.os.SystemClock.uptimeMillis()
+                    expandedRuns[info.runId] = !expanded
+                },
             )
-            if (expanded) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 2.dp)
-                        .height(1.dp)
-                        .background(thoughtCardEdge()),
+            androidx.compose.animation.AnimatedVisibility(
+                visible = expanded,
+                enter = androidx.compose.animation.fadeIn(tween(240)) +
+                    androidx.compose.animation.expandVertically(tween(260, easing = ThoughtEase)),
+                exit = androidx.compose.animation.fadeOut(tween(120)) +
+                    androidx.compose.animation.shrinkVertically(tween(200, easing = ThoughtEase)),
+            ) {
+                ThoughtTrace(
+                    live = info.summary.live,
+                    color = ink,
+                    restAlpha = 0.16f,
+                    modifier = Modifier.padding(bottom = 4.dp),
                 )
             }
         }
-        if (expanded) content(info.index > 0, !last)
+        if (expanded) {
+            Box(
+                modifier = if (info.isHead) Modifier else Modifier.graphicsLayer {
+                    val p = enter.value
+                    alpha = p.coerceIn(0f, 1f)
+                    translationY = (1f - p) * 10.dp.toPx()
+                },
+            ) {
+                content(info.index > 0, !last)
+            }
+        }
     }
 }
 
@@ -581,8 +648,6 @@ private fun ThoughtCardHeader(
     expanded: Boolean,
     onToggle: () -> Unit,
 ) {
-    val dark = ChatColors.isDark
-    val meta = MaterialTheme.colorScheme.onSurfaceVariant
     val live = summary.live
     val startedAt = androidx.compose.runtime.remember(runId) { android.os.SystemClock.elapsedRealtime() }
     var liveSecs by androidx.compose.runtime.remember(runId) { androidx.compose.runtime.mutableLongStateOf(0L) }
@@ -593,104 +658,39 @@ private fun ThoughtCardHeader(
         }
     }
     val hasThinking = summary.thinkingCount > 0
+    val doneSecs = (summary.totalMs / 1000).toInt()
     val title = when {
-        live && hasThinking -> stringResource(R.string.spectra_thinking_live)
+        live && (summary.liveThinking || hasThinking) -> stringResource(R.string.spectra_thinking_live)
         live -> summary.preview.ifEmpty { stringResource(R.string.spectra_thinking_live) }
+        hasThinking && doneSecs > 0 -> stringResource(R.string.spectra_thinking_done_secs, doneSecs)
         hasThinking -> stringResource(R.string.spectra_thinking_done)
         else -> stringResource(R.string.noir_steps_done, summary.stepCount)
     }
-    val metaParts = buildList {
-        val t = if (live) formatStepRunDuration(liveSecs * 1000) else formatStepRunDuration(summary.totalMs)
-        t?.let { add(it) }
-        if (hasThinking && summary.stepCount > 1) add(stringResource(R.string.spectra_thought_steps, summary.stepCount))
-        if (summary.toolCount > 0 && hasThinking) add(stringResource(R.string.spectra_thought_tools, summary.toolCount))
+    val meta = buildList {
+        if (!live && !hasThinking) formatStepRunDuration(summary.totalMs)?.let { add(it) }
+        if (summary.toolCount > 0) add(stringResource(R.string.spectra_thought_tools, summary.toolCount))
+        else if (summary.stepCount > 1) add(stringResource(R.string.spectra_thought_steps, summary.stepCount))
+    }.joinToString(" · ")
+    val tools = androidx.compose.runtime.remember(summary.segments, summary.nodeTools) {
+        (summary.segments.mapNotNull { it.first } + summary.nodeTools).distinct()
     }
-    val err = if (dark) Noir.ErrOnOnyx else Noir.Err
-    val chevron by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(240),
-        label = "thoughtCardChevron",
+    ThoughtHeader(
+        orb = when {
+            live && summary.liveThinking -> com.openminis.app.ui.theme.OrbState.Think
+            live -> com.openminis.app.ui.theme.OrbState.Live
+            summary.failedCount > 0 -> com.openminis.app.ui.theme.OrbState.Muted
+            else -> com.openminis.app.ui.theme.OrbState.Done
+        },
+        title = title,
+        meta = meta,
+        liveSecs = if (live) liveSecs else null,
+        preview = if (live && !hasThinking) "" else summary.preview,
+        expanded = expanded,
+        failed = if (summary.failedCount > 0) stringResource(R.string.noir_steps_failed, summary.failedCount) else null,
+        tools = tools,
+        toolsKey = runId,
+        animateTools = live,
+        onClick = onToggle,
     )
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onToggle)
-            .padding(top = 12.dp, bottom = 12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(StepNodeSize), contentAlignment = Alignment.Center) {
-                com.openminis.app.ui.theme.SpectraOrb(
-                    size = 22.dp,
-                    state = when {
-                        live && summary.liveThinking -> com.openminis.app.ui.theme.OrbState.Think
-                        live -> com.openminis.app.ui.theme.OrbState.Live
-                        else -> com.openminis.app.ui.theme.OrbState.Done
-                    },
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = title,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (metaParts.isNotEmpty()) {
-                        Text(
-                            text = "  " + metaParts.joinToString(" · "),
-                            fontSize = 12.5.sp,
-                            color = meta,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    }
-                    if (summary.failedCount > 0) {
-                        Text(
-                            text = " · " + stringResource(R.string.noir_steps_failed, summary.failedCount),
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = err,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    }
-                }
-                val line = if (live && !hasThinking) "" else summary.preview
-                if (!expanded && line.isNotEmpty()) {
-                    Text(
-                        text = line,
-                        fontSize = 13.5.sp,
-                        lineHeight = 19.sp,
-                        color = meta,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 3.dp),
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(6.dp))
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = meta,
-                modifier = Modifier.size(20.dp).rotate(chevron),
-            )
-        }
-        if (!expanded && !live && summary.stepCount >= 2) {
-            StepFingerprint(
-                segments = summary.segments.ifEmpty { summary.nodeTools.map { it to 1000L } },
-                height = 3.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = StepTextIndent, end = 26.dp, top = 10.dp),
-            )
-        }
-    }
 }
+
