@@ -492,8 +492,8 @@ internal fun thinkingPreviewLine(content: String): String {
 
 internal enum class ThoughtSeg { LONE, TOP, MIDDLE, BOTTOM }
 
-@Composable
 // [T-spectra-v5-thought] Folio: white sheet + soft shadow (light), lifted onyx (dark).
+@Composable
 internal fun thoughtCardFill(): Color = if (ChatColors.isDark) Noir.Onyx1 else Noir.PaperCard
 
 @Composable

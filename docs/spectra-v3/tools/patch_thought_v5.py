@@ -23,7 +23,6 @@ s = add_imports(s, [
     'androidx.compose.animation.togetherWith',
     'androidx.compose.animation.animateContentSize',
     'androidx.compose.foundation.layout.RowScope',
-    'androidx.compose.animation.using',
 ])
 p.write_text(s)
 

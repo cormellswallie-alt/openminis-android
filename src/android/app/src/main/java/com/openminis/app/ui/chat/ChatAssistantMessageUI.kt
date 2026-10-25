@@ -6,7 +6,6 @@ package com.openminis.app.ui.chat
 // formatToolDetailsForClipboard, ToolCallPill, ThinkingBlock.
 // Full import block copied (unused=warnings); externally-called ones internal.
 
-import androidx.compose.animation.using
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.RowScope
