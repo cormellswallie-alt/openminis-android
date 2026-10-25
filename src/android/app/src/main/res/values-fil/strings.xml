@@ -1853,4 +1853,5 @@
     <string name="spectra_step_cancelled">Itinigil</string>
     <string name="spectra_home_live">Kasalukuyan</string>
     <string name="spectra_settings_hint">Mga model, tool, at itsura</string>
+    <string name="spectra_island_running">Tumatakbo %1$s</string>
 </resources>

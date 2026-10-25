@@ -1853,4 +1853,5 @@
     <string name="spectra_step_cancelled">Durduruldu</string>
     <string name="spectra_home_live">Devam ediyor</string>
     <string name="spectra_settings_hint">Modeller, araçlar ve görünüm</string>
+    <string name="spectra_island_running">Çalışıyor %1$s</string>
 </resources>

@@ -2158,4 +2158,5 @@
     <string name="spectra_step_cancelled">已停止</string>
     <string name="spectra_home_live">進行中</string>
     <string name="spectra_settings_hint">模型、工具與外觀</string>
+    <string name="spectra_island_running">執行中 %1$s</string>
 </resources>

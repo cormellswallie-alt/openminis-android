@@ -1857,4 +1857,5 @@
     <string name="spectra_step_cancelled">Oprit</string>
     <string name="spectra_home_live">În desfășurare</string>
     <string name="spectra_settings_hint">Modele, unelte și aspect</string>
+    <string name="spectra_island_running">Rulează %1$s</string>
 </resources>

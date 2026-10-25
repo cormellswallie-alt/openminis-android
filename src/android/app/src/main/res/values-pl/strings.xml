@@ -1861,4 +1861,5 @@
     <string name="spectra_step_cancelled">Zatrzymano</string>
     <string name="spectra_home_live">W toku</string>
     <string name="spectra_settings_hint">Modele, narzędzia i wygląd</string>
+    <string name="spectra_island_running">W toku %1$s</string>
 </resources>

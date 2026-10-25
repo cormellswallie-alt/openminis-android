@@ -1856,4 +1856,5 @@
     <string name="spectra_step_cancelled">Parado</string>
     <string name="spectra_home_live">Em andamento</string>
     <string name="spectra_settings_hint">Modelos, ferramentas e aparência</string>
+    <string name="spectra_island_running">Em execução %1$s</string>
 </resources>

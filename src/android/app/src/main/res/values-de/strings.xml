@@ -1879,4 +1879,5 @@
     <string name="spectra_step_cancelled">Gestoppt</string>
     <string name="spectra_home_live">Läuft gerade</string>
     <string name="spectra_settings_hint">Modelle, Tools und Aussehen</string>
+    <string name="spectra_island_running">Läuft %1$s</string>
 </resources>

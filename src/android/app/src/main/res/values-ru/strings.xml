@@ -1866,4 +1866,5 @@
     <string name="spectra_step_cancelled">Остановлено</string>
     <string name="spectra_home_live">В работе</string>
     <string name="spectra_settings_hint">Модели, инструменты и вид</string>
+    <string name="spectra_island_running">Выполняется %1$s</string>
 </resources>

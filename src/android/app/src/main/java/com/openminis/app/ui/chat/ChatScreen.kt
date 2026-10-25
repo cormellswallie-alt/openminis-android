@@ -5883,6 +5883,7 @@ fun ChatScreen(
                         }
                     },
                 ) {
+                val composerShadowAlpha = if (ChatColors.isDark) 60 else 26
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -5895,7 +5896,7 @@ fun ChatScreen(
                             // outlined.
                             shadowPaint.setShadowLayer(
                                 18.dp.toPx(), 0f, 6.dp.toPx(),
-                                android.graphics.Color.argb(if (ChatColors.isDark) 60 else 26, 10, 10, 12),
+                                android.graphics.Color.argb(composerShadowAlpha, 10, 10, 12),
                             )
                             canvas.drawRoundRect(
                                 0f, 0f, size.width, size.height,

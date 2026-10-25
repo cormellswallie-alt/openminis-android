@@ -1853,4 +1853,5 @@
     <string name="spectra_step_cancelled">Dihentikan</string>
     <string name="spectra_home_live">Sedang berjalan</string>
     <string name="spectra_settings_hint">Model, alat dan rupa</string>
+    <string name="spectra_island_running">Berjalan %1$s</string>
 </resources>

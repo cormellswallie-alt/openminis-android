@@ -1879,4 +1879,5 @@
     <string name="spectra_step_cancelled">Arrêté</string>
     <string name="spectra_home_live">En cours</string>
     <string name="spectra_settings_hint">Modèles, outils et apparence</string>
+    <string name="spectra_island_running">En cours %1$s</string>
 </resources>

@@ -2103,4 +2103,5 @@
     <string name="spectra_step_cancelled">Zaustavljeno</string>
     <string name="spectra_home_live">U tijeku</string>
     <string name="spectra_settings_hint">Modeli, alati i izgled</string>
+    <string name="spectra_island_running">U tijeku %1$s</string>
 </resources>

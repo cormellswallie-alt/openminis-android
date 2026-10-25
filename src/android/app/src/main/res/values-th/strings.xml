@@ -1854,4 +1854,5 @@
     <string name="spectra_step_cancelled">หยุดแล้ว</string>
     <string name="spectra_home_live">กำลังดำเนินการ</string>
     <string name="spectra_settings_hint">โมเดล เครื่องมือ และหน้าตา</string>
+    <string name="spectra_island_running">กำลังทำงาน %1$s</string>
 </resources>

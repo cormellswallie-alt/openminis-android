@@ -2362,4 +2362,5 @@
     <string name="spectra_step_cancelled">Stopped</string>
     <string name="spectra_home_live">In progress</string>
     <string name="spectra_settings_hint">Model, tools, and how Minis looks</string>
+    <string name="spectra_island_running">Running %1$s</string>
 </resources>
