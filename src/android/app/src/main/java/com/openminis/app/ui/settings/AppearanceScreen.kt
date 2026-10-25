@@ -273,6 +273,10 @@ fun AppearanceScreen(
     var thoughtCards by remember { mutableStateOf(prefs.getBoolean(KEY_THOUGHT_CARDS, true)) }
     var thinkingAutoTranslate by remember { mutableStateOf(prefs.getBoolean(KEY_THINKING_AUTO_TRANSLATE, false)) }
     var thinkingItalic by remember { mutableStateOf(prefs.getBoolean(KEY_THINKING_ITALIC, false)) }
+    var userBubble by remember { mutableStateOf(prefs.getBoolean(KEY_USER_BUBBLE, true)) }
+    var userBubbleTone by remember {
+        mutableStateOf(UserBubbleTone.of(prefs.getString(KEY_USER_BUBBLE_TONE, "mist")))
+    }
     var showChatTitle by remember { mutableStateOf(prefs.getBoolean(KEY_SHOW_CHAT_TITLE, true)) }
     var autoGrouping by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_GROUPING, true)) }
     var chatInputLevel by remember { mutableIntStateOf(prefs.getInt(KEY_FONT_CHAT_INPUT, 0)) }
@@ -521,6 +525,31 @@ fun AppearanceScreen(
                     prefs.edit().putBoolean(KEY_AUTO_EXPAND_THINKING, it).apply()
                 },
                 showDivider = false,
+            )
+        }
+
+        // [T-spectra-v5-bubble] -- Your messages --
+        SettingsSection(
+            header = stringResource(R.string.user_bubble_section),
+            footer = stringResource(R.string.user_bubble_footer),
+        ) {
+            SettingsSwitchRow(
+                icon = androidx.compose.material.icons.Icons.Outlined.ChatBubbleOutline,
+                iconColor = tileBlue,
+                title = stringResource(R.string.user_bubble_title),
+                checked = userBubble,
+                onCheckedChange = {
+                    userBubble = it
+                    prefs.edit().putBoolean(KEY_USER_BUBBLE, it).apply()
+                },
+            )
+            UserBubbleTonePicker(
+                selected = userBubbleTone,
+                enabled = userBubble,
+                onSelect = {
+                    userBubbleTone = it
+                    prefs.edit().putString(KEY_USER_BUBBLE_TONE, it.key).apply()
+                },
             )
         }
 

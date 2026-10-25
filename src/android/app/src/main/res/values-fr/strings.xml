@@ -1898,4 +1898,15 @@
     <string name="appearance_thinking_translate_footer">Traduit en chinois, sur l’appareil, la réflexion anglaise terminée. Un pack d’environ 30 Mo est téléchargé la première fois (accès aux services Google requis), puis tout fonctionne hors ligne.</string>
     <string name="appearance_thinking_italic_title">Réflexion en italique</string>
     <string name="appearance_thinking_italic_subtitle">Affiche la réflexion en anglais en Newsreader Italic. Le chinois reste droit.</string>
+    <string name="user_bubble_section">Vos messages</string>
+    <string name="user_bubble_title">Bulle de message</string>
+    <string name="user_bubble_footer">Désactivé : votre message s\'affiche comme un titre aligné à gauche, sans bulle.</string>
+    <string name="user_bubble_preview">Aide-moi à ranger mes notes de la semaine</string>
+    <string name="user_bubble_tone_mist">Brume</string>
+    <string name="user_bubble_tone_ink">Encre</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Océan</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rose</string>
+    <string name="user_bubble_tone_coral">Corail</string>
 </resources>

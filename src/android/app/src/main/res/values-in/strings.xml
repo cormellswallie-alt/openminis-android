@@ -1877,4 +1877,15 @@
     <string name="appearance_thinking_translate_footer">Menerjemahkan pemikiran bahasa Inggris yang selesai ke bahasa Mandarin di perangkat. Paket bahasa ~30 MB diunduh sekali saat pertama dipakai (perlu akses layanan Google), lalu bekerja offline.</string>
     <string name="appearance_thinking_italic_title">Pemikiran miring</string>
     <string name="appearance_thinking_italic_subtitle">Tampilkan pemikiran bahasa Inggris dengan Newsreader Italic. Teks Tionghoa tetap tegak.</string>
+    <string name="user_bubble_section">Pesan Anda</string>
+    <string name="user_bubble_title">Gelembung pesan</string>
+    <string name="user_bubble_footer">Nonaktif: pesan Anda tampil sebagai judul rata kiri tanpa gelembung.</string>
+    <string name="user_bubble_preview">Bantu rapikan catatan minggu ini</string>
+    <string name="user_bubble_tone_mist">Kabut</string>
+    <string name="user_bubble_tone_ink">Tinta</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Samudra</string>
+    <string name="user_bubble_tone_jade">Giok</string>
+    <string name="user_bubble_tone_rose">Mawar</string>
+    <string name="user_bubble_tone_coral">Koral</string>
 </resources>

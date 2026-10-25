@@ -2122,4 +2122,15 @@
     <string name="appearance_thinking_translate_footer">Na uređaju prevodi završeno englesko razmišljanje na kineski. Pri prvoj upotrebi preuzima se paket od ~30 MB (potreban pristup Google uslugama), zatim radi izvanmrežno.</string>
     <string name="appearance_thinking_italic_title">Razmišljanje u kurzivu</string>
     <string name="appearance_thinking_italic_subtitle">Englesko razmišljanje u fontu Newsreader Italic. Kineski ostaje uspravan.</string>
+    <string name="user_bubble_section">Vaše poruke</string>
+    <string name="user_bubble_title">Oblačić poruke</string>
+    <string name="user_bubble_footer">Isključeno: poruka se prikazuje kao naslov poravnat lijevo, bez oblačića.</string>
+    <string name="user_bubble_preview">Pomozi mi srediti bilješke ovog tjedna</string>
+    <string name="user_bubble_tone_mist">Magla</string>
+    <string name="user_bubble_tone_ink">Tinta</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Ocean</string>
+    <string name="user_bubble_tone_jade">Žad</string>
+    <string name="user_bubble_tone_rose">Ruža</string>
+    <string name="user_bubble_tone_coral">Koralj</string>
 </resources>

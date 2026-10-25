@@ -1935,4 +1935,15 @@
     <string name="appearance_thinking_translate_footer">完了した英語の思考を端末内で中国語に翻訳します。初回のみ約 30MB の言語パックをダウンロードします（Google サービスへの接続が必要）。以降はオフラインで動作します。</string>
     <string name="appearance_thinking_italic_title">思考を斜体で表示</string>
     <string name="appearance_thinking_italic_subtitle">英語の思考を Newsreader Italic で表示します。日本語・中国語は正体のままです。</string>
+    <string name="user_bubble_section">自分のメッセージ</string>
+    <string name="user_bubble_title">メッセージの吹き出し</string>
+    <string name="user_bubble_footer">オフにすると、送信したメッセージは吹き出しなしで左寄せの見出しになります。</string>
+    <string name="user_bubble_preview">今週のメモを整理して</string>
+    <string name="user_bubble_tone_mist">ミスト</string>
+    <string name="user_bubble_tone_ink">インク</string>
+    <string name="user_bubble_tone_iris">アイリス</string>
+    <string name="user_bubble_tone_ocean">オーシャン</string>
+    <string name="user_bubble_tone_jade">ジェイド</string>
+    <string name="user_bubble_tone_rose">ローズ</string>
+    <string name="user_bubble_tone_coral">コーラル</string>
 </resources>

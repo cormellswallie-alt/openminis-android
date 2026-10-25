@@ -2381,4 +2381,15 @@
     <string name="appearance_thinking_translate_footer">Translates finished English thinking into Chinese on the device. A ~30 MB language pack is downloaded once on first use (needs access to Google services); after that it works offline. The Translate button on the card is always available.</string>
     <string name="appearance_thinking_italic_title">Italic thinking</string>
     <string name="appearance_thinking_italic_subtitle">Set English thinking in Newsreader Italic. Chinese stays upright.</string>
+    <string name="user_bubble_section">Your messages</string>
+    <string name="user_bubble_title">Message bubble</string>
+    <string name="user_bubble_footer">Off: your message reads as a left-aligned heading with no bubble.</string>
+    <string name="user_bubble_preview">Help me tidy up this week\'s notes</string>
+    <string name="user_bubble_tone_mist">Mist</string>
+    <string name="user_bubble_tone_ink">Ink</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Ocean</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rose</string>
+    <string name="user_bubble_tone_coral">Coral</string>
 </resources>

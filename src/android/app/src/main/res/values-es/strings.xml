@@ -1898,4 +1898,15 @@
     <string name="appearance_thinking_translate_footer">Traduce al chino en el dispositivo el razonamiento en inglés terminado. La primera vez descarga un paquete de ~30 MB (requiere acceso a servicios de Google); después funciona sin conexión.</string>
     <string name="appearance_thinking_italic_title">Razonamiento en cursiva</string>
     <string name="appearance_thinking_italic_subtitle">Muestra el razonamiento en inglés con Newsreader Italic. El chino no cambia.</string>
+    <string name="user_bubble_section">Tus mensajes</string>
+    <string name="user_bubble_title">Burbuja de mensaje</string>
+    <string name="user_bubble_footer">Desactivado: tu mensaje se muestra como título alineado a la izquierda, sin burbuja.</string>
+    <string name="user_bubble_preview">Ayúdame a ordenar las notas de esta semana</string>
+    <string name="user_bubble_tone_mist">Niebla</string>
+    <string name="user_bubble_tone_ink">Tinta</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Océano</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rosa</string>
+    <string name="user_bubble_tone_coral">Coral</string>
 </resources>

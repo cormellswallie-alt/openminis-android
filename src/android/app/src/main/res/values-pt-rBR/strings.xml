@@ -1875,4 +1875,15 @@
     <string name="appearance_thinking_translate_footer">Traduz para chinês, no dispositivo, o raciocínio em inglês concluído. Um pacote de ~30 MB é baixado no primeiro uso (requer acesso aos serviços do Google); depois funciona offline.</string>
     <string name="appearance_thinking_italic_title">Raciocínio em itálico</string>
     <string name="appearance_thinking_italic_subtitle">Mostra o raciocínio em inglês em Newsreader Italic. O chinês não muda.</string>
+    <string name="user_bubble_section">Suas mensagens</string>
+    <string name="user_bubble_title">Balão de mensagem</string>
+    <string name="user_bubble_footer">Desativado: sua mensagem aparece como título alinhado à esquerda, sem balão.</string>
+    <string name="user_bubble_preview">Me ajude a organizar as notas desta semana</string>
+    <string name="user_bubble_tone_mist">Névoa</string>
+    <string name="user_bubble_tone_ink">Tinta</string>
+    <string name="user_bubble_tone_iris">Íris</string>
+    <string name="user_bubble_tone_ocean">Oceano</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rosa</string>
+    <string name="user_bubble_tone_coral">Coral</string>
 </resources>

@@ -1872,4 +1872,15 @@
     <string name="appearance_thinking_translate_footer">Isinasalin sa Chinese sa device ang tapos na Ingles na pag-iisip. Magda-download ng ~30 MB na language pack sa unang gamit (kailangan ng Google services); offline na pagkatapos.</string>
     <string name="appearance_thinking_italic_title">Italic na pag-iisip</string>
     <string name="appearance_thinking_italic_subtitle">Ipakita ang pag-iisip sa Ingles gamit ang Newsreader Italic. Hindi nagbabago ang Chinese.</string>
+    <string name="user_bubble_section">Mga mensahe mo</string>
+    <string name="user_bubble_title">Bubble ng mensahe</string>
+    <string name="user_bubble_footer">Kapag naka-off: lalabas ang mensahe mo bilang heading sa kaliwa, walang bubble.</string>
+    <string name="user_bubble_preview">Tulungan mo akong ayusin ang mga tala ngayong linggo</string>
+    <string name="user_bubble_tone_mist">Mist</string>
+    <string name="user_bubble_tone_ink">Ink</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Ocean</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rose</string>
+    <string name="user_bubble_tone_coral">Coral</string>
 </resources>

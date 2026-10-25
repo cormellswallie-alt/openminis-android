@@ -1896,4 +1896,15 @@
     <string name="appearance_thinking_translate_footer">완료된 영어 생각을 기기에서 중국어로 번역합니다. 처음 한 번 약 30MB 언어 팩을 내려받으며(Google 서비스 접속 필요) 이후에는 오프라인으로 동작합니다.</string>
     <string name="appearance_thinking_italic_title">생각을 기울임꼴로</string>
     <string name="appearance_thinking_italic_subtitle">영어 생각을 Newsreader Italic으로 표시합니다. 한중일 문자는 그대로입니다.</string>
+    <string name="user_bubble_section">내 메시지</string>
+    <string name="user_bubble_title">메시지 말풍선</string>
+    <string name="user_bubble_footer">끄면 보낸 메시지가 말풍선 없이 왼쪽 정렬 제목으로 표시됩니다.</string>
+    <string name="user_bubble_preview">이번 주 메모 정리해 줘</string>
+    <string name="user_bubble_tone_mist">미스트</string>
+    <string name="user_bubble_tone_ink">잉크</string>
+    <string name="user_bubble_tone_iris">아이리스</string>
+    <string name="user_bubble_tone_ocean">오션</string>
+    <string name="user_bubble_tone_jade">제이드</string>
+    <string name="user_bubble_tone_rose">로즈</string>
+    <string name="user_bubble_tone_coral">코랄</string>
 </resources>

@@ -1885,4 +1885,15 @@
     <string name="appearance_thinking_translate_footer">Переводит завершённые английские размышления на китайский прямо на устройстве. При первом использовании загружается пакет ~30 МБ (нужен доступ к сервисам Google), затем работает офлайн.</string>
     <string name="appearance_thinking_italic_title">Рассуждения курсивом</string>
     <string name="appearance_thinking_italic_subtitle">Английские рассуждения шрифтом Newsreader Italic. Китайский остаётся прямым.</string>
+    <string name="user_bubble_section">Ваши сообщения</string>
+    <string name="user_bubble_title">Пузырь сообщения</string>
+    <string name="user_bubble_footer">Выкл.: сообщение показывается как заголовок слева, без пузыря.</string>
+    <string name="user_bubble_preview">Помоги разобрать заметки за неделю</string>
+    <string name="user_bubble_tone_mist">Туман</string>
+    <string name="user_bubble_tone_ink">Чернила</string>
+    <string name="user_bubble_tone_iris">Ирис</string>
+    <string name="user_bubble_tone_ocean">Океан</string>
+    <string name="user_bubble_tone_jade">Нефрит</string>
+    <string name="user_bubble_tone_rose">Роза</string>
+    <string name="user_bubble_tone_coral">Коралл</string>
 </resources>

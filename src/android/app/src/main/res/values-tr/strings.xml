@@ -1872,4 +1872,15 @@
     <string name="appearance_thinking_translate_footer">Tamamlanan İngilizce düşünmeyi cihazda Çinceye çevirir. İlk kullanımda ~30 MB dil paketi indirilir (Google hizmetlerine erişim gerekir), sonrasında çevrimdışı çalışır.</string>
     <string name="appearance_thinking_italic_title">İtalik düşünme</string>
     <string name="appearance_thinking_italic_subtitle">İngilizce düşünmeyi Newsreader Italic ile göster. Çince dik kalır.</string>
+    <string name="user_bubble_section">Mesajların</string>
+    <string name="user_bubble_title">Mesaj balonu</string>
+    <string name="user_bubble_footer">Kapalı: mesajın balonsuz, sola hizalı bir başlık olarak görünür.</string>
+    <string name="user_bubble_preview">Bu haftanın notlarını toplamama yardım et</string>
+    <string name="user_bubble_tone_mist">Sis</string>
+    <string name="user_bubble_tone_ink">Mürekkep</string>
+    <string name="user_bubble_tone_iris">İris</string>
+    <string name="user_bubble_tone_ocean">Okyanus</string>
+    <string name="user_bubble_tone_jade">Yeşim</string>
+    <string name="user_bubble_tone_rose">Gül</string>
+    <string name="user_bubble_tone_coral">Mercan</string>
 </resources>

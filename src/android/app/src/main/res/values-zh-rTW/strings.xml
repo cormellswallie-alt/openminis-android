@@ -2177,4 +2177,15 @@
     <string name="appearance_thinking_translate_footer">在本機將已完成的英文思考翻譯成中文。首次使用會下載約 30MB 的語言包（需能連線 Google 服務），之後可離線使用。卡片上的「翻譯」按鈕始終可用。</string>
     <string name="appearance_thinking_italic_title">思考使用斜體</string>
     <string name="appearance_thinking_italic_subtitle">英文思考改用 Newsreader 斜體，中文保持正體。</string>
+    <string name="user_bubble_section">我的訊息</string>
+    <string name="user_bubble_title">訊息泡泡</string>
+    <string name="user_bubble_footer">關閉後，你傳送的訊息不帶泡泡，靠左顯示為標題。</string>
+    <string name="user_bubble_preview">幫我整理一下這週的筆記</string>
+    <string name="user_bubble_tone_mist">霧灰</string>
+    <string name="user_bubble_tone_ink">墨黑</string>
+    <string name="user_bubble_tone_iris">鳶尾紫</string>
+    <string name="user_bubble_tone_ocean">海藍</string>
+    <string name="user_bubble_tone_jade">青玉</string>
+    <string name="user_bubble_tone_rose">玫瑰</string>
+    <string name="user_bubble_tone_coral">珊瑚</string>
 </resources>

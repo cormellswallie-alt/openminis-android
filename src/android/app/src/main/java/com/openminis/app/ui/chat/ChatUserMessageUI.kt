@@ -305,6 +305,14 @@ internal fun UserMessageBubble(
     var showMenu by remember { mutableStateOf(false) }
     val isQueued = message.isQueued
     val haptics = LocalHapticFeedback.current
+    // [T-spectra-v5-bubble] Bubble (default) vs v3 heading; seven tones.
+    val bubbleMode by com.openminis.app.ui.settings.rememberAppearanceFlag(
+        com.openminis.app.ui.settings.KEY_USER_BUBBLE, true,
+    )
+    val bubbleToneKey by com.openminis.app.ui.settings.rememberAppearanceString(
+        com.openminis.app.ui.settings.KEY_USER_BUBBLE_TONE, "mist",
+    )
+    val bubbleTone = com.openminis.app.ui.settings.UserBubbleTone.of(bubbleToneKey)
 
     BoxWithConstraints(
         modifier = Modifier
@@ -316,16 +324,22 @@ internal fun UserMessageBubble(
             // together with the assistant trailing-block bottom + LazyColumn
             // spacedBy(2). Bottom stays 4dp: the User→Assistant boundary is
             // user.bottom(4) + spacedBy(2) + AssistantHeader.top(10) = 16.
-            .padding(start = 2.dp, top = if (precededByUser) 16.dp else 18.dp, bottom = 6.dp),
+            .padding(
+                start = if (bubbleMode) 0.dp else 2.dp,
+                top = if (bubbleMode) (if (precededByUser) 10.dp else 16.dp)
+                else (if (precededByUser) 16.dp else 18.dp),
+                bottom = 6.dp,
+            ),
     ) {
         // Cap the bubble at 80% of the LazyColumn's available width (mirrors iOS
         // proportional sizing; prevents single-line messages from spanning the
         // full row and losing their "trailing bubble" shape).
         // [T-spectra-v3] The question is the page heading: full width, left aligned.
-        val bubbleMaxWidth = this.maxWidth
+        val bubbleMaxWidth = if (bubbleMode) this.maxWidth * 0.8f else this.maxWidth
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        if (bubbleMode) Spacer(modifier = Modifier.weight(1f).widthIn(min = 60.dp))
         Box(
             modifier = Modifier
                 .widthIn(max = bubbleMaxWidth)
@@ -356,8 +370,8 @@ internal fun UserMessageBubble(
         ) {
             // iOS: VStack(alignment: .trailing, spacing: 6) { attachments; text bubble }
             Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = if (bubbleMode) Alignment.End else Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(if (bubbleMode) 6.dp else 8.dp),
             ) {
                 // Attachments ABOVE the text bubble, right-aligned FlowRow (iOS UserAttachmentList)
                 val hasAttachments = message.imageUris.isNotEmpty() || message.attachmentNames.isNotEmpty()
@@ -367,6 +381,7 @@ internal fun UserMessageBubble(
                         allFileNames = message.attachmentNames,
                         nonImageUris = message.attachmentUris,
                         onPreviewFile = onPreviewFile,
+                        alignEnd = bubbleMode,
                     )
                 }
 
@@ -380,9 +395,14 @@ internal fun UserMessageBubble(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        val textColor = if (isQueued) secondaryTextColor else ChatColors.userBubbleText
+                        val dark = ChatColors.isDark
                         @Suppress("UNUSED_VARIABLE") val legacyBubble = userBubbleColor
-                        val bubbleBg = Color.Transparent
+                        val textColor = when {
+                            isQueued -> secondaryTextColor
+                            bubbleMode -> bubbleTone.text(dark)
+                            else -> ChatColors.userBubbleText
+                        }
+                        val bubbleBg = if (bubbleMode && !isQueued) bubbleTone.fill(dark) else Color.Transparent
                         // [T-noir-redesign] Noir bubble: 22dp corners with a tight
                         // 6dp "tail" corner pointing back at the sender (bottom-end).
                         val shape = RoundedCornerShape(
@@ -437,15 +457,16 @@ internal fun UserMessageBubble(
                                 // Short questions read as a heading (19sp
                                 // SemiBold); long pastes drop to 16sp Medium
                                 // so a log dump never becomes a wall of bold.
-                                val isShort = message.content.length <= 160 &&
+                                val isShort = !bubbleMode && message.content.length <= 160 &&
                                     message.content.count { it == '\n' } < 4
                                 Text(
                                     text = message.content,
                                     color = textColor,
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = if (isShort) 19.sp else 16.sp,
-                                        lineHeight = if (isShort) 28.sp else 25.sp,
-                                        fontWeight = if (isShort) androidx.compose.ui.text.font.FontWeight.SemiBold
+                                        fontSize = if (bubbleMode) 16.5.sp else if (isShort) 19.sp else 16.sp,
+                                        lineHeight = if (bubbleMode) 24.sp else if (isShort) 28.sp else 25.sp,
+                                        fontWeight = if (bubbleMode) androidx.compose.ui.text.font.FontWeight.Normal
+                                        else if (isShort) androidx.compose.ui.text.font.FontWeight.SemiBold
                                         else androidx.compose.ui.text.font.FontWeight.Medium,
                                         letterSpacing = if (isShort) (-0.01).em else 0.em,
                                     ),
@@ -454,8 +475,8 @@ internal fun UserMessageBubble(
                                         .clip(shape)
                                         .then(dashedStroke)
                                         .padding(
-                                            horizontal = if (isQueued) 14.dp else 2.dp,
-                                            vertical = if (isQueued) 10.dp else 2.dp,
+                                            horizontal = if (isQueued || bubbleMode) 16.dp else 2.dp,
+                                            vertical = if (isQueued || bubbleMode) 10.dp else 2.dp,
                                         ),
                                 )
                             }
@@ -607,6 +628,8 @@ internal fun UserAttachmentList(
     allFileNames: List<String>,
     nonImageUris: List<Uri> = emptyList(),
     onPreviewFile: (Uri, String) -> Unit = { _, _ -> },
+    // [T-spectra-v5-bubble] Right-aligned above a bubble, left under a heading.
+    alignEnd: Boolean = false,
 ) {
     var previewImageIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -618,7 +641,7 @@ internal fun UserAttachmentList(
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.Start),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, if (alignEnd) Alignment.End else Alignment.Start),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         imageUris.forEachIndexed { idx, uri ->

@@ -1872,4 +1872,15 @@
     <string name="appearance_thinking_translate_footer">Menterjemah pemikiran Inggeris yang selesai ke bahasa Cina pada peranti. Pek bahasa ~30 MB dimuat turun sekali pada penggunaan pertama (perlu akses perkhidmatan Google), kemudian berfungsi luar talian.</string>
     <string name="appearance_thinking_italic_title">Pemikiran condong</string>
     <string name="appearance_thinking_italic_subtitle">Paparkan pemikiran bahasa Inggeris dalam Newsreader Italic. Teks Cina kekal tegak.</string>
+    <string name="user_bubble_section">Mesej anda</string>
+    <string name="user_bubble_title">Gelembung mesej</string>
+    <string name="user_bubble_footer">Mati: mesej anda dipaparkan sebagai tajuk sejajar kiri tanpa gelembung.</string>
+    <string name="user_bubble_preview">Bantu kemas nota minggu ini</string>
+    <string name="user_bubble_tone_mist">Kabus</string>
+    <string name="user_bubble_tone_ink">Dakwat</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Lautan</string>
+    <string name="user_bubble_tone_jade">Jed</string>
+    <string name="user_bubble_tone_rose">Mawar</string>
+    <string name="user_bubble_tone_coral">Karang</string>
 </resources>

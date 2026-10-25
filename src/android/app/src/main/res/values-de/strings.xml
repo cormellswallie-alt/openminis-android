@@ -1898,4 +1898,15 @@
     <string name="appearance_thinking_translate_footer">Übersetzt abgeschlossenes englisches Denken auf dem Gerät ins Chinesische. Beim ersten Mal wird ein Sprachpaket (~30 MB) geladen (Zugriff auf Google-Dienste nötig), danach offline.</string>
     <string name="appearance_thinking_italic_title">Denken kursiv</string>
     <string name="appearance_thinking_italic_subtitle">Englisches Denken in Newsreader Italic setzen. Chinesisch bleibt aufrecht.</string>
+    <string name="user_bubble_section">Deine Nachrichten</string>
+    <string name="user_bubble_title">Nachrichtenblase</string>
+    <string name="user_bubble_footer">Aus: Deine Nachricht erscheint linksbündig als Überschrift ohne Blase.</string>
+    <string name="user_bubble_preview">Hilf mir, die Notizen dieser Woche zu ordnen</string>
+    <string name="user_bubble_tone_mist">Nebel</string>
+    <string name="user_bubble_tone_ink">Tinte</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Ozean</string>
+    <string name="user_bubble_tone_jade">Jade</string>
+    <string name="user_bubble_tone_rose">Rose</string>
+    <string name="user_bubble_tone_coral">Koralle</string>
 </resources>

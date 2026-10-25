@@ -1873,4 +1873,15 @@
     <string name="appearance_thinking_translate_footer">แปลความคิดภาษาอังกฤษที่เสร็จแล้วเป็นภาษาจีนบนอุปกรณ์ ครั้งแรกจะดาวน์โหลดชุดภาษาประมาณ 30 MB (ต้องเข้าถึงบริการ Google ได้) หลังจากนั้นใช้งานออฟไลน์ได้</string>
     <string name="appearance_thinking_italic_title">แสดงความคิดเป็นตัวเอียง</string>
     <string name="appearance_thinking_italic_subtitle">แสดงความคิดภาษาอังกฤษด้วย Newsreader Italic ส่วนภาษาจีนคงตัวตรง</string>
+    <string name="user_bubble_section">ข้อความของคุณ</string>
+    <string name="user_bubble_title">บับเบิลข้อความ</string>
+    <string name="user_bubble_footer">ปิด: ข้อความของคุณจะแสดงเป็นหัวข้อชิดซ้ายโดยไม่มีบับเบิล</string>
+    <string name="user_bubble_preview">ช่วยจัดโน้ตของสัปดาห์นี้หน่อย</string>
+    <string name="user_bubble_tone_mist">หมอก</string>
+    <string name="user_bubble_tone_ink">หมึก</string>
+    <string name="user_bubble_tone_iris">ไอริส</string>
+    <string name="user_bubble_tone_ocean">มหาสมุทร</string>
+    <string name="user_bubble_tone_jade">หยก</string>
+    <string name="user_bubble_tone_rose">กุหลาบ</string>
+    <string name="user_bubble_tone_coral">ปะการัง</string>
 </resources>

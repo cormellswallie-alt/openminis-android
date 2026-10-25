@@ -1880,4 +1880,15 @@
     <string name="appearance_thinking_translate_footer">Tłumaczy zakończone angielskie myślenie na chiński na urządzeniu. Za pierwszym razem pobiera pakiet ~30 MB (wymaga dostępu do usług Google), potem działa offline.</string>
     <string name="appearance_thinking_italic_title">Myślenie kursywą</string>
     <string name="appearance_thinking_italic_subtitle">Angielskie myślenie krojem Newsreader Italic. Chiński pozostaje prosty.</string>
+    <string name="user_bubble_section">Twoje wiadomości</string>
+    <string name="user_bubble_title">Dymek wiadomości</string>
+    <string name="user_bubble_footer">Wyłączone: wiadomość wyświetla się jako nagłówek wyrównany do lewej, bez dymka.</string>
+    <string name="user_bubble_preview">Pomóż mi uporządkować notatki z tego tygodnia</string>
+    <string name="user_bubble_tone_mist">Mgła</string>
+    <string name="user_bubble_tone_ink">Atrament</string>
+    <string name="user_bubble_tone_iris">Iris</string>
+    <string name="user_bubble_tone_ocean">Ocean</string>
+    <string name="user_bubble_tone_jade">Jadeit</string>
+    <string name="user_bubble_tone_rose">Róża</string>
+    <string name="user_bubble_tone_coral">Koral</string>
 </resources>
