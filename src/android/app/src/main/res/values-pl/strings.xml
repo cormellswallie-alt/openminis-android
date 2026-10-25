@@ -1878,4 +1878,6 @@
     <string name="appearance_thought_cards_footer">Wywołania narzędzi, myślenie i inne kroki dzielą jedną kartę. Gdy model napisze podsumowanie pośrednie, karta się zamyka, a kolejne kroki zaczynają nową.</string>
     <string name="appearance_thinking_translate_title">Automatycznie tłumacz angielskie myślenie</string>
     <string name="appearance_thinking_translate_footer">Tłumaczy zakończone angielskie myślenie na chiński na urządzeniu. Za pierwszym razem pobiera pakiet ~30 MB (wymaga dostępu do usług Google), potem działa offline.</string>
+    <string name="appearance_thinking_italic_title">Myślenie kursywą</string>
+    <string name="appearance_thinking_italic_subtitle">Angielskie myślenie krojem Newsreader Italic. Chiński pozostaje prosty.</string>
 </resources>

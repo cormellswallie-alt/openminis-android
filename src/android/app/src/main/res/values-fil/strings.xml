@@ -1870,4 +1870,6 @@
     <string name="appearance_thought_cards_footer">Ang mga tawag sa tool, pag-iisip at iba pang hakbang ay nasa iisang thinking card. Kapag sumulat ang model ng pansamantalang buod, magsasara ang card at magsisimula ng bago ang susunod na mga hakbang.</string>
     <string name="appearance_thinking_translate_title">Awtomatikong isalin ang Ingles na pag-iisip</string>
     <string name="appearance_thinking_translate_footer">Isinasalin sa Chinese sa device ang tapos na Ingles na pag-iisip. Magda-download ng ~30 MB na language pack sa unang gamit (kailangan ng Google services); offline na pagkatapos.</string>
+    <string name="appearance_thinking_italic_title">Italic na pag-iisip</string>
+    <string name="appearance_thinking_italic_subtitle">Ipakita ang pag-iisip sa Ingles gamit ang Newsreader Italic. Hindi nagbabago ang Chinese.</string>
 </resources>

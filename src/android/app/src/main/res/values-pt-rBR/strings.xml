@@ -1873,4 +1873,6 @@
     <string name="appearance_thought_cards_footer">Chamadas de ferramentas, raciocínio e outras etapas ficam em um único cartão. Quando o modelo escreve um resumo intermediário, o cartão é encerrado e as próximas etapas começam um novo.</string>
     <string name="appearance_thinking_translate_title">Traduzir raciocínio em inglês</string>
     <string name="appearance_thinking_translate_footer">Traduz para chinês, no dispositivo, o raciocínio em inglês concluído. Um pacote de ~30 MB é baixado no primeiro uso (requer acesso aos serviços do Google); depois funciona offline.</string>
+    <string name="appearance_thinking_italic_title">Raciocínio em itálico</string>
+    <string name="appearance_thinking_italic_subtitle">Mostra o raciocínio em inglês em Newsreader Italic. O chinês não muda.</string>
 </resources>

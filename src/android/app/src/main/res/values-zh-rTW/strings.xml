@@ -2175,4 +2175,6 @@
     <string name="appearance_thought_cards_footer">工具呼叫、思考等步驟統一收在思維卡片中顯示；模型輸出階段性總結時，目前卡片截止，後續步驟另起一張新卡片。</string>
     <string name="appearance_thinking_translate_title">自動翻譯英文思考</string>
     <string name="appearance_thinking_translate_footer">在本機將已完成的英文思考翻譯成中文。首次使用會下載約 30MB 的語言包（需能連線 Google 服務），之後可離線使用。卡片上的「翻譯」按鈕始終可用。</string>
+    <string name="appearance_thinking_italic_title">思考使用斜體</string>
+    <string name="appearance_thinking_italic_subtitle">英文思考改用 Newsreader 斜體，中文保持正體。</string>
 </resources>

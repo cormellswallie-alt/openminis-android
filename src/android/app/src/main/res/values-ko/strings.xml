@@ -1894,4 +1894,6 @@
     <string name="appearance_thought_cards_footer">도구 호출, 생각 등 단계를 하나의 생각 카드에 모아 표시합니다. 모델이 중간 요약을 쓰면 카드가 끝나고 다음 단계는 새 카드로 시작합니다.</string>
     <string name="appearance_thinking_translate_title">영어 생각 자동 번역</string>
     <string name="appearance_thinking_translate_footer">완료된 영어 생각을 기기에서 중국어로 번역합니다. 처음 한 번 약 30MB 언어 팩을 내려받으며(Google 서비스 접속 필요) 이후에는 오프라인으로 동작합니다.</string>
+    <string name="appearance_thinking_italic_title">생각을 기울임꼴로</string>
+    <string name="appearance_thinking_italic_subtitle">영어 생각을 Newsreader Italic으로 표시합니다. 한중일 문자는 그대로입니다.</string>
 </resources>

@@ -1874,4 +1874,6 @@
     <string name="appearance_thought_cards_footer">Apelurile de instrumente, gândirea și alți pași împart un singur card. Când modelul scrie un rezumat intermediar, cardul se închide și pașii următori încep unul nou.</string>
     <string name="appearance_thinking_translate_title">Tradu automat gândirea în engleză</string>
     <string name="appearance_thinking_translate_footer">Traduce pe dispozitiv în chineză gândirea în engleză încheiată. La prima utilizare se descarcă un pachet de ~30 MB (necesită acces la serviciile Google), apoi funcționează offline.</string>
+    <string name="appearance_thinking_italic_title">Gândire cu italic</string>
+    <string name="appearance_thinking_italic_subtitle">Afișează gândirea în engleză cu Newsreader Italic. Chineza rămâne dreaptă.</string>
 </resources>

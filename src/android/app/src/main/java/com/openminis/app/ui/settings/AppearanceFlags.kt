@@ -16,6 +16,10 @@ const val KEY_THOUGHT_CARDS = "chat.thoughtCards"  // Boolean, default true
 // on device (ML Kit). Default OFF — the first use downloads a language pack.
 const val KEY_THINKING_AUTO_TRANSLATE = "chat.thinkingAutoTranslate"  // Boolean, default false
 
+// [T-spectra-v5-italic] Thinking body in Newsreader Italic (English text;
+// MiSans has no italic, so Chinese stays upright rather than faux-slanted).
+const val KEY_THINKING_ITALIC = "chat.thinkingItalic"  // Boolean, default false
+
 /**
  * An appearance boolean as Compose state that follows later edits (the chat
  * screen stays composed in the back stack while the user flips the switch in

@@ -1883,4 +1883,6 @@
     <string name="appearance_thought_cards_footer">Вызовы инструментов, размышления и другие шаги показываются в одной карточке. Когда модель пишет промежуточный итог, карточка закрывается, а следующие шаги начинают новую.</string>
     <string name="appearance_thinking_translate_title">Автоперевод английских размышлений</string>
     <string name="appearance_thinking_translate_footer">Переводит завершённые английские размышления на китайский прямо на устройстве. При первом использовании загружается пакет ~30 МБ (нужен доступ к сервисам Google), затем работает офлайн.</string>
+    <string name="appearance_thinking_italic_title">Рассуждения курсивом</string>
+    <string name="appearance_thinking_italic_subtitle">Английские рассуждения шрифтом Newsreader Italic. Китайский остаётся прямым.</string>
 </resources>

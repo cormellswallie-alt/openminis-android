@@ -1933,4 +1933,6 @@
     <string name="appearance_thought_cards_footer">ツール呼び出しや思考などのステップを 1 枚の思考カードにまとめて表示します。モデルが途中のまとめを書くとカードが区切られ、続くステップは新しいカードになります。</string>
     <string name="appearance_thinking_translate_title">英語の思考を自動翻訳</string>
     <string name="appearance_thinking_translate_footer">完了した英語の思考を端末内で中国語に翻訳します。初回のみ約 30MB の言語パックをダウンロードします（Google サービスへの接続が必要）。以降はオフラインで動作します。</string>
+    <string name="appearance_thinking_italic_title">思考を斜体で表示</string>
+    <string name="appearance_thinking_italic_subtitle">英語の思考を Newsreader Italic で表示します。日本語・中国語は正体のままです。</string>
 </resources>

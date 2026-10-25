@@ -1896,4 +1896,6 @@
     <string name="appearance_thought_cards_footer">Las llamadas a herramientas, el razonamiento y otros pasos comparten una tarjeta. Cuando el modelo escribe un resumen intermedio, la tarjeta se cierra y los pasos siguientes empiezan una nueva.</string>
     <string name="appearance_thinking_translate_title">Traducir razonamiento en inglés</string>
     <string name="appearance_thinking_translate_footer">Traduce al chino en el dispositivo el razonamiento en inglés terminado. La primera vez descarga un paquete de ~30 MB (requiere acceso a servicios de Google); después funciona sin conexión.</string>
+    <string name="appearance_thinking_italic_title">Razonamiento en cursiva</string>
+    <string name="appearance_thinking_italic_subtitle">Muestra el razonamiento en inglés con Newsreader Italic. El chino no cambia.</string>
 </resources>

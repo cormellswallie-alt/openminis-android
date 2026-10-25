@@ -1871,4 +1871,6 @@
     <string name="appearance_thought_cards_footer">การเรียกเครื่องมือ การคิด และขั้นตอนอื่นๆ จะแสดงในการ์ดความคิดเดียวกัน เมื่อโมเดลเขียนสรุประหว่างทาง การ์ดจะปิดและขั้นตอนถัดไปจะเริ่มการ์ดใหม่</string>
     <string name="appearance_thinking_translate_title">แปลความคิดภาษาอังกฤษอัตโนมัติ</string>
     <string name="appearance_thinking_translate_footer">แปลความคิดภาษาอังกฤษที่เสร็จแล้วเป็นภาษาจีนบนอุปกรณ์ ครั้งแรกจะดาวน์โหลดชุดภาษาประมาณ 30 MB (ต้องเข้าถึงบริการ Google ได้) หลังจากนั้นใช้งานออฟไลน์ได้</string>
+    <string name="appearance_thinking_italic_title">แสดงความคิดเป็นตัวเอียง</string>
+    <string name="appearance_thinking_italic_subtitle">แสดงความคิดภาษาอังกฤษด้วย Newsreader Italic ส่วนภาษาจีนคงตัวตรง</string>
 </resources>

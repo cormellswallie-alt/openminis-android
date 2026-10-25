@@ -153,6 +153,11 @@ internal fun thoughtBodyColor(): Color = if (ChatColors.isDark) Noir.IvorySoft e
 @Composable
 internal fun thoughtSerifStyle(): TextStyle = androidx.compose.material3.LocalTextStyle.current.merge(
     fontFamily = ThoughtSerif,
+    fontStyle = if (
+        com.openminis.app.ui.settings.rememberAppearanceFlag(
+            com.openminis.app.ui.settings.KEY_THINKING_ITALIC, false,
+        ).value
+    ) FontStyle.Italic else FontStyle.Normal,
     fontSize = 16.sp,
     lineHeight = 25.sp,
     letterSpacing = 0.003.em,
@@ -235,6 +240,7 @@ internal fun rememberThoughtRich(text: String, serif: Boolean): AnnotatedString 
             code = SpanStyle(
                 fontFamily = com.openminis.app.ui.terminal.JetBrainsMonoFontFamily,
                 fontSize = if (serif) 0.82.em else 0.9.em,
+                fontStyle = FontStyle.Normal,
                 background = codeBg,
             ),
         )

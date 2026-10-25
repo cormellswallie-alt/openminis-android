@@ -1,5 +1,6 @@
 package com.openminis.app.ui.settings
 
+import androidx.compose.material.icons.outlined.FormatItalic
 import com.openminis.app.R
 import com.openminis.app.data.repository.AppIconRepository
 import com.openminis.app.ui.components.MinisTextButton
@@ -271,6 +272,7 @@ fun AppearanceScreen(
     var autoExpandThinking by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_EXPAND_THINKING, true)) }
     var thoughtCards by remember { mutableStateOf(prefs.getBoolean(KEY_THOUGHT_CARDS, true)) }
     var thinkingAutoTranslate by remember { mutableStateOf(prefs.getBoolean(KEY_THINKING_AUTO_TRANSLATE, false)) }
+    var thinkingItalic by remember { mutableStateOf(prefs.getBoolean(KEY_THINKING_ITALIC, false)) }
     var showChatTitle by remember { mutableStateOf(prefs.getBoolean(KEY_SHOW_CHAT_TITLE, true)) }
     var autoGrouping by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_GROUPING, true)) }
     var chatInputLevel by remember { mutableIntStateOf(prefs.getInt(KEY_FONT_CHAT_INPUT, 0)) }
@@ -535,6 +537,17 @@ fun AppearanceScreen(
                 onCheckedChange = {
                     thoughtCards = it
                     prefs.edit().putBoolean(KEY_THOUGHT_CARDS, it).apply()
+                },
+            )
+            SettingsSwitchRow(
+                icon = androidx.compose.material.icons.Icons.Outlined.FormatItalic,
+                iconColor = tilePurple,
+                title = stringResource(R.string.appearance_thinking_italic_title),
+                subtitle = stringResource(R.string.appearance_thinking_italic_subtitle),
+                checked = thinkingItalic,
+                onCheckedChange = {
+                    thinkingItalic = it
+                    prefs.edit().putBoolean(KEY_THINKING_ITALIC, it).apply()
                 },
             )
             SettingsSwitchRow(

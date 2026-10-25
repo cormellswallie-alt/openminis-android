@@ -1896,4 +1896,6 @@
     <string name="appearance_thought_cards_footer">Les appels d’outils, la réflexion et les autres étapes partagent une même carte. Quand le modèle écrit un résumé intermédiaire, la carte se ferme et les étapes suivantes en ouvrent une nouvelle.</string>
     <string name="appearance_thinking_translate_title">Traduire la réflexion en anglais</string>
     <string name="appearance_thinking_translate_footer">Traduit en chinois, sur l’appareil, la réflexion anglaise terminée. Un pack d’environ 30 Mo est téléchargé la première fois (accès aux services Google requis), puis tout fonctionne hors ligne.</string>
+    <string name="appearance_thinking_italic_title">Réflexion en italique</string>
+    <string name="appearance_thinking_italic_subtitle">Affiche la réflexion en anglais en Newsreader Italic. Le chinois reste droit.</string>
 </resources>

@@ -1896,4 +1896,6 @@
     <string name="appearance_thought_cards_footer">Tool-Aufrufe, Denkschritte und andere Schritte teilen sich eine Denkkarte. Schreibt das Modell eine Zwischenzusammenfassung, endet die Karte und die nächsten Schritte beginnen eine neue.</string>
     <string name="appearance_thinking_translate_title">Englisches Denken automatisch übersetzen</string>
     <string name="appearance_thinking_translate_footer">Übersetzt abgeschlossenes englisches Denken auf dem Gerät ins Chinesische. Beim ersten Mal wird ein Sprachpaket (~30 MB) geladen (Zugriff auf Google-Dienste nötig), danach offline.</string>
+    <string name="appearance_thinking_italic_title">Denken kursiv</string>
+    <string name="appearance_thinking_italic_subtitle">Englisches Denken in Newsreader Italic setzen. Chinesisch bleibt aufrecht.</string>
 </resources>

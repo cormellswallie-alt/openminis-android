@@ -1870,4 +1870,6 @@
     <string name="appearance_thought_cards_footer">Panggilan alat, pemikiran dan langkah lain berkongsi satu kad pemikiran. Apabila model menulis ringkasan sementara, kad ditutup dan langkah seterusnya memulakan kad baharu.</string>
     <string name="appearance_thinking_translate_title">Terjemah automatik pemikiran Inggeris</string>
     <string name="appearance_thinking_translate_footer">Menterjemah pemikiran Inggeris yang selesai ke bahasa Cina pada peranti. Pek bahasa ~30 MB dimuat turun sekali pada penggunaan pertama (perlu akses perkhidmatan Google), kemudian berfungsi luar talian.</string>
+    <string name="appearance_thinking_italic_title">Pemikiran condong</string>
+    <string name="appearance_thinking_italic_subtitle">Paparkan pemikiran bahasa Inggeris dalam Newsreader Italic. Teks Cina kekal tegak.</string>
 </resources>
