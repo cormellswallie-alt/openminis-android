@@ -1858,4 +1858,20 @@
     <string name="spectra_home_live">În desfășurare</string>
     <string name="spectra_settings_hint">Modele, unelte și aspect</string>
     <string name="spectra_island_running">Rulează %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Comenzi</string>
+    <string name="spectra_thought_steps">%1$d pași</string>
+    <string name="spectra_thought_tools">%1$d apeluri de instrumente</string>
+    <string name="spectra_thinking_translate">Traduce</string>
+    <string name="spectra_thinking_original">Original</string>
+    <string name="spectra_thinking_translating">Se traduce…</string>
+    <string name="spectra_thinking_downloading">Se descarcă pachetul de limbă…</string>
+    <string name="spectra_thinking_translated_tag">Tradus pe dispozitiv</string>
+    <string name="spectra_thinking_translate_failed">Traducerea a eșuat: %1$s</string>
+    <string name="spectra_thinking_more">Arată mai mult</string>
+    <string name="spectra_thinking_less">Arată mai puțin</string>
+    <string name="appearance_thought_cards_title">Grupează instrumentele în cardul de gândire</string>
+    <string name="appearance_thought_cards_footer">Apelurile de instrumente, gândirea și alți pași împart un singur card. Când modelul scrie un rezumat intermediar, cardul se închide și pașii următori încep unul nou.</string>
+    <string name="appearance_thinking_translate_title">Tradu automat gândirea în engleză</string>
+    <string name="appearance_thinking_translate_footer">Traduce pe dispozitiv în chineză gândirea în engleză încheiată. La prima utilizare se descarcă un pachet de ~30 MB (necesită acces la serviciile Google), apoi funcționează offline.</string>
 </resources>

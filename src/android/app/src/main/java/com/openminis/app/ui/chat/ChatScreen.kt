@@ -3973,8 +3973,17 @@ fun ChatScreen(
                 // into one summary card. Expansion is per run, per session.
                 val stepExpandedRuns = remember(sessionId) { androidx.compose.runtime.mutableStateMapOf<String, Boolean>() }
                 val stepThinkingLevel = viewModel.thinkingLevel.value
-                val stepRuns = remember(flatItems, isStreaming, stepThinkingLevel) {
-                    computeStepRuns(flatItems, isStreaming) { row ->
+                // [T-spectra-v4-thought] Appearance → wrap tool calls in thinking cards.
+                val thoughtCards by com.openminis.app.ui.settings.rememberAppearanceFlag(
+                    com.openminis.app.ui.settings.KEY_THOUGHT_CARDS, true,
+                )
+                val thoughtAutoExpand = remember { com.openminis.app.ui.settings.autoExpandThinkingEnabled(context) }
+                val stepRuns = remember(flatItems, isStreaming, stepThinkingLevel, thoughtCards) {
+                    computeStepRuns(
+                        flatItems, isStreaming,
+                        cardMode = thoughtCards,
+                        autoExpandLive = thoughtAutoExpand,
+                    ) { row ->
                         when (row) {
                             is FlatChatItem.AssistantThinking ->
                                 (row.messageThinkingLevel ?: stepThinkingLevel).isEnabled
@@ -4205,7 +4214,8 @@ fun ChatScreen(
                         val stepFolded = stepInfo.isFoldedAway(stepExpandedRuns)
                         Box(
                             modifier = Modifier
-                                .padding(top = if (stepFolded) 0.dp else StepItemGap)
+                                // [T-spectra-v4-thought] card segments weld edge to edge.
+                                .padding(top = if (stepFolded || stepInfo.isCardMember) 0.dp else StepItemGap)
                                 .alpha(rowAlpha)
                                 .then(
                                     if (isNewestItem) {
@@ -4417,6 +4427,7 @@ fun ChatScreen(
                                             isLast = item.isLast,
                                             railUp = railUp,
                                             railDown = railDown,
+                                            embedded = stepInfo?.card == true,
                                         )
                                     }
                                 }
@@ -6679,6 +6690,28 @@ fun ChatScreen(
                                         )
                                     },
                                 )
+                                // [T-spectra-v4-thought] "/" button removed from the
+                                // composer row; the command panel lives here (and on
+                                // typing "/").
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.chat_attach_slash_commands)) },
+                                    leadingIcon = {
+                                        Text(
+                                            "/",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontStyle = FontStyle.Italic,
+                                            modifier = Modifier.width(24.dp),
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        )
+                                    },
+                                    onClick = {
+                                        showAttachMenu = false
+                                        if (!viewModel.showSlashMenu.value) {
+                                            viewModel.setInputText(viewModel.showSlashMenuOverInput(inputText))
+                                        }
+                                    },
+                                )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.chat_attach_add_file)) },
                                     leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
@@ -6690,25 +6723,6 @@ fun ChatScreen(
                                     },
                                 )
                             }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Left: "/" slash command button (iOS: italic /, bold)
-                        InputCircleButton(onClick = {
-                            if (viewModel.showSlashMenu.value) {
-                                viewModel.setInputText(viewModel.dismissSlashMenu(inputText))
-                            } else {
-                                viewModel.setInputText(viewModel.showSlashMenuOverInput(inputText))
-                            }
-                        }) {
-                            Text(
-                                "/",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
                         }
 
                         // [T-spectra-v3-composer] Model switch + thinking depth.

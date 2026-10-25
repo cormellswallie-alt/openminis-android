@@ -2169,4 +2169,20 @@
     <string name="spectra_home_live">进行中</string>
     <string name="spectra_settings_hint">模型、工具与外观</string>
     <string name="spectra_island_running">执行中 %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">命令</string>
+    <string name="spectra_thought_steps">%1$d 步</string>
+    <string name="spectra_thought_tools">%1$d 次工具调用</string>
+    <string name="spectra_thinking_translate">翻译</string>
+    <string name="spectra_thinking_original">原文</string>
+    <string name="spectra_thinking_translating">翻译中…</string>
+    <string name="spectra_thinking_downloading">正在下载语言包…</string>
+    <string name="spectra_thinking_translated_tag">本地译文</string>
+    <string name="spectra_thinking_translate_failed">翻译失败：%1$s</string>
+    <string name="spectra_thinking_more">展开全部</string>
+    <string name="spectra_thinking_less">收起</string>
+    <string name="appearance_thought_cards_title">工具调用收进思维卡片</string>
+    <string name="appearance_thought_cards_footer">工具调用、思考等步骤统一收在思维卡片里显示；模型输出阶段性总结时，当前卡片截止，后续步骤另起一张新卡片。</string>
+    <string name="appearance_thinking_translate_title">自动翻译英文思考</string>
+    <string name="appearance_thinking_translate_footer">在本机把已完成的英文思考翻译成中文。首次使用会下载约 30MB 的语言包（需能访问 Google 服务），之后可离线使用。卡片上的「翻译」按钮始终可用。</string>
 </resources>

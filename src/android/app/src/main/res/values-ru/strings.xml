@@ -1867,4 +1867,20 @@
     <string name="spectra_home_live">В работе</string>
     <string name="spectra_settings_hint">Модели, инструменты и вид</string>
     <string name="spectra_island_running">Выполняется %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Команды</string>
+    <string name="spectra_thought_steps">%1$d шагов</string>
+    <string name="spectra_thought_tools">%1$d вызовов инструментов</string>
+    <string name="spectra_thinking_translate">Перевести</string>
+    <string name="spectra_thinking_original">Оригинал</string>
+    <string name="spectra_thinking_translating">Перевод…</string>
+    <string name="spectra_thinking_downloading">Загрузка языкового пакета…</string>
+    <string name="spectra_thinking_translated_tag">Переведено на устройстве</string>
+    <string name="spectra_thinking_translate_failed">Не удалось перевести: %1$s</string>
+    <string name="spectra_thinking_more">Показать всё</string>
+    <string name="spectra_thinking_less">Свернуть</string>
+    <string name="appearance_thought_cards_title">Сворачивать инструменты в карточку размышлений</string>
+    <string name="appearance_thought_cards_footer">Вызовы инструментов, размышления и другие шаги показываются в одной карточке. Когда модель пишет промежуточный итог, карточка закрывается, а следующие шаги начинают новую.</string>
+    <string name="appearance_thinking_translate_title">Автоперевод английских размышлений</string>
+    <string name="appearance_thinking_translate_footer">Переводит завершённые английские размышления на китайский прямо на устройстве. При первом использовании загружается пакет ~30 МБ (нужен доступ к сервисам Google), затем работает офлайн.</string>
 </resources>

@@ -374,6 +374,9 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    // [T-spectra-v4-thought] On-device EN→ZH translation of thinking text.
+    // Language pack (~30 MB) is fetched on first use, then works offline.
+    implementation("com.google.mlkit:translate:17.0.3")
 
     // T283: ACRA — local crash report capture. acra-core only (no http
     // sender, no network permission). CrashFileSender writes reports to

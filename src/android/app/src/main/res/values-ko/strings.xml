@@ -1878,4 +1878,20 @@
     <string name="spectra_home_live">진행 중</string>
     <string name="spectra_settings_hint">모델, 도구, 화면</string>
     <string name="spectra_island_running">실행 중 %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">명령</string>
+    <string name="spectra_thought_steps">%1$d단계</string>
+    <string name="spectra_thought_tools">도구 호출 %1$d회</string>
+    <string name="spectra_thinking_translate">번역</string>
+    <string name="spectra_thinking_original">원문</string>
+    <string name="spectra_thinking_translating">번역 중…</string>
+    <string name="spectra_thinking_downloading">언어 팩 다운로드 중…</string>
+    <string name="spectra_thinking_translated_tag">기기 내 번역</string>
+    <string name="spectra_thinking_translate_failed">번역 실패: %1$s</string>
+    <string name="spectra_thinking_more">모두 보기</string>
+    <string name="spectra_thinking_less">접기</string>
+    <string name="appearance_thought_cards_title">도구 호출을 생각 카드에 묶기</string>
+    <string name="appearance_thought_cards_footer">도구 호출, 생각 등 단계를 하나의 생각 카드에 모아 표시합니다. 모델이 중간 요약을 쓰면 카드가 끝나고 다음 단계는 새 카드로 시작합니다.</string>
+    <string name="appearance_thinking_translate_title">영어 생각 자동 번역</string>
+    <string name="appearance_thinking_translate_footer">완료된 영어 생각을 기기에서 중국어로 번역합니다. 처음 한 번 약 30MB 언어 팩을 내려받으며(Google 서비스 접속 필요) 이후에는 오프라인으로 동작합니다.</string>
 </resources>

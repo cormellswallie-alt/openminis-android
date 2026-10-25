@@ -1854,4 +1854,20 @@
     <string name="spectra_home_live">Sedang berjalan</string>
     <string name="spectra_settings_hint">Model, alat dan rupa</string>
     <string name="spectra_island_running">Berjalan %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Arahan</string>
+    <string name="spectra_thought_steps">%1$d langkah</string>
+    <string name="spectra_thought_tools">%1$d panggilan alat</string>
+    <string name="spectra_thinking_translate">Terjemah</string>
+    <string name="spectra_thinking_original">Asal</string>
+    <string name="spectra_thinking_translating">Menterjemah…</string>
+    <string name="spectra_thinking_downloading">Memuat turun pek bahasa…</string>
+    <string name="spectra_thinking_translated_tag">Diterjemah pada peranti</string>
+    <string name="spectra_thinking_translate_failed">Terjemahan gagal: %1$s</string>
+    <string name="spectra_thinking_more">Tunjuk semua</string>
+    <string name="spectra_thinking_less">Kecilkan</string>
+    <string name="appearance_thought_cards_title">Lipat panggilan alat ke dalam kad pemikiran</string>
+    <string name="appearance_thought_cards_footer">Panggilan alat, pemikiran dan langkah lain berkongsi satu kad pemikiran. Apabila model menulis ringkasan sementara, kad ditutup dan langkah seterusnya memulakan kad baharu.</string>
+    <string name="appearance_thinking_translate_title">Terjemah automatik pemikiran Inggeris</string>
+    <string name="appearance_thinking_translate_footer">Menterjemah pemikiran Inggeris yang selesai ke bahasa Cina pada peranti. Pek bahasa ~30 MB dimuat turun sekali pada penggunaan pertama (perlu akses perkhidmatan Google), kemudian berfungsi luar talian.</string>
 </resources>

@@ -2104,4 +2104,20 @@
     <string name="spectra_home_live">U tijeku</string>
     <string name="spectra_settings_hint">Modeli, alati i izgled</string>
     <string name="spectra_island_running">U tijeku %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Naredbe</string>
+    <string name="spectra_thought_steps">%1$d koraka</string>
+    <string name="spectra_thought_tools">%1$d poziva alata</string>
+    <string name="spectra_thinking_translate">Prevedi</string>
+    <string name="spectra_thinking_original">Izvornik</string>
+    <string name="spectra_thinking_translating">Prevođenje…</string>
+    <string name="spectra_thinking_downloading">Preuzimanje jezičnog paketa…</string>
+    <string name="spectra_thinking_translated_tag">Prevedeno na uređaju</string>
+    <string name="spectra_thinking_translate_failed">Prijevod nije uspio: %1$s</string>
+    <string name="spectra_thinking_more">Prikaži više</string>
+    <string name="spectra_thinking_less">Prikaži manje</string>
+    <string name="appearance_thought_cards_title">Skupi pozive alata u karticu razmišljanja</string>
+    <string name="appearance_thought_cards_footer">Pozivi alata, razmišljanje i ostali koraci dijele jednu karticu. Kad model napiše međusažetak, kartica se zatvara, a sljedeći koraci počinju novu.</string>
+    <string name="appearance_thinking_translate_title">Automatski prevedi englesko razmišljanje</string>
+    <string name="appearance_thinking_translate_footer">Na uređaju prevodi završeno englesko razmišljanje na kineski. Pri prvoj upotrebi preuzima se paket od ~30 MB (potreban pristup Google uslugama), zatim radi izvanmrežno.</string>
 </resources>

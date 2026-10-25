@@ -1854,4 +1854,20 @@
     <string name="spectra_home_live">Kasalukuyan</string>
     <string name="spectra_settings_hint">Mga model, tool, at itsura</string>
     <string name="spectra_island_running">Tumatakbo %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Mga command</string>
+    <string name="spectra_thought_steps">%1$d hakbang</string>
+    <string name="spectra_thought_tools">%1$d tawag sa tool</string>
+    <string name="spectra_thinking_translate">Isalin</string>
+    <string name="spectra_thinking_original">Orihinal</string>
+    <string name="spectra_thinking_translating">Isinasalin…</string>
+    <string name="spectra_thinking_downloading">Dina-download ang language pack…</string>
+    <string name="spectra_thinking_translated_tag">Isinalin sa device</string>
+    <string name="spectra_thinking_translate_failed">Nabigo ang pagsalin: %1$s</string>
+    <string name="spectra_thinking_more">Ipakita lahat</string>
+    <string name="spectra_thinking_less">Itago</string>
+    <string name="appearance_thought_cards_title">Isama ang tool calls sa thinking card</string>
+    <string name="appearance_thought_cards_footer">Ang mga tawag sa tool, pag-iisip at iba pang hakbang ay nasa iisang thinking card. Kapag sumulat ang model ng pansamantalang buod, magsasara ang card at magsisimula ng bago ang susunod na mga hakbang.</string>
+    <string name="appearance_thinking_translate_title">Awtomatikong isalin ang Ingles na pag-iisip</string>
+    <string name="appearance_thinking_translate_footer">Isinasalin sa Chinese sa device ang tapos na Ingles na pag-iisip. Magda-download ng ~30 MB na language pack sa unang gamit (kailangan ng Google services); offline na pagkatapos.</string>
 </resources>

@@ -1862,4 +1862,20 @@
     <string name="spectra_home_live">W toku</string>
     <string name="spectra_settings_hint">Modele, narzędzia i wygląd</string>
     <string name="spectra_island_running">W toku %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Polecenia</string>
+    <string name="spectra_thought_steps">%1$d kroków</string>
+    <string name="spectra_thought_tools">%1$d wywołań narzędzi</string>
+    <string name="spectra_thinking_translate">Przetłumacz</string>
+    <string name="spectra_thinking_original">Oryginał</string>
+    <string name="spectra_thinking_translating">Tłumaczenie…</string>
+    <string name="spectra_thinking_downloading">Pobieranie pakietu językowego…</string>
+    <string name="spectra_thinking_translated_tag">Przetłumaczono na urządzeniu</string>
+    <string name="spectra_thinking_translate_failed">Tłumaczenie nie powiodło się: %1$s</string>
+    <string name="spectra_thinking_more">Pokaż więcej</string>
+    <string name="spectra_thinking_less">Pokaż mniej</string>
+    <string name="appearance_thought_cards_title">Zwijaj narzędzia do karty myślenia</string>
+    <string name="appearance_thought_cards_footer">Wywołania narzędzi, myślenie i inne kroki dzielą jedną kartę. Gdy model napisze podsumowanie pośrednie, karta się zamyka, a kolejne kroki zaczynają nową.</string>
+    <string name="appearance_thinking_translate_title">Automatycznie tłumacz angielskie myślenie</string>
+    <string name="appearance_thinking_translate_footer">Tłumaczy zakończone angielskie myślenie na chiński na urządzeniu. Za pierwszym razem pobiera pakiet ~30 MB (wymaga dostępu do usług Google), potem działa offline.</string>
 </resources>

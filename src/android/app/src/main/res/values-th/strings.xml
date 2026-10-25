@@ -1855,4 +1855,20 @@
     <string name="spectra_home_live">กำลังดำเนินการ</string>
     <string name="spectra_settings_hint">โมเดล เครื่องมือ และหน้าตา</string>
     <string name="spectra_island_running">กำลังทำงาน %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">คำสั่ง</string>
+    <string name="spectra_thought_steps">%1$d ขั้นตอน</string>
+    <string name="spectra_thought_tools">เรียกใช้เครื่องมือ %1$d ครั้ง</string>
+    <string name="spectra_thinking_translate">แปล</string>
+    <string name="spectra_thinking_original">ต้นฉบับ</string>
+    <string name="spectra_thinking_translating">กำลังแปล…</string>
+    <string name="spectra_thinking_downloading">กำลังดาวน์โหลดชุดภาษา…</string>
+    <string name="spectra_thinking_translated_tag">แปลบนอุปกรณ์</string>
+    <string name="spectra_thinking_translate_failed">แปลไม่สำเร็จ: %1$s</string>
+    <string name="spectra_thinking_more">แสดงทั้งหมด</string>
+    <string name="spectra_thinking_less">ย่อ</string>
+    <string name="appearance_thought_cards_title">รวมการเรียกเครื่องมือไว้ในการ์ดความคิด</string>
+    <string name="appearance_thought_cards_footer">การเรียกเครื่องมือ การคิด และขั้นตอนอื่นๆ จะแสดงในการ์ดความคิดเดียวกัน เมื่อโมเดลเขียนสรุประหว่างทาง การ์ดจะปิดและขั้นตอนถัดไปจะเริ่มการ์ดใหม่</string>
+    <string name="appearance_thinking_translate_title">แปลความคิดภาษาอังกฤษอัตโนมัติ</string>
+    <string name="appearance_thinking_translate_footer">แปลความคิดภาษาอังกฤษที่เสร็จแล้วเป็นภาษาจีนบนอุปกรณ์ ครั้งแรกจะดาวน์โหลดชุดภาษาประมาณ 30 MB (ต้องเข้าถึงบริการ Google ได้) หลังจากนั้นใช้งานออฟไลน์ได้</string>
 </resources>

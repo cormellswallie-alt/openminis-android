@@ -2363,4 +2363,20 @@
     <string name="spectra_home_live">In progress</string>
     <string name="spectra_settings_hint">Model, tools, and how Minis looks</string>
     <string name="spectra_island_running">Running %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Commands</string>
+    <string name="spectra_thought_steps">%1$d steps</string>
+    <string name="spectra_thought_tools">%1$d tool calls</string>
+    <string name="spectra_thinking_translate">Translate</string>
+    <string name="spectra_thinking_original">Original</string>
+    <string name="spectra_thinking_translating">Translating…</string>
+    <string name="spectra_thinking_downloading">Downloading language pack…</string>
+    <string name="spectra_thinking_translated_tag">Translated on device</string>
+    <string name="spectra_thinking_translate_failed">Translation failed: %1$s</string>
+    <string name="spectra_thinking_more">Show more</string>
+    <string name="spectra_thinking_less">Show less</string>
+    <string name="appearance_thought_cards_title">Fold tool calls into thinking</string>
+    <string name="appearance_thought_cards_footer">Tool calls, thinking and other steps share one thinking card. When the model writes an interim summary, the card closes and the next steps start a new one.</string>
+    <string name="appearance_thinking_translate_title">Auto-translate English thinking</string>
+    <string name="appearance_thinking_translate_footer">Translates finished English thinking into Chinese on the device. A ~30 MB language pack is downloaded once on first use (needs access to Google services); after that it works offline. The Translate button on the card is always available.</string>
 </resources>

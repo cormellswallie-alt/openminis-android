@@ -1854,4 +1854,20 @@
     <string name="spectra_home_live">Devam ediyor</string>
     <string name="spectra_settings_hint">Modeller, araçlar ve görünüm</string>
     <string name="spectra_island_running">Çalışıyor %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Komutlar</string>
+    <string name="spectra_thought_steps">%1$d adım</string>
+    <string name="spectra_thought_tools">%1$d araç çağrısı</string>
+    <string name="spectra_thinking_translate">Çevir</string>
+    <string name="spectra_thinking_original">Orijinal</string>
+    <string name="spectra_thinking_translating">Çevriliyor…</string>
+    <string name="spectra_thinking_downloading">Dil paketi indiriliyor…</string>
+    <string name="spectra_thinking_translated_tag">Cihazda çevrildi</string>
+    <string name="spectra_thinking_translate_failed">Çeviri başarısız: %1$s</string>
+    <string name="spectra_thinking_more">Tümünü göster</string>
+    <string name="spectra_thinking_less">Daralt</string>
+    <string name="appearance_thought_cards_title">Araç çağrılarını düşünme kartına topla</string>
+    <string name="appearance_thought_cards_footer">Araç çağrıları, düşünme ve diğer adımlar tek bir düşünme kartında gösterilir. Model ara özet yazdığında kart kapanır ve sonraki adımlar yeni bir kart başlatır.</string>
+    <string name="appearance_thinking_translate_title">İngilizce düşünmeyi otomatik çevir</string>
+    <string name="appearance_thinking_translate_footer">Tamamlanan İngilizce düşünmeyi cihazda Çinceye çevirir. İlk kullanımda ~30 MB dil paketi indirilir (Google hizmetlerine erişim gerekir), sonrasında çevrimdışı çalışır.</string>
 </resources>

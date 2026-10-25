@@ -269,6 +269,8 @@ fun AppearanceScreen(
     var toolPreview by remember { mutableStateOf(prefs.getBoolean(KEY_TOOL_PREVIEW, true)) }
     var autoFocusAfterReply by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_FOCUS_AFTER_REPLY, true)) }
     var autoExpandThinking by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_EXPAND_THINKING, true)) }
+    var thoughtCards by remember { mutableStateOf(prefs.getBoolean(KEY_THOUGHT_CARDS, true)) }
+    var thinkingAutoTranslate by remember { mutableStateOf(prefs.getBoolean(KEY_THINKING_AUTO_TRANSLATE, false)) }
     var showChatTitle by remember { mutableStateOf(prefs.getBoolean(KEY_SHOW_CHAT_TITLE, true)) }
     var autoGrouping by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO_GROUPING, true)) }
     var chatInputLevel by remember { mutableIntStateOf(prefs.getInt(KEY_FONT_CHAT_INPUT, 0)) }
@@ -515,6 +517,35 @@ fun AppearanceScreen(
                 onCheckedChange = {
                     autoExpandThinking = it
                     prefs.edit().putBoolean(KEY_AUTO_EXPAND_THINKING, it).apply()
+                },
+                showDivider = false,
+            )
+        }
+
+        // [T-spectra-v4-thought] -- Thinking Cards --
+        SettingsSection(
+            header = stringResource(R.string.spectra_thinking_done),
+            footer = stringResource(R.string.appearance_thought_cards_footer),
+        ) {
+            SettingsSwitchRow(
+                icon = Icons.Outlined.Psychology,
+                iconColor = tilePurple,
+                title = stringResource(R.string.appearance_thought_cards_title),
+                checked = thoughtCards,
+                onCheckedChange = {
+                    thoughtCards = it
+                    prefs.edit().putBoolean(KEY_THOUGHT_CARDS, it).apply()
+                },
+            )
+            SettingsSwitchRow(
+                icon = Icons.Outlined.Psychology,
+                iconColor = tilePurple,
+                title = stringResource(R.string.appearance_thinking_translate_title),
+                subtitle = stringResource(R.string.appearance_thinking_translate_footer),
+                checked = thinkingAutoTranslate,
+                onCheckedChange = {
+                    thinkingAutoTranslate = it
+                    prefs.edit().putBoolean(KEY_THINKING_AUTO_TRANSLATE, it).apply()
                 },
                 showDivider = false,
             )

@@ -1880,4 +1880,20 @@
     <string name="spectra_home_live">Läuft gerade</string>
     <string name="spectra_settings_hint">Modelle, Tools und Aussehen</string>
     <string name="spectra_island_running">Läuft %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Befehle</string>
+    <string name="spectra_thought_steps">%1$d Schritte</string>
+    <string name="spectra_thought_tools">%1$d Tool-Aufrufe</string>
+    <string name="spectra_thinking_translate">Übersetzen</string>
+    <string name="spectra_thinking_original">Original</string>
+    <string name="spectra_thinking_translating">Wird übersetzt…</string>
+    <string name="spectra_thinking_downloading">Sprachpaket wird geladen…</string>
+    <string name="spectra_thinking_translated_tag">Auf dem Gerät übersetzt</string>
+    <string name="spectra_thinking_translate_failed">Übersetzung fehlgeschlagen: %1$s</string>
+    <string name="spectra_thinking_more">Mehr anzeigen</string>
+    <string name="spectra_thinking_less">Weniger anzeigen</string>
+    <string name="appearance_thought_cards_title">Tool-Aufrufe in die Denkkarte falten</string>
+    <string name="appearance_thought_cards_footer">Tool-Aufrufe, Denkschritte und andere Schritte teilen sich eine Denkkarte. Schreibt das Modell eine Zwischenzusammenfassung, endet die Karte und die nächsten Schritte beginnen eine neue.</string>
+    <string name="appearance_thinking_translate_title">Englisches Denken automatisch übersetzen</string>
+    <string name="appearance_thinking_translate_footer">Übersetzt abgeschlossenes englisches Denken auf dem Gerät ins Chinesische. Beim ersten Mal wird ein Sprachpaket (~30 MB) geladen (Zugriff auf Google-Dienste nötig), danach offline.</string>
 </resources>

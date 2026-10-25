@@ -1880,4 +1880,20 @@
     <string name="spectra_home_live">En cours</string>
     <string name="spectra_settings_hint">Modèles, outils et apparence</string>
     <string name="spectra_island_running">En cours %1$s</string>
+    <!-- [T-spectra-v4-thought] -->
+    <string name="chat_attach_slash_commands">Commandes</string>
+    <string name="spectra_thought_steps">%1$d étapes</string>
+    <string name="spectra_thought_tools">%1$d appels d’outils</string>
+    <string name="spectra_thinking_translate">Traduire</string>
+    <string name="spectra_thinking_original">Original</string>
+    <string name="spectra_thinking_translating">Traduction…</string>
+    <string name="spectra_thinking_downloading">Téléchargement du pack de langue…</string>
+    <string name="spectra_thinking_translated_tag">Traduit sur l’appareil</string>
+    <string name="spectra_thinking_translate_failed">Échec de la traduction : %1$s</string>
+    <string name="spectra_thinking_more">Afficher plus</string>
+    <string name="spectra_thinking_less">Afficher moins</string>
+    <string name="appearance_thought_cards_title">Regrouper les outils dans la réflexion</string>
+    <string name="appearance_thought_cards_footer">Les appels d’outils, la réflexion et les autres étapes partagent une même carte. Quand le modèle écrit un résumé intermédiaire, la carte se ferme et les étapes suivantes en ouvrent une nouvelle.</string>
+    <string name="appearance_thinking_translate_title">Traduire la réflexion en anglais</string>
+    <string name="appearance_thinking_translate_footer">Traduit en chinois, sur l’appareil, la réflexion anglaise terminée. Un pack d’environ 30 Mo est téléchargé la première fois (accès aux services Google requis), puis tout fonctionne hors ligne.</string>
 </resources>
