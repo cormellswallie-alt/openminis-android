@@ -1,5 +1,6 @@
 package com.openminis.app.ui.components
 
+import com.openminis.app.ui.theme.spectraCard
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,7 @@ object SectionDesign {
     val ScreenHorizontalPadding = 16.dp
 
     /** Card corner radius. iOS UITableViewCell rounded section uses ~10pt. */
-    val CardShape = RoundedCornerShape(12.dp)
+    val CardShape = RoundedCornerShape(20.dp)
 
     /** Distance from screen top → first section header. */
     val FirstSectionTopGap = 16.dp
@@ -162,18 +163,15 @@ fun SectionCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(
-        color = SectionDesign.cardColor(),
-        shape = SectionDesign.CardShape,
+    // [T-spectra-v3] Shadow-layered card (white on the grouped page).
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = SectionDesign.ScreenHorizontalPadding),
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = SectionDesign.CardInnerVerticalPadding),
-            content = content,
-        )
-    }
+            .padding(horizontal = SectionDesign.ScreenHorizontalPadding)
+            .spectraCard()
+            .padding(vertical = SectionDesign.CardInnerVerticalPadding),
+        content = content,
+    )
 }
 
 /** Divider between rows inside a [SectionCard]. */

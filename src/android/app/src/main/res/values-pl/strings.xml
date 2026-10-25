@@ -1854,4 +1854,11 @@
     <string name="spectra_home_question">Co dziś robimy?</string>
     <string name="spectra_home_sessions">Czaty: %1$d</string>
     <string name="spectra_home_scheduled">Zaplanowane: %1$d</string>
+    <string name="spectra_step_running">W toku</string>
+    <string name="spectra_step_done">Gotowe</string>
+    <string name="spectra_step_failed">Błąd</string>
+    <string name="spectra_step_timeout">Przekroczono czas</string>
+    <string name="spectra_step_cancelled">Zatrzymano</string>
+    <string name="spectra_home_live">W toku</string>
+    <string name="spectra_settings_hint">Modele, narzędzia i wygląd</string>
 </resources>

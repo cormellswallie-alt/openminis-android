@@ -2096,4 +2096,11 @@
     <string name="spectra_home_question">Što ćemo danas?</string>
     <string name="spectra_home_sessions">%1$d razgovora</string>
     <string name="spectra_home_scheduled">%1$d zakazano</string>
+    <string name="spectra_step_running">U tijeku</string>
+    <string name="spectra_step_done">Gotovo</string>
+    <string name="spectra_step_failed">Neuspjelo</string>
+    <string name="spectra_step_timeout">Isteklo vrijeme</string>
+    <string name="spectra_step_cancelled">Zaustavljeno</string>
+    <string name="spectra_home_live">U tijeku</string>
+    <string name="spectra_settings_hint">Modeli, alati i izgled</string>
 </resources>

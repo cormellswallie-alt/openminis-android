@@ -1846,4 +1846,11 @@
     <string name="spectra_home_question">Bugün ne yapalım?</string>
     <string name="spectra_home_sessions">%1$d sohbet</string>
     <string name="spectra_home_scheduled">%1$d zamanlanmış</string>
+    <string name="spectra_step_running">Çalışıyor</string>
+    <string name="spectra_step_done">Bitti</string>
+    <string name="spectra_step_failed">Başarısız</string>
+    <string name="spectra_step_timeout">Zaman aşımı</string>
+    <string name="spectra_step_cancelled">Durduruldu</string>
+    <string name="spectra_home_live">Devam ediyor</string>
+    <string name="spectra_settings_hint">Modeller, araçlar ve görünüm</string>
 </resources>

@@ -268,7 +268,8 @@ fun ComposerSendButton(
         Icon(
             Icons.Default.ArrowUpward,
             contentDescription = "Send",
-            tint = if (canActivate) Color.White
+            // [T-spectra-v3] ink button in light, ivory in dark -> arrow flips.
+            tint = if (canActivate) (if (ChatColors.isDark) com.openminis.app.ui.theme.Noir.Onyx else Color.White)
             else ChatColors.secondaryText,
             modifier = Modifier
                 .size(20.dp)

@@ -1851,4 +1851,11 @@
     <string name="spectra_home_question">Apa yang kita kerjakan hari ini?</string>
     <string name="spectra_home_sessions">%1$d obrolan</string>
     <string name="spectra_home_scheduled">%1$d terjadwal</string>
+    <string name="spectra_step_running">Berjalan</string>
+    <string name="spectra_step_done">Selesai</string>
+    <string name="spectra_step_failed">Gagal</string>
+    <string name="spectra_step_timeout">Waktu habis</string>
+    <string name="spectra_step_cancelled">Dihentikan</string>
+    <string name="spectra_home_live">Sedang berjalan</string>
+    <string name="spectra_settings_hint">Model, alat, dan tampilan</string>
 </resources>

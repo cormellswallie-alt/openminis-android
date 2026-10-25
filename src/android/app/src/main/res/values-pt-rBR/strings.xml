@@ -1849,4 +1849,11 @@
     <string name="spectra_home_question">O que vamos fazer hoje?</string>
     <string name="spectra_home_sessions">%1$d conversas</string>
     <string name="spectra_home_scheduled">%1$d agendadas</string>
+    <string name="spectra_step_running">Em execução</string>
+    <string name="spectra_step_done">Concluído</string>
+    <string name="spectra_step_failed">Falhou</string>
+    <string name="spectra_step_timeout">Tempo esgotado</string>
+    <string name="spectra_step_cancelled">Parado</string>
+    <string name="spectra_home_live">Em andamento</string>
+    <string name="spectra_settings_hint">Modelos, ferramentas e aparência</string>
 </resources>

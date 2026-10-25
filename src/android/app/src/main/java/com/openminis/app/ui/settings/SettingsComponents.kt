@@ -1,5 +1,6 @@
 package com.openminis.app.ui.settings
 
+import com.openminis.app.ui.theme.spectraCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -91,10 +92,14 @@ fun SettingsScaffold(
 ) {
     Scaffold(
         topBar = {
+            // [T-spectra-v3] Large left title; centered modal titles stay compact.
             val titleSlot: @Composable () -> Unit = {
                 Text(
                     title,
-                    fontWeight = FontWeight.SemiBold,
+                    style = if (centerTitle) MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    else com.openminis.app.ui.theme.SpectraSurface.LargeTitleStyle.copy(fontSize = 26.sp, lineHeight = 32.sp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             val navigationSlot: @Composable () -> Unit = {
@@ -122,6 +127,7 @@ fun SettingsScaffold(
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
                     ),
+                    expandedHeight = 68.dp,
                 )
             }
         },
@@ -224,11 +230,11 @@ fun SettingsSection(
             .padding(top = 24.dp),
     ) {
         if (header != null) {
-            // [T-noir-redesign] Eyebrow: Inter SemiBold 11sp, 0.18em tracking.
+            // [T-spectra-v3] Sentence-case 14sp header (no ALL-CAPS eyebrow).
             Text(
-                text = header.uppercaseForDisplay(),
-                style = com.openminis.app.ui.theme.NoirEyebrow,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = header,
+                style = com.openminis.app.ui.theme.SpectraSurface.SectionHeaderStyle,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
                 // [T-android-settings-ui-md3] #5 header→card gap = 8dp (was 6dp,
                 // off-grid). Horizontal stays 32dp to align the header text with
                 // the inset card's content.
@@ -247,14 +253,11 @@ fun SettingsSection(
         // in a single-row one ("Status / Enabled", "Voice Services", the
         // thinking-rules note).
         // [T-noir-redesign] Noir card: 22dp corners + hairline edge.
-        val cardShape = RoundedCornerShape(22.dp)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .clip(cardShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, cardShape),
+                .spectraCard(),
             content = content,
         )
         if (footer != null) {
@@ -307,7 +310,7 @@ fun SettingsRow(
                 // is what made a no-subtitle last row read ~50px shorter.
                 .heightIn(min = minHeight)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             // #10 keep the trailing control (Switch/value) vertically centered
             // against the title — already centered, kept explicit.
             verticalAlignment = Alignment.CenterVertically,
@@ -318,10 +321,10 @@ fun SettingsRow(
                 // jewel dot so sections stay scannable without loud fills.
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(34.dp)
                         .background(
                             MaterialTheme.colorScheme.secondaryContainer,
-                            RoundedCornerShape(10.dp),
+                            RoundedCornerShape(11.dp),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {

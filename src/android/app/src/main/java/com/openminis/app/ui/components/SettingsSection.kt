@@ -1,5 +1,6 @@
 package com.openminis.app.ui.components
 
+import com.openminis.app.ui.theme.spectraCard
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -35,24 +36,15 @@ fun SettingsSection(
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         // [T-noir-redesign] Same eyebrow + 22dp hairline card as the main
         // settings screens, so every settings page reads as one family.
-        Text(
-            text = title.uppercaseForDisplay(),
-            style = com.openminis.app.ui.theme.NoirEyebrow,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // [T-spectra-v3] Sentence-case header + shadow-layered card.
+        com.openminis.app.ui.theme.SpectraSectionHeader(
+            text = title,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
         )
-        Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            tonalElevation = 0.dp,
-            border = androidx.compose.foundation.BorderStroke(
-                0.5.dp,
-                MaterialTheme.colorScheme.outlineVariant,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(content = content)
-        }
+        Column(
+            modifier = Modifier.fillMaxWidth().spectraCard(),
+            content = content,
+        )
         Spacer(modifier = Modifier.height(16.dp))
     }
 }

@@ -1846,4 +1846,11 @@
     <string name="spectra_home_question">Ano ang gagawin natin ngayon?</string>
     <string name="spectra_home_sessions">%1$d chat</string>
     <string name="spectra_home_scheduled">%1$d naka-iskedyul</string>
+    <string name="spectra_step_running">Tumatakbo</string>
+    <string name="spectra_step_done">Tapos</string>
+    <string name="spectra_step_failed">Nabigo</string>
+    <string name="spectra_step_timeout">Nag-time out</string>
+    <string name="spectra_step_cancelled">Itinigil</string>
+    <string name="spectra_home_live">Kasalukuyan</string>
+    <string name="spectra_settings_hint">Mga model, tool, at itsura</string>
 </resources>

@@ -176,6 +176,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.em
 import com.openminis.app.R
 import com.openminis.app.data.db.ChatSessionEntity
 import com.openminis.app.data.db.FolderEntity
@@ -1059,6 +1060,9 @@ fun SessionListScreen(
                                 SpectraHomeHero(
                                     sessionCount = sessions.size,
                                     scheduledCount = scheduledTaskCount,
+                                    liveSessions = sessions.filter { it.id in activeSessionIds }.take(8)
+                                        .map { it.id to (it.title ?: "New Chat") to (it.lastMessage ?: "") },
+                                    onOpen = onSessionClickGuarded,
                                 )
                             }
                         }
@@ -3711,7 +3715,12 @@ private fun exportSession(
  * hour read once per composition.
  */
 @Composable
-private fun SpectraHomeHero(sessionCount: Int, scheduledCount: Int) {
+private fun SpectraHomeHero(
+    sessionCount: Int,
+    scheduledCount: Int,
+    liveSessions: List<Pair<Pair<String, String>, String>> = emptyList(),
+    onOpen: (String) -> Unit = {},
+) {
     val hour = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
     val greeting = stringResource(
         when (hour) {
@@ -3722,35 +3731,128 @@ private fun SpectraHomeHero(sessionCount: Int, scheduledCount: Int) {
         }
     )
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 18.dp, bottom = 14.dp),
+            .padding(top = 10.dp, bottom = 8.dp),
     ) {
-        com.openminis.app.ui.theme.SpectraOrb(
-            size = 64.dp,
-            state = com.openminis.app.ui.theme.OrbState.Idle,
-        )
-        Spacer(Modifier.height(18.dp))
-        Text(
-            text = greeting,
-            fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(6.dp))
+        // [T-spectra-v3] Left-aligned hero: orb, greeting, one big question.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 22.dp),
+        ) {
+            com.openminis.app.ui.theme.SpectraOrb(
+                size = 44.dp,
+                state = if (liveSessions.isNotEmpty()) com.openminis.app.ui.theme.OrbState.Live
+                else com.openminis.app.ui.theme.OrbState.Idle,
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = greeting,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(14.dp))
         Text(
             text = stringResource(R.string.spectra_home_question),
-            fontSize = 24.sp,
-            lineHeight = 32.sp,
+            fontSize = 28.sp,
+            lineHeight = 36.sp,
             fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.02).em,
             color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 22.dp),
         )
-        Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.height(14.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 22.dp),
+        ) {
             SpectraHeroChip(stringResource(R.string.spectra_home_sessions, sessionCount))
             if (scheduledCount > 0) {
                 SpectraHeroChip(stringResource(R.string.spectra_home_scheduled, scheduledCount))
             }
+        }
+        if (liveSessions.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.spectra_home_live),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 22.dp, top = 24.dp, bottom = 10.dp),
+            )
+            androidx.compose.foundation.lazy.LazyRow(
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(liveSessions.size, key = { liveSessions[it].first.first }) { i ->
+                    val (idTitle, preview) = liveSessions[i]
+                    SpectraLiveCard(
+                        title = idTitle.second,
+                        preview = preview,
+                        onClick = { onOpen(idTitle.first) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** [T-spectra-v3] A conversation that is working right now (streaming or sub agents). */
+@Composable
+private fun SpectraLiveCard(title: String, preview: String, onClick: () -> Unit) {
+    val dark = com.openminis.app.ui.theme.ChatColors.isDark
+    Column(
+        modifier = Modifier
+            .width(232.dp)
+            .shadow(
+                elevation = if (dark) 0.dp else 10.dp,
+                shape = RoundedCornerShape(22.dp),
+                ambientColor = Color(0x14000000),
+                spotColor = Color(0x1F000000),
+            )
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .then(
+                if (dark) Modifier.border(0.75.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(22.dp))
+                else Modifier
+            )
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.openminis.app.ui.theme.SpectraOrb(
+                size = 22.dp,
+                state = com.openminis.app.ui.theme.OrbState.Live,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.spectra_step_running),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (dark) com.openminis.app.ui.theme.Noir.OkOnOnyx else com.openminis.app.ui.theme.Noir.Ok,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            lineHeight = 21.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (preview.isNotBlank()) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = preview,
+                fontSize = 13.5.sp,
+                lineHeight = 19.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

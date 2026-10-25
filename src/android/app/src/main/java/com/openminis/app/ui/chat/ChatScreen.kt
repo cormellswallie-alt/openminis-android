@@ -312,7 +312,7 @@ internal val ToolCancelColor = Color(0xFFF2B11E) // iOS .yellow
 internal val ToolMemoryAccent = Color(0xFFE5578A)
 // Sparkle gradient colors (iOS uses linear gradient)
 /** [T-noir-iris-layout] Composer card corner. */
-internal val ComposerCardRadius = 24.dp
+internal val ComposerCardRadius = 26.dp
 
 internal val SparkleColor1 = Color(0xFF8E90FF) // rgb(0.72, 0.69, 0.59)
 internal val SparkleColor2 = Color(0xFF9B6CF6) // rgb(0.6, 0.6, 0.55)
@@ -2799,6 +2799,7 @@ fun ChatScreen(
         containerColor = ChatColors.background,
         contentWindowInsets = WindowInsets(0),
         topBar = {
+            SpectraIsland {
             TopAppBar(
                 title = {
                     // [T-noir-iris-layout] Left-aligned two-line header: the
@@ -2806,8 +2807,18 @@ fun ChatScreen(
                     // thinking badge) instead of the old centred three-row
                     // stack. Same tap targets: title → rename sheet, chip →
                     // model picker, badge → thinking sheet.
-                    Box(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // [T-spectra-v3] The assistant's face leads the island.
+                        com.openminis.app.ui.theme.SpectraOrb(
+                            size = 30.dp,
+                            state = if (isStreaming) com.openminis.app.ui.theme.OrbState.Live else com.openminis.app.ui.theme.OrbState.Idle,
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
+                        Box(
+                        modifier = Modifier.weight(1f),
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         val noFontPad = androidx.compose.ui.text.TextStyle(
@@ -3147,6 +3158,8 @@ fun ChatScreen(
                             }
                         }
                     }
+                        SpectraLiveChip(isStreaming = isStreaming, modifier = Modifier.padding(start = 6.dp))
+                    }
                 },
                 navigationIcon = {
                     // [T-android-tablet-split] See `isTwoPane`.
@@ -3227,6 +3240,9 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    contextUsage?.let { cu ->
+                        if (cu.windowTokens > 0) SpectraContextRing(percent = cu.percent, onClick = { showTokenUsageSheet = true })
+                    }
                     // iOS: "..." circle button → dropdown menu
                     Box {
                         IconButton(onClick = { viewModel.refreshEnhancedCacheState(); showChatMenu = true }) {
@@ -3482,10 +3498,10 @@ fun ChatScreen(
                         }
                     }
                 },
-                windowInsets = WindowInsets.statusBars,
+                windowInsets = WindowInsets(0),
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = ChatColors.background.copy(alpha = 0.92f),
-                    scrolledContainerColor = ChatColors.background.copy(alpha = 0.92f),
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
                 ),
                 // [T-android-topbar-shrink] 76dp → 68dp. The earlier
                 // T-topbar-model-row-clip fix bumped 60dp → 76dp to give the
@@ -3500,8 +3516,9 @@ fun ChatScreen(
                 // user-configured font scale on xhdpi/xxhdpi without
                 // re-clipping (T-topbar-model-row-clip regression check).
                 // Font sizes + lineHeights stay untouched per spec.
-                expandedHeight = 60.dp,
+                expandedHeight = 62.dp,
             )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
@@ -5873,9 +5890,12 @@ fun ChatScreen(
                             val radiusPx = ComposerCardRadius.toPx()
                             val canvas = drawContext.canvas.nativeCanvas
                             // Pass 1: symmetric ambient halo — small blur, low alpha.
+                            // [T-spectra-v3] Soft drop shadow (v3 --sh3): the
+                            // card floats on the white page instead of being
+                            // outlined.
                             shadowPaint.setShadowLayer(
-                                6.dp.toPx(), 0f, 0f,
-                                android.graphics.Color.argb(22, 0, 0, 0),
+                                18.dp.toPx(), 0f, 6.dp.toPx(),
+                                android.graphics.Color.argb(if (ChatColors.isDark) 60 else 26, 10, 10, 12),
                             )
                             canvas.drawRoundRect(
                                 0f, 0f, size.width, size.height,
@@ -5914,7 +5934,7 @@ fun ChatScreen(
                         )
                         // [T-noir-iris-layout] Hairline edge so the white card
                         // still reads on the white chat page.
-                        .border(0.75.dp, ChatColors.inputBorder, RoundedCornerShape(ComposerCardRadius))
+                        .border(0.75.dp, if (ChatColors.isDark) ChatColors.inputBorder else ChatColors.inputBorder.copy(alpha = 0.55f), RoundedCornerShape(ComposerCardRadius))
                         .padding(top = if (attachments.isNotEmpty()) 8.dp else 4.dp),
                 ) {
                     // T185: Move-to capsule lives INSIDE the composer card,

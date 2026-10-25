@@ -1870,4 +1870,11 @@
     <string name="spectra_home_question">오늘은 무엇을 할까요?</string>
     <string name="spectra_home_sessions">대화 %1$d개</string>
     <string name="spectra_home_scheduled">예약 %1$d개</string>
+    <string name="spectra_step_running">실행 중</string>
+    <string name="spectra_step_done">완료</string>
+    <string name="spectra_step_failed">실패</string>
+    <string name="spectra_step_timeout">시간 초과</string>
+    <string name="spectra_step_cancelled">중지됨</string>
+    <string name="spectra_home_live">진행 중</string>
+    <string name="spectra_settings_hint">모델, 도구, 화면</string>
 </resources>

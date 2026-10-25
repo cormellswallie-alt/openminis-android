@@ -2161,4 +2161,11 @@
     <string name="spectra_home_question">今天想让我做点什么？</string>
     <string name="spectra_home_sessions">%1$d 个对话</string>
     <string name="spectra_home_scheduled">%1$d 个定时任务</string>
+    <string name="spectra_step_running">执行中</string>
+    <string name="spectra_step_done">已完成</string>
+    <string name="spectra_step_failed">失败</string>
+    <string name="spectra_step_timeout">超时</string>
+    <string name="spectra_step_cancelled">已停止</string>
+    <string name="spectra_home_live">进行中</string>
+    <string name="spectra_settings_hint">模型、工具与外观</string>
 </resources>

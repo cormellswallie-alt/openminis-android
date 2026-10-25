@@ -2355,4 +2355,11 @@
     <string name="spectra_home_question">What shall we do today?</string>
     <string name="spectra_home_sessions">%1$d chats</string>
     <string name="spectra_home_scheduled">%1$d scheduled</string>
+    <string name="spectra_step_running">Running</string>
+    <string name="spectra_step_done">Done</string>
+    <string name="spectra_step_failed">Failed</string>
+    <string name="spectra_step_timeout">Timed out</string>
+    <string name="spectra_step_cancelled">Stopped</string>
+    <string name="spectra_home_live">In progress</string>
+    <string name="spectra_settings_hint">Model, tools, and how Minis looks</string>
 </resources>

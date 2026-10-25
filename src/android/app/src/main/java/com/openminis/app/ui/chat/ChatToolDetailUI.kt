@@ -301,54 +301,109 @@ internal fun ToolDetailSheet(
         sheetState = sheetState,
         dragHandle = null,
         contentWindowInsets = { WindowInsets(0) },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = ChatColors.background,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.85f)
-                .background(ChatColors.secondaryBg),
+                .background(ChatColors.background),
         ) {
-            // ── Top Nav Bar (iOS: X button + "Minis Computer" + action button) ──
+            // [T-spectra-v3] Grab handle.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .background(ChatColors.tertiaryText.copy(alpha = 0.35f), RoundedCornerShape(2.dp)),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ChatColors.sheetHeaderBg)
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(start = 18.dp, end = 12.dp, top = 4.dp, bottom = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Close button (iOS: xmark in circle)
+                // [T-spectra-v3] Step identity: tool tile + title + one status line.
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .background(ChatColors.secondaryBg, CircleShape)
-                        .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
-                        .clip(CircleShape)
-                        .clickable { onDismiss() },
+                        .size(42.dp)
+                        .background(toolAccent.copy(alpha = if (ChatColors.isDark) 0.16f else 0.10f), RoundedCornerShape(13.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = ChatColors.primaryText,
-                        modifier = Modifier.size(16.dp),
-                    )
+                    if (isLive) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = toolAccent,
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(
+                            toolIconFor(block.toolName),
+                            contentDescription = toolTitleLabel(block.toolName),
+                            tint = toolAccent,
+                            modifier = Modifier.size(21.dp),
+                        )
+                    }
                 }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // [T-step-timestamp v3 aa8b1128] Sheet header reverted to a
-                // single-line title. The HH:mm:ss + duration line was moved
-                // out to the inline ToolCallPill's trailing column (under
-                // the elapsed-duration text) so it sits next to where the
-                // user is already scanning timing info.
-                Text(
-                    text = "Minis Computer",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ChatColors.primaryText,
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(12.dp))
+                val hdrDurationMs = if (com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(block.toolName)) {
+                    runCatching { org.json.JSONObject(block.content).optLong("elapsed_s", -1L) }.getOrDefault(-1L)
+                        .takeIf { it >= 0 }?.let { it * 1000L } ?: block.durationMs
+                } else block.durationMs
+                val (hdrStatus, hdrStatusColor) = when {
+                    isLive -> stringResource(R.string.spectra_step_running) to (if (ChatColors.isDark) com.openminis.app.ui.theme.Noir.OkOnOnyx else com.openminis.app.ui.theme.Noir.Ok)
+                    block.toolStatus == ToolBlockStatus.FAILED -> stringResource(R.string.spectra_step_failed) to ToolErrorColor
+                    block.toolStatus == ToolBlockStatus.TIMEOUT -> stringResource(R.string.spectra_step_timeout) to ToolErrorColor
+                    block.toolStatus == ToolBlockStatus.CANCELLED -> stringResource(R.string.spectra_step_cancelled) to ChatColors.secondaryText
+                    else -> stringResource(R.string.spectra_step_done) to ChatColors.secondaryText
+                }
+                val hdrMeta = buildList {
+                    add(toolTitleLabel(block.toolName))
+                    if (hdrDurationMs > 0 && !isLive) add(formatToolDuration(hdrDurationMs))
+                    if (block.startTimeMs > 0L) add(formatStepTimestamp(block.startTimeMs))
+                    if (toolBlocks.size > 1) add("${currentIdx + 1} / ${toolBlocks.size}")
+                }.joinToString("  ·  ")
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = block.toolTitle.ifEmpty { toolDisplayName(block.toolName) },
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = ChatColors.primaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 2.dp),
+                    ) {
+                        Text(
+                            text = hdrStatus,
+                            fontSize = 13.sp,
+                            lineHeight = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = hdrStatusColor,
+                            maxLines = 1,
+                        )
+                        if (hdrMeta.isNotEmpty()) {
+                            Text(
+                                text = "  ·  $hdrMeta",
+                                fontSize = 13.sp,
+                                lineHeight = 17.sp,
+                                color = ChatColors.secondaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Action button: dispatches per tool kind.
                 //  - shell_execute → opens the in-app terminal pre-filled
@@ -399,9 +454,8 @@ internal fun ToolDetailSheet(
                 val agentChildId = if (isAgentTool) com.openminis.app.agent.jobs.HelperRunner.childSessionIdFrom(block.content) else null
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(38.dp)
                         .background(ChatColors.secondaryBg, CircleShape)
-                        .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
                         .clip(CircleShape)
                         .clickable {
                             if (isAgentTool) {
@@ -463,10 +517,27 @@ internal fun ToolDetailSheet(
                         copyDone = false
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                // Close button (iOS: xmark in circle)
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(ChatColors.secondaryBg, CircleShape)
+                        .clip(CircleShape)
+                        .clickable { onDismiss() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = ChatColors.primaryText,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
 
             // Divider
-            HorizontalDivider(thickness = 1.dp, color = ChatColors.sheetHeaderBorder)
+            HorizontalDivider(thickness = 0.5.dp, color = ChatColors.separator)
 
             // ── Content Area (iOS: tool-specific rendering) ──
             val outputScrollState = rememberScrollState()
@@ -1170,106 +1241,18 @@ internal fun ToolDetailSheet(
             ) {
                 HorizontalDivider(thickness = 0.5.dp, color = ChatColors.separator)
 
-                // Tool info row: status icon + title/subtitle + duration
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 10.dp, bottom = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // Status icon (iOS: 18x18)
-                    if (isLive) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = toolAccent,
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        val (icon, tint) = when (block.toolStatus) {
-                            ToolBlockStatus.SUCCESS -> Icons.Default.CheckCircle to ToolCheckColor
-                            ToolBlockStatus.FAILED -> Icons.Default.Error to ToolErrorColor
-                            ToolBlockStatus.CANCELLED -> Icons.Default.Cancel to ToolCancelColor
-                            ToolBlockStatus.TIMEOUT -> Icons.Default.Schedule to ToolErrorColor
-                            else -> Icons.Default.CheckCircle to ToolCheckColor
-                        }
-                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Title + subtitle
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = toolTitleLabel(block.toolName),
-                            fontSize = 14.sp,
-                            lineHeight = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ChatColors.primaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = block.toolTitle.ifEmpty { block.toolName },
-                            fontSize = 12.sp,
-                            lineHeight = 14.sp,
-                            color = ChatColors.secondaryText,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-
-                    // [T-step-timestamp v3-fix aa8b1128] Trailing column in
-                    // the detail-view bottom bar: duration on top, the
-                    // step's HH:mm:ss start time on a smaller / lighter
-                    // line right beneath it. This is where the user goes
-                    // to inspect a single step, so the timestamp lives
-                    // here instead of on every pill in the message list.
-                    // [T-agent-port-round3] A background delegate_task's tool
-                    // call returns in ~2 s; the run it stands for is measured
-                    // by the payload's elapsed_s. Show that for agent blocks.
-                    val shownDurationMs = if (com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(block.toolName)) {
-                        runCatching { org.json.JSONObject(block.content).optLong("elapsed_s", -1L) }.getOrDefault(-1L)
-                            .takeIf { it >= 0 }?.let { it * 1000L } ?: block.durationMs
-                    } else block.durationMs
-                    if ((shownDurationMs > 0 && !isLive) || block.startTimeMs > 0L) {
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(1.dp),
-                        ) {
-                            if (shownDurationMs > 0 && !isLive) {
-                                Text(
-                                    text = formatToolDuration(shownDurationMs),
-                                    fontSize = 11.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = ChatColors.tertiaryText,
-                                )
-                            }
-                            if (block.startTimeMs > 0L) {
-                                Text(
-                                    text = formatStepTimestamp(block.startTimeMs),
-                                    fontSize = 9.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = ChatColors.tertiaryText.copy(alpha = 0.75f),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Navigation row: |< ... 1/N ... >|
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 8.dp),
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 10.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Back button (iOS: backward.end.fill)
                     IconButton(
                         onClick = { if (currentIdx > 0) currentIdx-- },
                         enabled = currentIdx > 0,
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(42.dp).background(ChatColors.secondaryBg, CircleShape),
                     ) {
                         Icon(
                             Icons.Default.SkipPrevious,
@@ -1315,7 +1298,7 @@ internal fun ToolDetailSheet(
                     IconButton(
                         onClick = { if (currentIdx < toolBlocks.lastIndex) currentIdx++ },
                         enabled = currentIdx < toolBlocks.lastIndex,
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(42.dp).background(ChatColors.secondaryBg, CircleShape),
                     ) {
                         Icon(
                             Icons.Default.SkipNext,

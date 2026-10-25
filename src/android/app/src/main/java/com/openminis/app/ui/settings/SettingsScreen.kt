@@ -1,5 +1,6 @@
 package com.openminis.app.ui.settings
 
+import com.openminis.app.ui.theme.spectraCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -119,7 +120,14 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
+                // [T-spectra-v3] Large left title.
+                title = {
+                    Text(
+                        stringResource(R.string.settings_title),
+                        style = com.openminis.app.ui.theme.SpectraSurface.LargeTitleStyle,
+                    )
+                },
+                expandedHeight = 72.dp,
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -137,6 +145,12 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // [T-spectra-v3] Orb hero — the assistant's face greets the page.
+            com.openminis.app.ui.theme.SpectraSettingsHero(
+                title = "Minis",
+                subtitle = stringResource(R.string.spectra_settings_hint),
+                modifier = Modifier.padding(top = 8.dp),
+            )
             // -- LLM Providers --
             SettingsSection(
                 title = stringResource(R.string.settings_section_llm_providers),
@@ -526,23 +540,17 @@ private fun SettingsSection(
             .fillMaxWidth()
             .padding(top = 26.dp),
     ) {
-        // [T-noir-redesign] Eyebrow header: small caps, wide tracking, mute ink.
-        Text(
-            text = title.uppercaseForDisplay(),
-            style = com.openminis.app.ui.theme.NoirEyebrow,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // [T-spectra-v3] Sentence-case header + shadow-layered card.
+        com.openminis.app.ui.theme.SpectraSectionHeader(
+            text = title,
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 10.dp),
         )
 
-        // Section card — raised paper/onyx with a hairline, 22dp corners.
-        val shape = RoundedCornerShape(22.dp)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .clip(shape)
-                .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
-                .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, shape),
+                .spectraCard(),
         ) {
             content()
         }

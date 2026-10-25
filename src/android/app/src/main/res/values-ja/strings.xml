@@ -1909,4 +1909,11 @@
     <string name="spectra_home_question">今日は何をしましょう？</string>
     <string name="spectra_home_sessions">%1$d 件の会話</string>
     <string name="spectra_home_scheduled">%1$d 件の予約</string>
+    <string name="spectra_step_running">実行中</string>
+    <string name="spectra_step_done">完了</string>
+    <string name="spectra_step_failed">失敗</string>
+    <string name="spectra_step_timeout">タイムアウト</string>
+    <string name="spectra_step_cancelled">停止</string>
+    <string name="spectra_home_live">進行中</string>
+    <string name="spectra_settings_hint">モデル・ツール・外観</string>
 </resources>

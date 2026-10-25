@@ -1847,4 +1847,11 @@
     <string name="spectra_home_question">วันนี้ให้ช่วยอะไรดี?</string>
     <string name="spectra_home_sessions">%1$d แชต</string>
     <string name="spectra_home_scheduled">%1$d ตั้งเวลา</string>
+    <string name="spectra_step_running">กำลังทำงาน</string>
+    <string name="spectra_step_done">เสร็จแล้ว</string>
+    <string name="spectra_step_failed">ล้มเหลว</string>
+    <string name="spectra_step_timeout">หมดเวลา</string>
+    <string name="spectra_step_cancelled">หยุดแล้ว</string>
+    <string name="spectra_home_live">กำลังดำเนินการ</string>
+    <string name="spectra_settings_hint">โมเดล เครื่องมือ และหน้าตา</string>
 </resources>

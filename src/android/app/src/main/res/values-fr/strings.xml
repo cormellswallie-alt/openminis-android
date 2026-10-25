@@ -1872,4 +1872,11 @@
     <string name="spectra_home_question">Que faisons-nous aujourd’hui ?</string>
     <string name="spectra_home_sessions">%1$d discussions</string>
     <string name="spectra_home_scheduled">%1$d planifiées</string>
+    <string name="spectra_step_running">En cours</string>
+    <string name="spectra_step_done">Terminé</string>
+    <string name="spectra_step_failed">Échec</string>
+    <string name="spectra_step_timeout">Délai dépassé</string>
+    <string name="spectra_step_cancelled">Arrêté</string>
+    <string name="spectra_home_live">En cours</string>
+    <string name="spectra_settings_hint">Modèles, outils et apparence</string>
 </resources>

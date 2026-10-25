@@ -1846,4 +1846,11 @@
     <string name="spectra_home_question">Apa kita nak buat hari ini?</string>
     <string name="spectra_home_sessions">%1$d sembang</string>
     <string name="spectra_home_scheduled">%1$d berjadual</string>
+    <string name="spectra_step_running">Sedang berjalan</string>
+    <string name="spectra_step_done">Selesai</string>
+    <string name="spectra_step_failed">Gagal</string>
+    <string name="spectra_step_timeout">Tamat masa</string>
+    <string name="spectra_step_cancelled">Dihentikan</string>
+    <string name="spectra_home_live">Sedang berjalan</string>
+    <string name="spectra_settings_hint">Model, alat dan rupa</string>
 </resources>

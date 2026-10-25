@@ -1859,4 +1859,11 @@
     <string name="spectra_home_question">Чем займёмся сегодня?</string>
     <string name="spectra_home_sessions">Чатов: %1$d</string>
     <string name="spectra_home_scheduled">Запланировано: %1$d</string>
+    <string name="spectra_step_running">Выполняется</string>
+    <string name="spectra_step_done">Готово</string>
+    <string name="spectra_step_failed">Ошибка</string>
+    <string name="spectra_step_timeout">Тайм-аут</string>
+    <string name="spectra_step_cancelled">Остановлено</string>
+    <string name="spectra_home_live">В работе</string>
+    <string name="spectra_settings_hint">Модели, инструменты и вид</string>
 </resources>
