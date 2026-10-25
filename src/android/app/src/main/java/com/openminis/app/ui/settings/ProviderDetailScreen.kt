@@ -992,7 +992,7 @@ private fun OAuthCredentialBlock(
                     .padding(horizontal = 8.dp)
                     .size(8.dp)
                     .background(
-                        if (needsReauth) MaterialTheme.colorScheme.error else Color(0xFF6E9C7B),
+                        if (needsReauth) MaterialTheme.colorScheme.error else Color(0xFF23A26D),
                         CircleShape,
                     ),
             )
@@ -1294,7 +1294,7 @@ private fun ManualBearerTokenSection(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(8.dp)
-                    .background(Color(0xFF6E9C7B), CircleShape),
+                    .background(Color(0xFF23A26D), CircleShape),
             )
         }
         Row(modifier = Modifier.padding(top = 8.dp)) {

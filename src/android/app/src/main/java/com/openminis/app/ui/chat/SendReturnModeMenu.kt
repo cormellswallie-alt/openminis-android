@@ -268,7 +268,7 @@ fun ComposerSendButton(
         Icon(
             Icons.Default.ArrowUpward,
             contentDescription = "Send",
-            tint = if (canActivate) ChatColors.background
+            tint = if (canActivate) Color.White
             else ChatColors.secondaryText,
             modifier = Modifier
                 .size(20.dp)

@@ -428,7 +428,7 @@ private fun SelectionDot(isSelected: Boolean) {
     Icon(
         if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
         contentDescription = null,
-        tint = if (isSelected) Color(0xFF9A7A48)
+        tint = if (isSelected) Color(0xFF5B5CF0)
         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
         modifier = Modifier.size(20.dp),
     )
@@ -489,7 +489,7 @@ fun ModalityBadge(badge: String) {
 fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
     ProviderType.anthropic -> Color(0xFFAB47BC)
     ProviderType.gemini -> Color(0xFF42A5F5)
-    ProviderType.openAI -> Color(0xFF6E9C7B)
+    ProviderType.openAI -> Color(0xFF23A26D)
     ProviderType.openRouter -> Color(0xFF00BCD4)
     ProviderType.xAI -> Color(0xFFFF7043)
     ProviderType.kimiCode -> Color(0xFF5C6BC0) // indigo — Kimi accent
@@ -497,10 +497,10 @@ fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
     // [T-android-provider-type-parity] Responses API instances are
     // OpenAI under the hood — same green dot. Undrivable types share
     // the neutral gray used for "no provider".
-    ProviderType.openAIResponses -> Color(0xFF6E9C7B)
+    ProviderType.openAIResponses -> Color(0xFF23A26D)
     ProviderType.antigravity,
-    ProviderType.unsupported -> Color(0xFF8F8A80)
-    null -> Color(0xFF8F8A80)
+    ProviderType.unsupported -> Color(0xFF878C9C)
+    null -> Color(0xFF878C9C)
 }
 
 /**

@@ -421,7 +421,7 @@ private fun BackupTab(
         CategorySwitchRow(
             title = stringResource(R.string.backup_encrypt_backup),
             icon = Icons.Outlined.Lock,
-            iconColor = Color(0xFF6E9C7B),
+            iconColor = Color(0xFF23A26D),
             checked = encrypt,
             onCheckedChange = { vm.setEncrypt(it) },
             enabled = !running,
@@ -697,7 +697,7 @@ private fun DeviceNameSection(enabled: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF9A7A48), CircleShape),
+                modifier = Modifier.size(30.dp).background(Color(0xFF5B5CF0), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -783,7 +783,7 @@ private fun BackupHistorySection(
         if (!expanded && records.size > shown.size) {
             RestoreSourceRow(
                 icon = Icons.Outlined.History,
-                iconColor = Color(0xFF8F8A80),
+                iconColor = Color(0xFF878C9C),
                 label = stringResource(
                     R.string.backup_history_show_all,
                     records.size,
@@ -803,10 +803,10 @@ private fun BackupHistoryRow(
     onClick: () -> Unit,
 ) {
     val (icon, tint) = when (record.status) {
-        BackupHistory.Status.RUNNING -> Icons.Outlined.Sync to Color(0xFF8F8A80)
-        BackupHistory.Status.SUCCEEDED -> Icons.Outlined.CheckCircle to Color(0xFF6E9C7B)
-        BackupHistory.Status.COMPLETED_WITH_ISSUES -> Icons.Outlined.Warning to Color(0xFFC98A3E)
-        BackupHistory.Status.FAILED -> Icons.Outlined.ErrorOutline to Color(0xFFC8553D)
+        BackupHistory.Status.RUNNING -> Icons.Outlined.Sync to Color(0xFF878C9C)
+        BackupHistory.Status.SUCCEEDED -> Icons.Outlined.CheckCircle to Color(0xFF23A26D)
+        BackupHistory.Status.COMPLETED_WITH_ISSUES -> Icons.Outlined.Warning to Color(0xFFEE8A2A)
+        BackupHistory.Status.FAILED -> Icons.Outlined.ErrorOutline to Color(0xFFE5484D)
     }
     Column {
         Row(
@@ -930,7 +930,7 @@ private fun MaxFileSizeRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF8F8A80), CircleShape),
+                modifier = Modifier.size(30.dp).background(Color(0xFF878C9C), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1046,7 +1046,7 @@ private fun RestoreTab(
                 serverDestinations.forEachIndexed { i, r ->
                     RestoreSourceRow(
                         icon = Icons.Outlined.Cloud,
-                        iconColor = Color(0xFF9A7FA8),
+                        iconColor = Color(0xFF9B6CF6),
                         label = r.name,
                         subtitle = stringResource(
                             R.string.backup_dest_row_subtitle,
@@ -1073,7 +1073,7 @@ private fun RestoreTab(
             // folder support is untouched — only this duplicate entry is gone.
             RestoreSourceRow(
                 icon = Icons.Outlined.Description,
-                iconColor = Color(0xFF9A7A48),
+                iconColor = Color(0xFF5B5CF0),
                 label = if (running) status ?: stringResource(R.string.backup_reading)
                 else stringResource(R.string.backup_choose_file),
                 enabled = !running,
@@ -1082,7 +1082,7 @@ private fun RestoreTab(
             )
             RestoreSourceRow(
                 icon = Icons.Outlined.Cloud,
-                iconColor = Color(0xFF9A7FA8),
+                iconColor = Color(0xFF9B6CF6),
                 label = stringResource(R.string.backup_choose_server),
                 enabled = !running,
                 // [T-android-restore-server-list] ALWAYS the same destination:
@@ -1385,7 +1385,7 @@ private fun DestinationsSection(
         // knew what either did.
         RestoreSourceRow(
             icon = Icons.Outlined.Add,
-            iconColor = Color(0xFF6E9C7B),
+            iconColor = Color(0xFF23A26D),
             label = stringResource(R.string.backup_manage_destinations),
             enabled = enabled,
             onClick = onManage,
@@ -1438,7 +1438,7 @@ private fun DestinationRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF9A7A48), CircleShape),
+                modifier = Modifier.size(30.dp).background(Color(0xFF5B5CF0), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
@@ -1515,7 +1515,7 @@ private fun ResultDestinationRow(
             Icon(
                 if (outcome.succeeded) Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
                 contentDescription = null,
-                tint = if (outcome.succeeded) Color(0xFF6E9C7B) else Color(0xFFC98A3E),
+                tint = if (outcome.succeeded) Color(0xFF23A26D) else Color(0xFFEE8A2A),
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(10.dp))
@@ -1879,14 +1879,14 @@ private fun categoryIcon(cat: BackupCategory): ImageVector = when (cat) {
 
 /** Tint per category, mirroring iOS BackupCategoryIcon.tint(for:). */
 private fun categoryTint(cat: BackupCategory): Color = when (cat) {
-    BackupCategory.CHATS -> Color(0xFF9A7A48)                 // blue
-    BackupCategory.SHARED_FILES -> Color(0xFF7C7FA6)         // indigo
-    BackupCategory.SKILLS -> Color(0xFFC98A3E)              // orange
-    BackupCategory.MEMORY -> Color(0xFFC2677A)             // pink
-    BackupCategory.PROVIDERS -> Color(0xFF6F9A9E)         // teal
-    BackupCategory.MCP_SERVERS -> Color(0xFF6F9A9E)      // cyan
+    BackupCategory.CHATS -> Color(0xFF5B5CF0)                 // blue
+    BackupCategory.SHARED_FILES -> Color(0xFF6E6FE8)         // indigo
+    BackupCategory.SKILLS -> Color(0xFFEE8A2A)              // orange
+    BackupCategory.MEMORY -> Color(0xFFE5578A)             // pink
+    BackupCategory.PROVIDERS -> Color(0xFF17A2B8)         // teal
+    BackupCategory.MCP_SERVERS -> Color(0xFF17A2B8)      // cyan
     BackupCategory.ENVIRONMENT_VARIABLES -> Color(0xFFA2845E) // brown
-    BackupCategory.VOICE_CORRECTIONS -> Color(0xFF9A7FA8) // purple
+    BackupCategory.VOICE_CORRECTIONS -> Color(0xFF9B6CF6) // purple
 }
 
 /**

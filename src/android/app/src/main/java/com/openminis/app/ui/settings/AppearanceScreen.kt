@@ -279,10 +279,10 @@ fun AppearanceScreen(
 
     val fontsModified = chatInputLevel != 0 || messageLevel != 0 || appBaseLevel != 0
 
-    val tilePurple = Color(0xFF7C7FA6)
-    val tileBlue = Color(0xFF9A7A48)
-    val tileOrange = Color(0xFFC98A3E)
-    val tileGreen = Color(0xFF6E9C7B)
+    val tilePurple = Color(0xFF6E6FE8)
+    val tileBlue = Color(0xFF5B5CF0)
+    val tileOrange = Color(0xFFEE8A2A)
+    val tileGreen = Color(0xFF23A26D)
     val tileTeal = Color(0xFF5AC8FA)
 
     SettingsScaffold(title = stringResource(R.string.appearance_title), onBack = onBack) {

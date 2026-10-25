@@ -305,14 +305,17 @@ import com.openminis.app.ui.theme.ChatColors
 import com.openminis.app.ui.components.MinisTextButton
 
 // iOS ChatColors equivalent
-internal val ToolCheckColor = Color(0xFF6E9C7B) // iOS .green
-internal val ToolErrorColor = Color(0xFFC8553D) // iOS .red
-internal val ToolCancelColor = Color(0xFFCDAE74) // iOS .yellow
+internal val ToolCheckColor = Color(0xFF23A26D) // iOS .green
+internal val ToolErrorColor = Color(0xFFE5484D) // iOS .red
+internal val ToolCancelColor = Color(0xFFF2B11E) // iOS .yellow
 // Memory tool accent — matches iOS `.pink` on SF Symbols.
-internal val ToolMemoryAccent = Color(0xFFC2677A)
+internal val ToolMemoryAccent = Color(0xFFE5578A)
 // Sparkle gradient colors (iOS uses linear gradient)
-internal val SparkleColor1 = Color(0xFFB8B096) // rgb(0.72, 0.69, 0.59)
-internal val SparkleColor2 = Color(0xFF99998C) // rgb(0.6, 0.6, 0.55)
+/** [T-noir-iris-layout] Composer card corner. */
+internal val ComposerCardRadius = 24.dp
+
+internal val SparkleColor1 = Color(0xFF8E90FF) // rgb(0.72, 0.69, 0.59)
+internal val SparkleColor2 = Color(0xFF9B6CF6) // rgb(0.6, 0.6, 0.55)
 
 // T129: cap photo/video and file pickers at 50 items per launch. Above this
 // count Android's PickMultipleVisualMedia silently truncates anyway, but our
@@ -2798,10 +2801,14 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // iOS-style centered layout: "Minis" + group row + provider·model row
+                    // [T-noir-iris-layout] Left-aligned two-line header: the
+                    // title, then ONE model chip (group ⌄ · provider·model ·
+                    // thinking badge) instead of the old centred three-row
+                    // stack. Same tap targets: title → rename sheet, chip →
+                    // model picker, badge → thinking sheet.
                     Box(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.CenterStart,
                     ) {
                         val noFontPad = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
@@ -2843,7 +2850,7 @@ fun ChatScreen(
                             }
                         }
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.Start,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(Color.Red.copy(alpha = 0.35f * fallbackPulseAlpha.value))
@@ -2855,7 +2862,7 @@ fun ChatScreen(
                                 // behind. Horizontal 32dp keeps the fallback
                                 // pulse highlight comfortably padded around
                                 // the longest title.
-                                .padding(horizontal = 32.dp, vertical = 2.dp),
+                                .padding(end = 8.dp, top = 2.dp, bottom = 2.dp),
                         ) {
                             // Nav title: current session title when one
                             // exists and the toggle is on, else fall back to
@@ -2879,8 +2886,8 @@ fun ChatScreen(
                             }
                             Text(
                                 text = displayTitle,
-                                fontSize = 16.sp,
-                                lineHeight = 19.sp,
+                                fontSize = 17.sp,
+                                lineHeight = 21.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = ChatColors.primaryText,
                                 maxLines = 1,
@@ -2899,10 +2906,13 @@ fun ChatScreen(
                             // provider/model. Tap opens the model picker —
                             // separated from the title above so tapping the
                             // title rows opens the rename sheet instead.
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .padding(start = 2.dp, top = 3.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(ChatColors.toolCapsuleBg)
                                     // [T-android-modelpicker-stuck-ripple] Own the
                                     // interaction source so the press can be
                                     // released explicitly. Opening the picker
@@ -2917,7 +2927,7 @@ fun ChatScreen(
                                         interactionSource = modelPickerInteraction,
                                         indication = ripple(),
                                     ) { showModelPicker = true }
-                                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                                    .padding(start = 8.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
                             ) {
                                 // Line 1: green dot + the active group OR
                                 // model name + dropdown arrow
@@ -2930,7 +2940,7 @@ fun ChatScreen(
                                         modifier = Modifier
                                             .size(6.dp)
                                             .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF6E9C7B) else Color(0xFFC98A3E),
+                                                if (modelName.isNotEmpty()) Color(0xFF23A26D) else Color(0xFFEE8A2A),
                                                 CircleShape,
                                             ),
                                     )
@@ -3067,6 +3077,8 @@ fun ChatScreen(
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        // Shares the chip's row: yields width first.
+                                        modifier = Modifier.weight(1f, fill = false),
                                     ) {
                                         // [T-codex-fast-mode] ⚡ badge ahead of the
                                         // resolved model name — small orange circle
@@ -3081,7 +3093,7 @@ fun ChatScreen(
                                                 contentAlignment = Alignment.Center,
                                                 modifier = Modifier
                                                     .size(11.dp)
-                                                    .background(Color(0xFFC98A3E), CircleShape),
+                                                    .background(Color(0xFFEE8A2A), CircleShape),
                                             ) {
                                                 Icon(
                                                     Icons.Default.Bolt,
@@ -3488,7 +3500,7 @@ fun ChatScreen(
                 // user-configured font scale on xhdpi/xxhdpi without
                 // re-clipping (T-topbar-model-row-clip regression check).
                 // Font sizes + lineHeights stay untouched per spec.
-                expandedHeight = 68.dp,
+                expandedHeight = 60.dp,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -5190,11 +5202,11 @@ fun ChatScreen(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 12.dp + fabEndInset, bottom = upBaseBottom + 46.dp)
-                            .shadow(4.dp, CircleShape)
-                            .size(36.dp),
+                            .size(34.dp)
+                            .border(0.5.dp, ChatColors.inputBorder, CircleShape),
                         colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                            containerColor = ChatColors.inputBg,
-                            contentColor = ChatColors.primaryText,
+                            containerColor = ChatColors.inputBg.copy(alpha = 0.94f),
+                            contentColor = ChatColors.secondaryText,
                         ),
                     ) {
                         Icon(
@@ -5242,11 +5254,11 @@ fun ChatScreen(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 12.dp + fabEndInset, bottom = fabBottomPadding)
-                            .shadow(4.dp, CircleShape)
-                            .size(36.dp),
+                            .size(34.dp)
+                            .border(0.5.dp, ChatColors.inputBorder, CircleShape),
                         colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                            containerColor = ChatColors.inputBg,
-                            contentColor = ChatColors.primaryText,
+                            containerColor = ChatColors.inputBg.copy(alpha = 0.94f),
+                            contentColor = ChatColors.secondaryText,
                         ),
                     ) {
                         Icon(
@@ -5856,7 +5868,7 @@ fun ChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .drawBehind {
-                            val radiusPx = 20.dp.toPx()
+                            val radiusPx = ComposerCardRadius.toPx()
                             val canvas = drawContext.canvas.nativeCanvas
                             // Pass 1: symmetric ambient halo — small blur, low alpha.
                             shadowPaint.setShadowLayer(
@@ -5870,8 +5882,8 @@ fun ChatScreen(
                             )
                             // Pass 2: soft downward shadow (spot light).
                             shadowPaint.setShadowLayer(
-                                10.dp.toPx(), 0f, 3.dp.toPx(),
-                                android.graphics.Color.argb(24, 0, 0, 0),
+                                14.dp.toPx(), 0f, 4.dp.toPx(),
+                                android.graphics.Color.argb(18, 20, 22, 60),
                             )
                             canvas.drawRoundRect(
                                 0f, 0f, size.width, size.height,
@@ -5895,9 +5907,12 @@ fun ChatScreen(
                         // crossfade honours it.
                         .contextUsageGlow(
                             tier = contextUsage?.tier ?: ContextUsage.Tier.NORMAL,
-                            cornerRadius = 20.dp,
+                            cornerRadius = ComposerCardRadius,
                             animate = !animationsDisabled(context),
                         )
+                        // [T-noir-iris-layout] Hairline edge so the white card
+                        // still reads on the white chat page.
+                        .border(0.75.dp, ChatColors.inputBorder, RoundedCornerShape(ComposerCardRadius))
                         .padding(top = if (attachments.isNotEmpty()) 8.dp else 4.dp),
                 ) {
                     // T185: Move-to capsule lives INSIDE the composer card,
@@ -7372,7 +7387,7 @@ fun ChatScreen(
                             Box(
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .background(Color(0xFFC8553D), CircleShape)
+                                    .background(Color(0xFFE5484D), CircleShape)
                                     .clip(CircleShape)
                                     .clickable { viewModel.cancelStream() },
                                 contentAlignment = Alignment.Center,

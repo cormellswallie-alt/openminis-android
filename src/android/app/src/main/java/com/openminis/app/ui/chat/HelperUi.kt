@@ -117,9 +117,9 @@ internal fun helperAccent(): Color = if (ChatColors.isDark) HelperAccentDark els
 /** Static mid-tone for non-composable call sites (tool colour map). */
 val HelperAccentStatic = Color(0xFF8B6CF6)
 
-internal val HelperStatusGreen = Color(0xFF6E9C7B)
-internal val HelperStatusYellow = Color(0xFFCDAE74)
-internal val HelperStatusRed = Color(0xFFC8553D)
+internal val HelperStatusGreen = Color(0xFF23A26D)
+internal val HelperStatusYellow = Color(0xFFF2B11E)
+internal val HelperStatusRed = Color(0xFFE5484D)
 
 /** What an agent block's content currently says, in structured form. */
 internal sealed class HelperPhase {
@@ -735,7 +735,7 @@ private fun HelperSecondLine(info: HelperBlockInfo) {
                 Icon(
                     Icons.Default.Warning,
                     contentDescription = stringResource(R.string.agent_pinned_group_unavailable),
-                    tint = Color(0xFFCDAE74),
+                    tint = Color(0xFFF2B11E),
                     modifier = Modifier.size(11.dp),
                 )
             }
@@ -747,7 +747,7 @@ private fun HelperSecondLine(info: HelperBlockInfo) {
                 )
             }
             p.elapsedSeconds?.let { Text(helperElapsedLabel(it), fontSize = 11.sp, lineHeight = 12.sp, fontFamily = FontFamily.Monospace, color = ChatColors.tertiaryText, maxLines = 1) }
-            if (p.escalation) Icon(Icons.Default.PriorityHigh, contentDescription = null, tint = Color(0xFFC98A3E), modifier = Modifier.size(11.dp))
+            if (p.escalation) Icon(Icons.Default.PriorityHigh, contentDescription = null, tint = Color(0xFFEE8A2A), modifier = Modifier.size(11.dp))
         }
     }
 }
@@ -822,7 +822,7 @@ internal fun HelperThumbContent(block: AssistantBlock) {
                     if (p.modelGroupUnavailable) {
                         Icon(
                             Icons.Default.Warning, contentDescription = null,
-                            tint = Color(0xFFCDAE74).copy(alpha = 0.9f),
+                            tint = Color(0xFFF2B11E).copy(alpha = 0.9f),
                             modifier = Modifier.size(6.dp),
                         )
                     }
@@ -1206,7 +1206,7 @@ internal fun AgentCallbackCard(callback: AgentCallback, onTap: () -> Unit, modif
     val accent = when (callback.status) {
         "running" -> helperAccent
         "done" -> HelperStatusGreen
-        "cancelled", "timeout" -> Color(0xFFCDAE74)
+        "cancelled", "timeout" -> Color(0xFFF2B11E)
         else -> HelperStatusRed
     }
     val icon = when {

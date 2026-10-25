@@ -916,10 +916,10 @@ private fun ExpandedContent(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFFC98A3E).copy(alpha = 0.12f))
+                    .background(Color(0xFFEE8A2A).copy(alpha = 0.12f))
                     .padding(horizontal = 12.dp, vertical = 5.dp),
             ) {
-                Text("⚠︎", fontSize = 10.sp, color = Color(0xFFC98A3E))
+                Text("⚠︎", fontSize = 10.sp, color = Color(0xFFEE8A2A))
                 Spacer(Modifier.width(5.dp))
                 Text(
                     transcribeError,

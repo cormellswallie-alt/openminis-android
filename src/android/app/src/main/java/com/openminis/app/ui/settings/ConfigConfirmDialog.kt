@@ -203,7 +203,7 @@ private fun ConfirmRow(item: PendingConfigChangeItem, onToggle: (Boolean) -> Uni
 private fun VerbBadge(verb: String) {
     val color = when (verb.lowercase()) {
         "remove", "delete" -> MaterialTheme.colorScheme.error
-        "add", "create" -> Color(0xFF5E8A6B)
+        "add", "create" -> Color(0xFF1B8A5A)
         "hide" -> MaterialTheme.colorScheme.outline
         "show" -> Color(0xFF1976D2)
         "revert" -> Color(0xFF8E5CD9)

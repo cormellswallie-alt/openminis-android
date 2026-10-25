@@ -100,7 +100,7 @@ fun SharedFolderDetailScreen(
                     Icon(
                         imageVector = Icons.Outlined.Folder,
                         contentDescription = null,
-                        tint = Color(0xFF9A7A48),
+                        tint = Color(0xFF5B5CF0),
                     )
                     Text(
                         text = stringResource(R.string.shared_folder_browse_files),
@@ -169,9 +169,9 @@ private fun HeaderCard(folder: SharedFolderEntry) {
 @Composable
 private fun AccessBadge(writable: Boolean) {
     val (textRes, color) = if (writable) {
-        R.string.mount_badge_rw to Color(0xFF6E9C7B)
+        R.string.mount_badge_rw to Color(0xFF23A26D)
     } else {
-        R.string.mount_badge_readonly to Color(0xFFC98A3E)
+        R.string.mount_badge_readonly to Color(0xFFEE8A2A)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

@@ -237,7 +237,7 @@ internal fun stepRailColor(): Color =
 
 /** Thinking ink: gold that holds contrast on both grounds. */
 @Composable
-internal fun thinkingInk(): Color = if (ChatColors.isDark) Noir.GoldOnOnyx else Noir.GoldOnPaper
+internal fun thinkingInk(): Color = if (ChatColors.isDark) Noir.ThinkOnOnyx else Noir.ThinkOnPaper
 
 /**
  * The tinted circle every step hangs from. While [running], a thin arc in the

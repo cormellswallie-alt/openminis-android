@@ -156,9 +156,9 @@ private fun SharedFolderRow(
 @Composable
 private fun AccessBadge(writable: Boolean) {
     val (textRes, color) = if (writable) {
-        R.string.mount_badge_rw to Color(0xFF6E9C7B)
+        R.string.mount_badge_rw to Color(0xFF23A26D)
     } else {
-        R.string.mount_badge_readonly to Color(0xFFC98A3E)
+        R.string.mount_badge_readonly to Color(0xFFEE8A2A)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),
@@ -191,7 +191,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/shared",
             writable = true,
             icon = Icons.Outlined.Folder,
-            iconColor = Color(0xFF9A7A48),
+            iconColor = Color(0xFF5B5CF0),
         ),
         SharedFolderEntry(
             id = "skills",
@@ -199,7 +199,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/skills",
             writable = false,
             icon = Icons.Outlined.AutoAwesome,
-            iconColor = Color(0xFF9A7FA8),
+            iconColor = Color(0xFF9B6CF6),
         ),
         SharedFolderEntry(
             id = "memory",
@@ -207,7 +207,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/memory",
             writable = false,
             icon = Icons.Outlined.Psychology,
-            iconColor = Color(0xFFC2677A),
+            iconColor = Color(0xFFE5578A),
         ),
     )
 

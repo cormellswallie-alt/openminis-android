@@ -309,16 +309,29 @@ internal fun AssistantHeader() {
         // 18.dp, matching the previous Icon exactly: the row height feeds a
         // measured-height estimate in the message list, so the icon stays
         // square and same-sized whichever branch renders.
-        com.openminis.app.ui.settings.SoulIconGlyph(
-            icon = soulMeta.icon,
-            sizeDp = 18.dp,
-            emojiSp = 15.sp,
-            sparkleTint = sparkleGradient,
-        )
-        Spacer(modifier = Modifier.width(6.dp))
+        // [T-noir-iris-layout] The soul glyph sits in a soft iris disc — a
+        // small avatar that marks where each reply starts.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(26.dp)
+                .background(
+                    if (ChatColors.isDark) com.openminis.app.ui.theme.Noir.IrisSoftDark
+                    else com.openminis.app.ui.theme.Noir.IrisSoft,
+                    CircleShape,
+                ),
+        ) {
+            com.openminis.app.ui.settings.SoulIconGlyph(
+                icon = soulMeta.icon,
+                sizeDp = 16.dp,
+                emojiSp = 14.sp,
+                sparkleTint = sparkleGradient,
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = displayName,
-            fontSize = 16.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -596,7 +609,7 @@ internal fun InlineErrorBanner(error: String, onRetry: (() -> Unit)? = null) {
             .fillMaxWidth()
             .padding(top = 4.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFC8553D).copy(alpha = 0.12f))
+            .background(Color(0xFFE5484D).copy(alpha = 0.12f))
             .combinedClickable(
                 onClick = {},
                 onLongClick = {
@@ -609,13 +622,13 @@ internal fun InlineErrorBanner(error: String, onRetry: (() -> Unit)? = null) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = null,
-            tint = Color(0xFFC8553D),
+            tint = Color(0xFFE5484D),
             modifier = Modifier.size(14.dp),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = error,
-            color = Color(0xFFC8553D),
+            color = Color(0xFFE5484D),
             fontSize = 12.sp,
             lineHeight = 16.sp,
             maxLines = 3,
@@ -627,7 +640,7 @@ internal fun InlineErrorBanner(error: String, onRetry: (() -> Unit)? = null) {
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFFC8553D).copy(alpha = 0.15f))
+                    .background(Color(0xFFE5484D).copy(alpha = 0.15f))
                     .clickable(onClick = onRetry)
                     .padding(horizontal = 10.dp, vertical = 3.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -635,11 +648,11 @@ internal fun InlineErrorBanner(error: String, onRetry: (() -> Unit)? = null) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = null,
-                    tint = Color(0xFFC8553D),
+                    tint = Color(0xFFE5484D),
                     modifier = Modifier.size(10.dp),
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.chat_longpress_retry), color = Color(0xFFC8553D), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.chat_longpress_retry), color = Color(0xFFE5484D), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -684,7 +697,7 @@ private fun ToolStopButton(
                 modifier = Modifier
                     .size(10.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFFC8553D)),
+                    .background(Color(0xFFE5484D)),
             )
         }
     }
@@ -1064,7 +1077,7 @@ internal fun ThinkingBlock(
         // One-shot auto-collapse when streaming for this block ends.
         if (shouldAutoCollapseThinking(isStreaming, userIntent)) expanded = false
     }
-    // [T-noir-step-timeline] Gold is reserved for thinking: it is the one
+    // [T-noir-step-timeline] Violet is reserved for thinking: it is the one
     // step kind drawn in the brand ink, everything else uses the spectrum.
     val thinkingInkColor = thinkingInk()
     val charCount = block.content.length

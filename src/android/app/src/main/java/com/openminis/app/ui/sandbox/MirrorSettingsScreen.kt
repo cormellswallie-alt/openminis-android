@@ -97,9 +97,9 @@ enum class MirrorCategory(
 
     val iconColor: Color
         get() = when (this) {
-            ALPINE -> Color(0xFF9A7A48)
-            PIP -> Color(0xFF6E9C7B)
-            NPM -> Color(0xFFC8553D)
+            ALPINE -> Color(0xFF5B5CF0)
+            PIP -> Color(0xFF23A26D)
+            NPM -> Color(0xFFE5484D)
         }
 }
 
@@ -504,7 +504,7 @@ fun MirrorsSectionView(onNavigate: (MirrorCategory) -> Unit) {
     ListItem(
         headlineContent = { Text(if (vm.isTesting) stringResource(R.string.mirror_test_speed_testing) else stringResource(R.string.mirror_detect_fast_label)) },
         leadingContent = {
-            CircleIconBadge(icon = Icons.Filled.Bolt, tint = Color(0xFFC98A3E))
+            CircleIconBadge(icon = Icons.Filled.Bolt, tint = Color(0xFFEE8A2A))
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -589,9 +589,9 @@ private fun CircleIconBadge(icon: ImageVector, tint: Color) {
 @Composable
 private fun LatencyBadge(ms: Int) {
     val color = when {
-        ms < 200 -> Color(0xFF6E9C7B)
-        ms < 500 -> Color(0xFFC98A3E)
-        else -> Color(0xFFC8553D)
+        ms < 200 -> Color(0xFF23A26D)
+        ms < 500 -> Color(0xFFEE8A2A)
+        else -> Color(0xFFE5484D)
     }
     Box(
         modifier = Modifier
@@ -732,7 +732,7 @@ fun MirrorCategoryDetailScreen(
             ListItem(
                 headlineContent = { Text(if (vm.isTesting) stringResource(R.string.mirror_test_speed_testing) else stringResource(R.string.mirror_test_speed_label)) },
                 leadingContent = {
-                    CircleIconBadge(icon = Icons.Filled.Bolt, tint = Color(0xFFC98A3E))
+                    CircleIconBadge(icon = Icons.Filled.Bolt, tint = Color(0xFFEE8A2A))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

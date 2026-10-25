@@ -15,58 +15,61 @@ import com.openminis.app.R
 /**
  * [T-noir-redesign] Minis Noir — the design language tokens.
  *
- * Three materials and nothing else:
- *   • Onyx      — the dark ground (#0B0B0C) and its lifted layers
- *   • Ivory     — warm paper (#F3F0E9) for light mode, warm ivory text on onyx
- *   • Champagne — a brushed-gold gradient used *sparingly*: active indicators,
- *                 progress, the pearl's glow, the launch wordmark rule
+ * Round 3 ("Iris"): the champagne-gold + warm-paper pairing read like a
+ * night-light filter on a real panel, so warmth is gone. Materials now:
+ *   • Onyx   — cool graphite ground (#0D0E12) and its lifted layers
+ *   • Paper  — clean cool white (#F6F7F9 page, #FFFFFF cards/chat)
+ *   • Iris   — indigo → violet accent. Solid for primary actions, the user
+ *              bubble and links; the gradient only for brand moments
+ *              (launch halo, send button, thinking node).
  *
- * Colour is deliberately almost absent. Hierarchy comes from typography
- * (Instrument Serif display over Inter text), hairlines (0.5–1dp at 7–15%
- * alpha) and generous spacing, not from fills or saturated accents.
- *
- * Every value lives here so Theme.kt / ChatColors.kt / the launch overlay
- * and the Noir components read one source of truth.
+ * The step spectrum (below) supplies the per-tool colour, so the chat is
+ * never a single-hue wall. Legacy names (Paper/Ink/Onyx/Ivory) are kept so
+ * 100+ call sites did not churn — they are cool neutrals now.
  */
 object Noir {
-    // ── Onyx (dark) ramp ──────────────────────────────────────────────
+    // ── Onyx (dark) ramp — cool graphite ─────────────────────────────
     // Lifted in ~4–6% steps: on a ≈500-nit Android panel smaller steps
     // crush together (see the T153 note in ChatColors.kt).
-    val Onyx = Color(0xFF0B0B0C)
-    val Onyx1 = Color(0xFF151516)      // cards / grouped rows
-    val Onyx2 = Color(0xFF1D1D1F)      // elevated: sheets, menus, input
-    val Onyx3 = Color(0xFF262628)      // tool capsules, pressed states
-    val OnyxHairline = Color(0x1AEFEBE3)   // ivory @ 10%
-    val OnyxHairlineStrong = Color(0x29EFEBE3) // ivory @ 16%
+    val Onyx = Color(0xFF0D0E12)
+    val Onyx1 = Color(0xFF16171D)      // cards / grouped rows
+    val Onyx2 = Color(0xFF1E2028)      // elevated: sheets, menus, input
+    val Onyx3 = Color(0xFF282B35)      // capsules, pressed states
+    val OnyxHairline = Color(0x1AE8EAF2)       // 10%
+    val OnyxHairlineStrong = Color(0x2BE8EAF2) // 17%
 
-    // ── Ivory text on onyx ────────────────────────────────────────────
-    val Ivory = Color(0xFFEFEBE3)
-    val IvorySoft = Color(0xFFBDB8AE)
-    val IvoryMute = Color(0xFF85817A)
-    val IvoryFaint = Color(0x4DEFEBE3)
+    // ── Light text on onyx ────────────────────────────────────────────
+    val Ivory = Color(0xFFECEEF4)
+    val IvorySoft = Color(0xFFB3B8C6)
+    val IvoryMute = Color(0xFF7E8496)
+    val IvoryFaint = Color(0x4DECEEF4)
 
-    // ── Paper (light) ramp ────────────────────────────────────────────
-    val Paper = Color(0xFFF3F0E9)          // page
-    val PaperCard = Color(0xFFFBFAF6)      // cards / grouped rows
+    // ── Paper (light) ramp — neutral cool white ──────────────────────
+    val Paper = Color(0xFFF6F7F9)          // page (settings, lists)
+    val PaperCard = Color(0xFFFFFFFF)      // cards / grouped rows / chat
     val PaperRaised = Color(0xFFFFFFFF)    // sheets, input
-    val PaperSunk = Color(0xFFE9E5DC)      // capsules, chips, inline code
-    val PaperHairline = Color(0x1A141413)  // ink @ 10%
-    val PaperHairlineStrong = Color(0x2B141413)
+    val PaperSunk = Color(0xFFEFF1F5)      // capsules, chips, inline code
+    val PaperHairline = Color(0x170F1115)  // 9%
+    val PaperHairlineStrong = Color(0x290F1115)
 
     // ── Ink text on paper ─────────────────────────────────────────────
-    val Ink = Color(0xFF141413)
-    val InkSoft = Color(0xFF4A4842)
-    val InkMute = Color(0xFF8F8A80)
-    val InkFaint = Color(0x4D141413)
+    val Ink = Color(0xFF0F1115)
+    val InkSoft = Color(0xFF4A5060)
+    val InkMute = Color(0xFF878C9C)
+    val InkFaint = Color(0x4D0F1115)
 
-    // ── Champagne ─────────────────────────────────────────────────────
-    val GoldLight = Color(0xFFF3E6C8)
-    val Gold = Color(0xFFCDAE74)
-    val GoldSheen = Color(0xFFEAD8B0)
-    val GoldDeep = Color(0xFFA98754)
-    /** Readable gold for text/icons: deep bronze on paper, champagne on onyx. */
-    val GoldOnPaper = Color(0xFF8A6A3A)
-    val GoldOnOnyx = Color(0xFFD9BF8C)
+    // ── Iris accent ───────────────────────────────────────────────────
+    val Iris = Color(0xFF5B5CF0)            // brand mid-tone
+    val IrisDeep = Color(0xFF4A47D9)        // text / icons / fills on paper
+    val IrisBright = Color(0xFF8E90FF)      // text / icons on onyx
+    val IrisFill = Color(0xFF5E5FEA)        // solid fill (bubble, send) in dark
+    val IrisSoft = Color(0xFFEDEEFF)        // container on paper
+    val IrisSoftDark = Color(0xFF242650)    // container on onyx
+    val Violet = Color(0xFF9B6CF6)
+    val Sky = Color(0xFF4F9BF7)
+    /** Thinking ink: violet, distinct from the indigo of actions. */
+    val ThinkOnPaper = Color(0xFF7A4FD8)
+    val ThinkOnOnyx = Color(0xFFB79CFF)
 
     /** Status hues, desaturated to sit inside the palette. */
     val Sage = Color(0xFF7FA88B)
@@ -76,7 +79,7 @@ object Noir {
      * Step spectrum. Gold-on-ink alone read as monotone once a turn ran a
      * dozen tools, so every tool kind gets its own muted ink. All nine sit
      * at similar lightness/chroma, so they read as one family on both Paper
-     * and Onyx and never shout over the gold accents.
+     * and Onyx and never shout over the iris accent.
      */
     val Moss = Color(0xFF5E9466)       // shell
     val Slate = Color(0xFF5B83B0)      // read
@@ -86,21 +89,20 @@ object Noir {
     val Orchid = Color(0xFF9C6BB0)     // image
     val Rose = Color(0xFFC75D7B)       // memory
     val Indigo = Color(0xFF6C72C4)     // search
-    val Stone = Color(0xFF8F8A80)      // everything else
+    val Stone = Color(0xFF878C9C)      // everything else
 
-    /** Brushed champagne, 115° like the design boards. */
-    fun goldBrush(start: Offset = Offset.Zero, end: Offset = Offset.Infinite): Brush =
+    /** Iris gradient, 120°: sky → indigo → violet. */
+    fun accentBrush(start: Offset = Offset.Zero, end: Offset = Offset.Infinite): Brush =
         Brush.linearGradient(
-            0f to GoldLight,
-            0.38f to Gold,
-            0.60f to GoldSheen,
-            1f to GoldDeep,
+            0f to Sky,
+            0.5f to Iris,
+            1f to Violet,
             start = start,
             end = end,
         )
 
-    val goldHorizontal: Brush = Brush.horizontalGradient(
-        listOf(GoldDeep.copy(alpha = 0f), Gold, GoldLight, Gold, GoldDeep.copy(alpha = 0f)),
+    val accentHorizontal: Brush = Brush.horizontalGradient(
+        listOf(Sky.copy(alpha = 0f), Sky, Iris, Violet, Violet.copy(alpha = 0f)),
     )
 }
 

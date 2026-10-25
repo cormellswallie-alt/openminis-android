@@ -44,13 +44,13 @@ import kotlinx.coroutines.launch
 
 /**
  * [T-noir-redesign] Launch sequence: the pearl surfaces, the serif wordmark
- * resolves above a champagne hairline, then the curtain lifts onto the app,
+ * resolves above a iris hairline, then the curtain lifts onto the app,
  * which has been composing underneath the whole time (so the overlay never
  * delays first data load — it only covers it for ~1.4 s).
  *
  * Timeline (fraction of [TOTAL_MS]):
  *   0.00–0.40  pearl rises: scale 0.55→1, alpha 0→1 (expo-out)
- *   0.08–0.55  champagne halo blooms behind it
+ *   0.08–0.55  iris halo blooms behind it
  *   0.22–0.56  wordmark fades up 10dp
  *   0.36–0.66  gold rule draws out from the centre
  *   0.66–0.74  hold
@@ -114,7 +114,7 @@ fun NoirLaunchOverlay(
         complete()
     }
 
-    val ground = if (isDark) Noir.Onyx else Noir.Paper
+    val ground = if (isDark) Noir.Onyx else Noir.PaperCard
     val ink = if (isDark) Noir.Ivory else Noir.Ink
     val haloAlpha = if (isDark) 0.30f else 0.20f
     // API 31+: the system splash already shows the pearl (see values-v31/themes.xml).
@@ -160,14 +160,14 @@ fun NoirLaunchOverlay(
                 modifier = Modifier.align(Alignment.Center).size(84.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                // Champagne halo — drawn past the 84dp bounds (no clip), radius ~120dp.
+                // Iris halo — drawn past the 84dp bounds (no clip), radius ~120dp.
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val h = EaseOutExpo.transform(seg(progress.value, 0.08f, 0.55f))
                     if (h > 0f) {
                         val r = 120.dp.toPx() * (0.6f + 0.4f * h)
                         drawCircle(
                             brush = Brush.radialGradient(
-                                colors = listOf(Noir.Gold.copy(alpha = haloAlpha * h), Color.Transparent),
+                                colors = listOf(Noir.Iris.copy(alpha = haloAlpha * h), Color.Transparent),
                                 center = center,
                                 radius = r,
                             ),
@@ -221,7 +221,7 @@ fun NoirLaunchOverlay(
                         .graphicsLayer {
                             scaleX = EaseOutExpo.transform(seg(progress.value, 0.36f, 0.66f))
                         }
-                        .drawBehind { drawRect(Noir.goldHorizontal) },
+                        .drawBehind { drawRect(Noir.accentHorizontal) },
                 )
             }
         }
@@ -229,7 +229,7 @@ fun NoirLaunchOverlay(
 }
 
 /**
- * The Minis pearl: a nacre body with a warm champagne lobe (lower right), a
+ * The Minis pearl: a nacre body with a violet lobe (lower right), a
  * cool silver lobe (lower left), soft terminator shading and a specular
  * highlight — the same recipe as the design boards' CSS pearl.
  * Fills the DrawScope's min dimension; casts its own soft shadow below.
@@ -253,19 +253,19 @@ fun DrawScope.drawNoirPearl(isDark: Boolean) {
     // Nacre body
     drawCircle(
         brush = Brush.radialGradient(
-            0f to Color(0xFFEEE8DC),
-            0.68f to Color(0xFFBFB4A2),
-            1f to Color(0xFF8A8172),
+            0f to Color(0xFFF1F2FA),
+            0.68f to Color(0xFFB9BDD6),
+            1f to Color(0xFF7D82A6),
             center = c,
             radius = r,
         ),
         radius = r,
         center = c,
     )
-    // Warm champagne lobe
+    // Violet lobe
     drawCircle(
         brush = Brush.radialGradient(
-            colors = listOf(Color(0xF2D2B88C), Color(0x00D2B88C)),
+            colors = listOf(Color(0xE69B6CF6), Color(0x009B6CF6)),
             center = at(0.72f, 0.76f),
             radius = r * 1.12f,
         ),
@@ -275,7 +275,7 @@ fun DrawScope.drawNoirPearl(isDark: Boolean) {
     // Cool silver lobe
     drawCircle(
         brush = Brush.radialGradient(
-            colors = listOf(Color(0xCCA8B0C4), Color(0x00A8B0C4)),
+            colors = listOf(Color(0xCC4F9BF7), Color(0x004F9BF7)),
             center = at(0.22f, 0.82f),
             radius = r * 1.04f,
         ),
@@ -286,7 +286,7 @@ fun DrawScope.drawNoirPearl(isDark: Boolean) {
     drawCircle(
         brush = Brush.radialGradient(
             0.55f to Color.Transparent,
-            1f to Color(0x593C2D19),
+            1f to Color(0x59201C3C),
             center = at(0.40f, 0.36f),
             radius = r * 1.25f,
         ),

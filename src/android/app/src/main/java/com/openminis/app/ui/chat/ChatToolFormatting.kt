@@ -115,7 +115,7 @@ internal fun toolAccentColorInt(toolName: String?): Int = when (toolName) {
     "memory_write", "memory_get" -> 0xFFC75D7B.toInt()
     "web_search" -> 0xFF6C72C4.toInt()
     "subagent_task", "delegate_task", "agent_status" -> 0xFF8B6CF6.toInt()
-    else -> 0xFF8F8A80.toInt()
+    else -> 0xFF878C9C.toInt()
 }
 
 /**

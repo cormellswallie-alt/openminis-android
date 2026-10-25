@@ -7,5 +7,5 @@
     -->
     <color name="shortcut_icon_fg">#E6E8EB</color>
     <!-- [T-noir-redesign] Noir Onyx - first OS-painted frame matches Compose background -->
-    <color name="noir_window_bg">#FF0B0B0C</color>
+    <color name="noir_window_bg">#FF0D0E12</color>
 </resources>

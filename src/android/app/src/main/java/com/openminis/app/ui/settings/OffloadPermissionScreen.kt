@@ -125,7 +125,7 @@ fun OffloadPermissionScreen(
         // deeplink back to the OS settings page that fixes it.
         IntegrationSection(
             iconVector = Icons.Outlined.Accessibility,
-            iconTint = Color(0xFF6E9C7B),
+            iconTint = Color(0xFF23A26D),
             sectionHeaderRes = R.string.perm_section_a11y,
             sectionFooterRes = R.string.perm_a11y_section_footer,
             toolName = "a11y_cli",
@@ -198,7 +198,7 @@ fun OffloadPermissionScreen(
 
         IntegrationSection(
             iconVector = Icons.Outlined.Shield,
-            iconTint = Color(0xFF9A7FA8),
+            iconTint = Color(0xFF9B6CF6),
             // [T-android-privileged-backend] One section covers both Shizuku
             // and AXManager (they share the same binder slot + protocol);
             // toolName stays "shizuku_cli" so user authz is preserved.

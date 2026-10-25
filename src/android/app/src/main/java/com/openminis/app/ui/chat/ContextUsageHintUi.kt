@@ -59,7 +59,7 @@ internal object ContextUsageColors {
         // brightest thing on the line, but now the same VISUAL WEIGHT as the
         // text it is part of. Colour stays the reinforcement, never the only
         // signal — the figure itself carries the meaning.
-        ContextUsage.Tier.WARNING -> Color(0xFF8A6A3A).copy(alpha = 0.55f)
+        ContextUsage.Tier.WARNING -> Color(0xFF4A47D9).copy(alpha = 0.55f)
         ContextUsage.Tier.CRITICAL -> Color(0xFF8E4B44).copy(alpha = 0.55f)
     }
 

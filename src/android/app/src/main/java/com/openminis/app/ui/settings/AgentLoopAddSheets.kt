@@ -290,7 +290,7 @@ fun AddAgentLoopGroupsScreen(
                                 Icon(
                                     if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                     contentDescription = null,
-                                    tint = if (isSelected) Color(0xFF9A7A48)
+                                    tint = if (isSelected) Color(0xFF5B5CF0)
                                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                     modifier = Modifier.size(20.dp),
                                 )

@@ -230,17 +230,17 @@ fun MinisSkillsBrowserScreen(
                             Text(stringResource(R.string.skills_browser_hud_importing), color = Color.White, style = MaterialTheme.typography.labelLarge)
                         }
                         HudState.SUCCESS -> {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF6E9C7B), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF23A26D), modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(hudMessage, color = Color.White, style = MaterialTheme.typography.labelLarge, maxLines = 1)
                         }
                         HudState.ERROR -> {
-                            Icon(Icons.Filled.Error, contentDescription = null, tint = Color(0xFFC8553D), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Error, contentDescription = null, tint = Color(0xFFE5484D), modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(hudMessage, color = Color.White, style = MaterialTheme.typography.labelLarge, maxLines = 2)
                         }
                         HudState.HINT -> {
-                            Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFF9A7A48), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFF5B5CF0), modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(hudMessage, color = Color.White, style = MaterialTheme.typography.labelLarge, maxLines = 2)
                         }

@@ -18,39 +18,31 @@ import androidx.compose.ui.unit.sp
 
 // [T-noir-redesign] Minis Noir colour schemes.
 //
-// Replaces the desaturated iOS-blue accent (#528AD2 / #6A94CE) and the iOS
-// grouped greys (#F2F2F7 / #000 / #1C1C1E). The scheme is near-monochrome:
+// Round 3 ("Iris"): cool neutrals, one accent.
 //
-//   light  page Paper #F3F0E9, card #FBFAF6, raised #FFFFFF, ink #141413
-//   dark   page Onyx  #0B0B0C, card #151516, raised #1D1D1F, ivory #EFEBE3
+//   light  page #F6F7F9, card/chat #FFFFFF, sunk #EFF1F5, ink #0F1115
+//   dark   page #0D0E12, card #16171D, raised #1E2028, text #ECEEF4
+//   accent Iris — #4A47D9 on paper, #8E90FF on onyx; violet for thinking
 //
-// `primary` is INK in light mode and IVORY in dark mode, not a hue: primary
-// buttons, switches and the send button read as solid ink/ivory, the way
-// the design boards render them. Champagne gold is NOT a Material role — it
-// is applied by hand (Noir.goldBrush) to the few places that earn it, so it
-// can never leak into 1000+ colorScheme call sites as a loud accent.
-//
-// Contrast (WCAG): ink on paper 16.9:1, ivory on onyx 16.2:1, InkMute on
-// paper 3.2:1 and IvoryMute on onyx 4.9:1 — the mute tones are only used
-// for secondary/tertiary text at ≥ 12sp, matching the previous scheme's
-// onSurfaceVariant usage.
-//
-// The old teal-prefixed names are gone; nothing outside this file used them.
+// `primary` is the accent now (switches, buttons, links, progress), so the
+// app carries one clear hue instead of the earlier ink/ivory monochrome
+// with hand-placed gold. Contrast: IrisDeep on white 6.6:1, white on
+// IrisDeep 6.6:1, IrisBright on onyx 6.4:1.
 
 private val NoirLight = lightColorScheme(
-    primary = Noir.Ink,
-    onPrimary = Noir.Paper,
-    primaryContainer = Noir.PaperSunk,
-    onPrimaryContainer = Noir.Ink,
-    inversePrimary = Noir.Ivory,
+    primary = Noir.IrisDeep,
+    onPrimary = Color.White,
+    primaryContainer = Noir.IrisSoft,
+    onPrimaryContainer = Color(0xFF1E1B6B),
+    inversePrimary = Noir.IrisBright,
     secondary = Noir.InkSoft,
     onSecondary = Noir.Paper,
     secondaryContainer = Noir.PaperSunk,
     onSecondaryContainer = Noir.Ink,
-    tertiary = Noir.GoldOnPaper,
-    onTertiary = Noir.PaperRaised,
-    tertiaryContainer = Color(0xFFF1E6CF),
-    onTertiaryContainer = Color(0xFF3D2E14),
+    tertiary = Noir.ThinkOnPaper,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFF1EBFF),
+    onTertiaryContainer = Color(0xFF2E1868),
     background = Noir.Paper,
     onBackground = Noir.Ink,
     surface = Noir.Paper,
@@ -60,10 +52,10 @@ private val NoirLight = lightColorScheme(
     surfaceTint = Color.Transparent,
     inverseSurface = Noir.Ink,
     inverseOnSurface = Noir.Ivory,
-    error = Color(0xFFB4442E),
+    error = Color(0xFFD93A44),
     onError = Color.White,
-    errorContainer = Color(0xFFF6DED6),
-    onErrorContainer = Color(0xFF4A140A),
+    errorContainer = Color(0xFFFDE4E5),
+    onErrorContainer = Color(0xFF5A0D13),
     outline = Noir.PaperHairlineStrong,
     outlineVariant = Noir.PaperHairline,
     scrim = Color(0xFF000000),
@@ -77,19 +69,19 @@ private val NoirLight = lightColorScheme(
 )
 
 private val NoirDark = darkColorScheme(
-    primary = Noir.Ivory,
-    onPrimary = Noir.Onyx,
-    primaryContainer = Noir.Onyx3,
-    onPrimaryContainer = Noir.Ivory,
-    inversePrimary = Noir.Ink,
+    primary = Noir.IrisBright,
+    onPrimary = Color(0xFF0E0F3A),
+    primaryContainer = Noir.IrisSoftDark,
+    onPrimaryContainer = Color(0xFFDCDDFF),
+    inversePrimary = Noir.IrisDeep,
     secondary = Noir.IvorySoft,
     onSecondary = Noir.Onyx,
     secondaryContainer = Noir.Onyx3,
     onSecondaryContainer = Noir.Ivory,
-    tertiary = Noir.GoldOnOnyx,
-    onTertiary = Noir.Onyx,
-    tertiaryContainer = Color(0xFF3A2F1C),
-    onTertiaryContainer = Noir.GoldLight,
+    tertiary = Noir.ThinkOnOnyx,
+    onTertiary = Color(0xFF1E0F45),
+    tertiaryContainer = Color(0xFF2E2350),
+    onTertiaryContainer = Color(0xFFE6DCFF),
     background = Noir.Onyx,
     onBackground = Noir.Ivory,
     surface = Noir.Onyx,
@@ -99,10 +91,10 @@ private val NoirDark = darkColorScheme(
     surfaceTint = Color.Transparent,
     inverseSurface = Noir.Ivory,
     inverseOnSurface = Noir.Onyx,
-    error = Color(0xFFE8826A),
+    error = Color(0xFFFF7A80),
     onError = Noir.Onyx,
-    errorContainer = Color(0xFF3B1D16),
-    onErrorContainer = Color(0xFFF6CFC4),
+    errorContainer = Color(0xFF3D171B),
+    onErrorContainer = Color(0xFFFFD5D7),
     outline = Noir.OnyxHairlineStrong,
     outlineVariant = Noir.OnyxHairline,
     scrim = Color(0xFF000000),

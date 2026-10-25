@@ -348,7 +348,7 @@ fun UnifiedModelPickerSheet(
                                     if (groupSelected) Icons.Default.CheckCircle
                                     else Icons.Default.RadioButtonUnchecked,
                                     contentDescription = null,
-                                    tint = if (groupSelected) Color(0xFF6E9C7B)
+                                    tint = if (groupSelected) Color(0xFF23A26D)
                                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                     modifier = Modifier.size(22.dp),
                                 )
@@ -356,7 +356,7 @@ fun UnifiedModelPickerSheet(
                                 Icon(
                                     Icons.Default.Layers,
                                     contentDescription = null,
-                                    tint = Color(0xFF9A7A48),
+                                    tint = Color(0xFF5B5CF0),
                                     modifier = Modifier.size(18.dp),
                                 )
                                 Spacer(Modifier.width(10.dp))
@@ -510,10 +510,10 @@ fun UnifiedModelPickerSheet(
                                                 fontSize = 9.sp,
                                                 lineHeight = 11.sp,
                                                 fontWeight = FontWeight.Medium,
-                                                color = Color(0xFF6E9C7B),
+                                                color = Color(0xFF23A26D),
                                                 modifier = Modifier
                                                     .background(
-                                                        Color(0xFF6E9C7B).copy(alpha = 0.1f),
+                                                        Color(0xFF23A26D).copy(alpha = 0.1f),
                                                         RoundedCornerShape(50),
                                                     )
                                                     .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -603,10 +603,10 @@ fun UnifiedModelPickerSheet(
                                             fontSize = 9.sp,
                                             lineHeight = 11.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF6E9C7B),
+                                            color = Color(0xFF23A26D),
                                             modifier = Modifier
                                                 .background(
-                                                    Color(0xFF6E9C7B).copy(alpha = 0.1f),
+                                                    Color(0xFF23A26D).copy(alpha = 0.1f),
                                                     RoundedCornerShape(50),
                                                 )
                                                 .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -890,7 +890,7 @@ private fun SelectionMark(selected: Boolean) {
     Icon(
         if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
         contentDescription = null,
-        tint = if (selected) Color(0xFF9A7A48)
+        tint = if (selected) Color(0xFF5B5CF0)
         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
         modifier = Modifier.size(20.dp),
     )

@@ -312,7 +312,7 @@ private fun actorLabel(actor: ConfigAuditActor): String = when (actor) {
 @Composable
 private fun StatusBadge(status: ConfigAuditStatus) {
     val color = when (status) {
-        ConfigAuditStatus.APPLIED -> Color(0xFF5E8A6B)
+        ConfigAuditStatus.APPLIED -> Color(0xFF1B8A5A)
         ConfigAuditStatus.REJECTED -> Color(0xFF757575)
         ConfigAuditStatus.TIMEOUT -> Color(0xFFE65100)
         ConfigAuditStatus.REVERTED -> Color(0xFF8E5CD9)

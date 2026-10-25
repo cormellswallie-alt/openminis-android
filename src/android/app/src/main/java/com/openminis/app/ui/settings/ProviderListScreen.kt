@@ -414,7 +414,7 @@ private fun ProviderInstanceRow(
                 .size(8.dp)
                 .background(
                     color = if (needsReauth) MaterialTheme.colorScheme.error
-                        else if (isActive) Color(0xFF6E9C7B)
+                        else if (isActive) Color(0xFF23A26D)
                         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                     shape = CircleShape,
                 ),

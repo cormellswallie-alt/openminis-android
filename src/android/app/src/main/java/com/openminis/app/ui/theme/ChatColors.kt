@@ -62,10 +62,10 @@ data class ChatPalette(
 
 val LightChatPalette = ChatPalette(
     isDark = false,
-    // [T-noir-redesign] Paper. Warm off-white page, ink text, hairlines
-    // instead of fills. Champagne appears only as GoldOnPaper (thinking,
-    // blockquote bar) — never as a flood.
-    background = Noir.Paper,
+    // [T-noir-iris] Clean white chat page, ink text, hairlines instead of
+    // fills; Iris is the accent (user bubble, send, links), violet marks
+    // thinking, and the step spectrum colours the tool rows.
+    background = Noir.PaperCard,
     secondaryBg = Noir.PaperCard,
     inputBg = Noir.PaperRaised,
     // [T-noir-step-timeline] Composer tools are hairline rings, not beige
@@ -79,33 +79,33 @@ val LightChatPalette = ChatPalette(
     disabledText = Noir.InkFaint,
     // The user's own message: solid ink with paper text — the strongest
     // object on the page, like the design boards.
-    userBubble = Noir.Ink,
-    userBubbleText = Noir.Paper,
-    toolBg = Noir.PaperCard,
+    userBubble = Noir.IrisDeep,
+    userBubbleText = Color.White,
+    toolBg = Noir.Paper,
     toolBorder = Noir.PaperHairline,
     toolCapsuleBg = Noir.PaperSunk,
     separator = Noir.PaperHairline,
-    sendButton = Noir.Ink,
+    sendButton = Noir.IrisDeep,
     sendButtonDisabled = Noir.PaperSunk,
     // Code stays a dark island in light mode (as before), now onyx + ivory
-    // with a champagne-tinted foreground rather than terminal green.
-    codeBlockBg = Color(0xFF161616),
-    codeBlockText = Color(0xFFE9DFC9),
+    // with a cool light foreground rather than terminal green.
+    codeBlockBg = Color(0xFF14161C),
+    codeBlockText = Color(0xFFE3E6EE),
     inlineCodeBg = Noir.PaperSunk,
-    inlineCodeText = Color(0xFF7A5A2C),
-    link = Color(0xFF7A5A2C),
-    blockquoteBar = Noir.Gold,
-    thinking = Noir.GoldOnPaper,
-    warningBg = Color(0x14B4442E),
+    inlineCodeText = Color(0xFFC0306A),
+    link = Noir.IrisDeep,
+    blockquoteBar = Noir.Iris,
+    thinking = Noir.ThinkOnPaper,
+    warningBg = Color(0x14D93A44),
     warningText = Noir.InkSoft,
     tableBorder = Noir.PaperHairlineStrong,
     inputShadow = Color(0x14141413),
-    toastBg = Color(0x24CDAE74),
+    toastBg = Color(0x245B5CF0),
     thumbnailBorder = Noir.PaperHairline,
     sheetHeaderBg = Noir.PaperRaised,
     sheetHeaderBorder = Noir.PaperHairline,
     // New-chat FAB: solid ink pearl on paper.
-    fabAccent = Noir.Ink,
+    fabAccent = Noir.IrisDeep,
 )
 
 // T153: Android-specific dark palette tweaks. iOS borrows the system
@@ -134,33 +134,33 @@ val DarkChatPalette = ChatPalette(
     disabledText = Noir.IvoryFaint,
     // [T-android-user-bubble-dark-contrast] still OPAQUE and clearly lifted
     // from the background — warm graphite instead of slate blue.
-    userBubble = Color(0xFF2A2825),
-    userBubbleText = Noir.Ivory,
+    userBubble = Noir.IrisFill,
+    userBubbleText = Color.White,
     toolBg = Noir.Onyx1,
     toolBorder = Noir.OnyxHairline,
     toolCapsuleBg = Noir.Onyx2,
     separator = Noir.OnyxHairline,
-    sendButton = Noir.Ivory,
+    sendButton = Noir.IrisFill,
     sendButtonDisabled = Noir.Onyx3,
-    codeBlockBg = Color(0xFF111112),
-    codeBlockText = Color(0xFFE9DFC9),
+    codeBlockBg = Color(0xFF101116),
+    codeBlockText = Color(0xFFE3E6EE),
     // [T-inline-code-dark-bg-android] lifted above both the wash and code
     // blocks so small chips stay visible.
     inlineCodeBg = Noir.Onyx3,
-    inlineCodeText = Noir.GoldOnOnyx,
-    link = Noir.GoldOnOnyx,
-    blockquoteBar = Noir.Gold,
-    thinking = Noir.GoldOnOnyx,
-    warningBg = Color(0x1AE8826A),
+    inlineCodeText = Color(0xFFFF8FB8),
+    link = Noir.IrisBright,
+    blockquoteBar = Noir.Iris,
+    thinking = Noir.ThinkOnOnyx,
+    warningBg = Color(0x1AFF7A80),
     warningText = Noir.IvorySoft,
     tableBorder = Noir.OnyxHairlineStrong,
     inputShadow = Color(0x99000000),
-    toastBg = Color(0x33CDAE74),
+    toastBg = Color(0x335B5CF0),
     thumbnailBorder = Noir.OnyxHairline,
     sheetHeaderBg = Noir.Onyx2,
     sheetHeaderBorder = Noir.OnyxHairline,
     // New-chat FAB: ivory pearl on onyx.
-    fabAccent = Noir.Ivory,
+    fabAccent = Noir.IrisFill,
 )
 
 val LocalChatPalette = compositionLocalOf { LightChatPalette }

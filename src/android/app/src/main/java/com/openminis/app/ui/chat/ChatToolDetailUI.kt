@@ -572,7 +572,7 @@ internal fun ToolDetailSheet(
                                                 text = linkified,
                                                 fontSize = 13.sp,
                                                 fontFamily = FontFamily.Monospace,
-                                                color = Color(0xFF6E9C7B),  // iOS .green
+                                                color = Color(0xFF23A26D),  // iOS .green
                                                 lineHeight = 18.sp,
                                             )
                                         }
@@ -599,14 +599,14 @@ internal fun ToolDetailSheet(
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             fontFamily = FontFamily.Monospace,
-                                            color = Color(0xFF6E9C7B),  // iOS .green
+                                            color = Color(0xFF23A26D),  // iOS .green
                                         )
                                         Text(
                                             text = sheetMonitor.formattedMem(),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             fontFamily = FontFamily.Monospace,
-                                            color = Color(0xFF6E9C7B),
+                                            color = Color(0xFF23A26D),
                                         )
                                     }
                                 }
@@ -690,7 +690,7 @@ internal fun ToolDetailSheet(
                                     Icon(
                                         Icons.Default.EditNote,
                                         contentDescription = null,
-                                        tint = Color(0xFFC98A3E),
+                                        tint = Color(0xFFEE8A2A),
                                         modifier = Modifier.size(12.dp),
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -708,7 +708,7 @@ internal fun ToolDetailSheet(
                                     Text(
                                         text = "($sizeLabel)",
                                         fontSize = 11.sp,
-                                        color = if (isLive) Color(0xCCC98A3E) else ChatColors.tertiaryText,
+                                        color = if (isLive) Color(0xCCEE8A2A) else ChatColors.tertiaryText,
                                     )
                                 }
                                 HorizontalDivider(thickness = 0.5.dp, color = cardBorder)
@@ -910,7 +910,7 @@ internal fun ToolDetailSheet(
                                             fontWeight = FontWeight.SemiBold,
                                             color = Color.White,
                                             modifier = Modifier
-                                                .background(Color(0xFF9A7A48), CircleShape)
+                                                .background(Color(0xFF5B5CF0), CircleShape)
                                                 .padding(horizontal = 10.dp, vertical = 2.dp),
                                         )
                                     }
@@ -1290,7 +1290,7 @@ internal fun ToolDetailSheet(
                             Box(
                                 modifier = Modifier
                                     .size(7.dp)
-                                    .background(Color(0xFF6E9C7B), CircleShape),
+                                    .background(Color(0xFF23A26D), CircleShape),
                             )
                             Text(
                                 "Live",
@@ -1615,7 +1615,7 @@ private fun EditorCard(
                     Text(
                         text = if (isStreaming) "($sizeLabel received)" else "($sizeLabel)",
                         fontSize = 11.sp,
-                        color = if (isStreaming) Color(0xFFC98A3E).copy(alpha = 0.8f) else sizeColor,
+                        color = if (isStreaming) Color(0xFFEE8A2A).copy(alpha = 0.8f) else sizeColor,
                     )
                 }
             }

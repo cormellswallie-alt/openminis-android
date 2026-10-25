@@ -203,23 +203,23 @@ private data class CategoryStyle(val icon: ImageVector, val color: Color)
 // 16 categories matching iOS (ContentView.swift:1897-1916)
 private fun categoryStyle(category: String?): CategoryStyle {
     return when (category?.lowercase()) {
-        "code"         -> CategoryStyle(Icons.Outlined.Code, Color(0xFFC98A3E))
-        "writing"      -> CategoryStyle(Icons.Outlined.Description, Color(0xFF9A7A48))
-        "research"     -> CategoryStyle(Icons.Outlined.Language, Color(0xFF6F9A9E))
-        "analysis"     -> CategoryStyle(Icons.Outlined.BarChart, Color(0xFF7C7FA6))
-        "creative"     -> CategoryStyle(Icons.Outlined.Brush, Color(0xFFC2677A))
-        "chat"         -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF6E9C7B))
+        "code"         -> CategoryStyle(Icons.Outlined.Code, Color(0xFFEE8A2A))
+        "writing"      -> CategoryStyle(Icons.Outlined.Description, Color(0xFF5B5CF0))
+        "research"     -> CategoryStyle(Icons.Outlined.Language, Color(0xFF17A2B8))
+        "analysis"     -> CategoryStyle(Icons.Outlined.BarChart, Color(0xFF6E6FE8))
+        "creative"     -> CategoryStyle(Icons.Outlined.Brush, Color(0xFFE5578A))
+        "chat"         -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF23A26D))
         "math"         -> CategoryStyle(Icons.Outlined.Calculate, Color(0xFF9B59B6))
         "translation"  -> CategoryStyle(Icons.Outlined.Translate, Color(0xFF00BCD4))
-        "health"       -> CategoryStyle(Icons.Outlined.Favorite, Color(0xFFC8553D))
-        "finance"      -> CategoryStyle(Icons.Outlined.Payments, Color(0xFF6F9A9E))
-        "travel"       -> CategoryStyle(Icons.Outlined.Map, Color(0xFFC98A3E))
-        "education"    -> CategoryStyle(Icons.Outlined.Book, Color(0xFF9A7A48))
-        "design"       -> CategoryStyle(Icons.Outlined.Palette, Color(0xFFC2677A))
-        "productivity" -> CategoryStyle(Icons.Outlined.CalendarMonth, Color(0xFFCDAE74))
-        "support"      -> CategoryStyle(Icons.Outlined.Settings, Color(0xFF8B6914))
-        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF8F8A80))
-        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF8F8A80))
+        "health"       -> CategoryStyle(Icons.Outlined.Favorite, Color(0xFFE5484D))
+        "finance"      -> CategoryStyle(Icons.Outlined.Payments, Color(0xFF17A2B8))
+        "travel"       -> CategoryStyle(Icons.Outlined.Map, Color(0xFFEE8A2A))
+        "education"    -> CategoryStyle(Icons.Outlined.Book, Color(0xFF5B5CF0))
+        "design"       -> CategoryStyle(Icons.Outlined.Palette, Color(0xFFE5578A))
+        "productivity" -> CategoryStyle(Icons.Outlined.CalendarMonth, Color(0xFFF2B11E))
+        "support"      -> CategoryStyle(Icons.Outlined.Settings, Color(0xFF0E8C8A))
+        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF878C9C))
+        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF878C9C))
     }
 }
 
@@ -1739,7 +1739,7 @@ private fun DualFabRow(
                     .shadow(8.dp, CircleShape, ambientColor = Color.Black.copy(alpha = 0.2f)),
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
             ) {
-                Icon(Icons.Outlined.Forum, contentDescription = "New Chat", tint = ChatColors.background, modifier = Modifier.size(24.dp))
+                Icon(Icons.Outlined.Forum, contentDescription = "New Chat", tint = Color.White, modifier = Modifier.size(24.dp))
             }
             DropdownMenu(
                 expanded = showGroupMenu,
@@ -3179,7 +3179,7 @@ private fun SessionBadgeOverlay(
                     .background(
                         // Solid system-orange. Picked over yellow so the
                         // alert reads as "attention" rather than "info".
-                        color = Color(0xFFC98A3E),
+                        color = Color(0xFFEE8A2A),
                         shape = CircleShape,
                     )
                     .border(
@@ -3355,7 +3355,7 @@ private fun SetupStepCard(
             modifier = Modifier
                 .size(32.dp)
                 .background(
-                    color = if (isDone) Color(0xFF6E9C7B) else MaterialTheme.colorScheme.primary,
+                    color = if (isDone) Color(0xFF23A26D) else MaterialTheme.colorScheme.primary,
                     shape = CircleShape,
                 ),
             contentAlignment = Alignment.Center,

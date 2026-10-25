@@ -626,7 +626,7 @@ internal fun ModelPickerSheet(
                                     Icon(
                                         if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(0xFF6E9C7B)
+                                        tint = if (isSelected) Color(0xFF23A26D)
                                         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp),
                                     )
@@ -642,7 +642,7 @@ internal fun ModelPickerSheet(
                                     Icon(
                                         Icons.Default.Layers,
                                         contentDescription = null,
-                                        tint = Color(0xFF9A7A48),
+                                        tint = Color(0xFF5B5CF0),
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(Modifier.width(10.dp))
@@ -722,10 +722,10 @@ internal fun ModelPickerSheet(
                                             fontSize = 9.sp,
                                             lineHeight = 11.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF9A7A48),
+                                            color = Color(0xFF5B5CF0),
                                             modifier = Modifier
                                                 .background(
-                                                    Color(0xFF9A7A48).copy(alpha = 0.1f),
+                                                    Color(0xFF5B5CF0).copy(alpha = 0.1f),
                                                     RoundedCornerShape(50),
                                                 )
                                                 .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -833,7 +833,7 @@ internal fun ModelPickerSheet(
                                                 Icon(
                                                     if (isActive) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                     contentDescription = null,
-                                                    tint = if (isActive) Color(0xFF9A7A48)
+                                                    tint = if (isActive) Color(0xFF5B5CF0)
                                                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
                                                     modifier = Modifier.size(17.dp),
                                                 )
@@ -1040,7 +1040,7 @@ internal fun ModelPickerSheet(
                                             Icon(
                                                 if (selectedEntry != null) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                 contentDescription = null,
-                                                tint = if (selectedEntry != null) Color(0xFF9A7A48)
+                                                tint = if (selectedEntry != null) Color(0xFF5B5CF0)
                                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                                 modifier = Modifier.size(20.dp),
                                             )
@@ -1126,7 +1126,7 @@ internal fun ModelPickerSheet(
                                                 Icons.Default.KeyboardArrowDown,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp),
-                                                tint = Color(0xFF9A7A48),
+                                                tint = Color(0xFF5B5CF0),
                                             )
                                             Spacer(Modifier.width(4.dp))
                                             Text(
@@ -1136,7 +1136,7 @@ internal fun ModelPickerSheet(
                                                     entries.size,
                                                 ),
                                                 style = MaterialTheme.typography.labelMedium,
-                                                color = Color(0xFF9A7A48),
+                                                color = Color(0xFF5B5CF0),
                                             )
                                         }
                                         }
@@ -1180,7 +1180,7 @@ internal fun ModelPickerSheet(
                                             Icon(
                                                 if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                 contentDescription = null,
-                                                tint = if (isSelected) Color(0xFF9A7A48)
+                                                tint = if (isSelected) Color(0xFF5B5CF0)
                                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                                 modifier = Modifier.size(20.dp),
                                             )
@@ -1334,10 +1334,10 @@ private fun ModelNameWithActiveBadge(name: String, showActiveBadge: Boolean) {
                 fontSize = 9.sp,
                 lineHeight = 11.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF6E9C7B),
+                color = Color(0xFF23A26D),
                 modifier = Modifier
                     .background(
-                        Color(0xFF6E9C7B).copy(alpha = 0.1f),
+                        Color(0xFF23A26D).copy(alpha = 0.1f),
                         RoundedCornerShape(50),
                     )
                     .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -1366,7 +1366,7 @@ private fun QuickTestButton(onClick: () -> Unit) {
         Icon(
             Icons.Default.Bolt,
             contentDescription = stringResource(R.string.model_picker_quick_test),
-            tint = Color(0xFF9A7A48),
+            tint = Color(0xFF5B5CF0),
             modifier = Modifier.size(17.dp),
         )
     }
@@ -1376,7 +1376,7 @@ private fun QuickTestButton(onClick: () -> Unit) {
 private fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
     ProviderType.anthropic -> Color(0xFFAB47BC) // purple
     ProviderType.gemini -> Color(0xFF42A5F5)    // blue
-    ProviderType.openAI -> Color(0xFF6E9C7B)    // green
+    ProviderType.openAI -> Color(0xFF23A26D)    // green
     ProviderType.openRouter -> Color(0xFF00BCD4) // cyan
     ProviderType.xAI -> Color(0xFFFF7043)        // orange — Grok brand
     ProviderType.kimiCode -> Color(0xFF5C6BC0)   // indigo — Kimi accent
@@ -1384,8 +1384,8 @@ private fun providerDotColor(providerType: ProviderType?): Color = when (provide
     // [T-android-provider-type-parity] Responses API instances are
     // OpenAI under the hood — same green dot. Undrivable types share
     // the neutral gray used for "no provider".
-    ProviderType.openAIResponses -> Color(0xFF6E9C7B)
+    ProviderType.openAIResponses -> Color(0xFF23A26D)
     ProviderType.antigravity,
-    ProviderType.unsupported -> Color(0xFF8F8A80)
-    null -> Color(0xFF8F8A80)                    // gray
+    ProviderType.unsupported -> Color(0xFF878C9C)
+    null -> Color(0xFF878C9C)                    // gray
 }

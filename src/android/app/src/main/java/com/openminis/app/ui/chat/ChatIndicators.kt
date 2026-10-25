@@ -172,7 +172,7 @@ internal fun TypingIndicator() {
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
     val soulName = soulMeta.name.trim().ifEmpty { "Minis" }
     val isDark = ChatColors.isDark
-    val gold = com.openminis.app.ui.theme.Noir.Gold
+    val gold = com.openminis.app.ui.theme.Noir.Iris
 
     Row(
         modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),

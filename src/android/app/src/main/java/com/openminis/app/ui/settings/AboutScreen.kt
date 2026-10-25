@@ -39,7 +39,7 @@ import com.openminis.app.ui.components.openExternalUrl
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val tileBlue = Color(0xFF9A7A48)
+    val tileBlue = Color(0xFF5B5CF0)
 
     SettingsScaffold(title = stringResource(R.string.about_title), onBack = onBack) {
         Column(

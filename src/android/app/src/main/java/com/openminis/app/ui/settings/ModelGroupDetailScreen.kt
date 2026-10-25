@@ -427,7 +427,7 @@ fun ModelGroupDetailScreen(
                             )
                         },
                         icon = Icons.Default.Psychology,
-                        iconColor = Color(0xFF9A7FA8),
+                        iconColor = Color(0xFF9B6CF6),
                         showDivider = reasoningEnabled,
                     )
                     if (reasoningEnabled) {
@@ -562,7 +562,7 @@ fun ModelGroupDetailScreen(
                             }
                         },
                         icon = Icons.Default.Memory,
-                        iconColor = Color(0xFF7C7FA6),
+                        iconColor = Color(0xFF6E6FE8),
                         showDivider = contextEnabled,
                     )
                     if (contextEnabled) {

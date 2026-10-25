@@ -128,8 +128,8 @@ fun SkillRowItem(
  * stay consistent between Settings and the in-chat sheet.
  */
 fun sourceIconAndColor(source: SkillRepository.ImportSource): Pair<ImageVector, Color> = when (source) {
-    SkillRepository.ImportSource.URL -> Icons.Default.Link to Color(0xFF9A7A48)
-    SkillRepository.ImportSource.FILE -> Icons.Outlined.Description to Color(0xFFC98A3E)
-    SkillRepository.ImportSource.BUNDLED -> Icons.Default.Inventory2 to Color(0xFF6E9C7B)
-    SkillRepository.ImportSource.SESSION -> Icons.Outlined.ChatBubble to Color(0xFF9A7FA8)
+    SkillRepository.ImportSource.URL -> Icons.Default.Link to Color(0xFF5B5CF0)
+    SkillRepository.ImportSource.FILE -> Icons.Outlined.Description to Color(0xFFEE8A2A)
+    SkillRepository.ImportSource.BUNDLED -> Icons.Default.Inventory2 to Color(0xFF23A26D)
+    SkillRepository.ImportSource.SESSION -> Icons.Outlined.ChatBubble to Color(0xFF9B6CF6)
 }
