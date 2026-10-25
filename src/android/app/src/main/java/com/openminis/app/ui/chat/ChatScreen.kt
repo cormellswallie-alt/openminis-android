@@ -4183,8 +4183,13 @@ fun ChatScreen(
                             is FlatChatItem.AssistantThinking ->
                                 (row.messageThinkingLevel ?: stepThinkingLevel).isEnabled
                             is FlatChatItem.AssistantToolUse ->
+                                // Non-composable twin of helperControlSummary() != null:
+                                // control calls are steps, delegations keep their card.
                                 !com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(row.block.toolName) ||
-                                    helperControlSummary(row.block) != null
+                                    com.openminis.app.agent.jobs.HelperRunner.classifyCall(
+                                        row.block.toolArgs.ifEmpty { null },
+                                        row.block.content.ifEmpty { null },
+                                    ) != com.openminis.app.agent.jobs.HelperRunner.SubAgentCall.DELEGATE
                             else -> false
                         }
                     }
