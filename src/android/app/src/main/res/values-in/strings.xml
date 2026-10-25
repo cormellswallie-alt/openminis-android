@@ -1833,4 +1833,7 @@
     <string name="sub_agents_move_down">Pindahkan ke bawah</string>
     <string name="sub_agents_move_up">Pindahkan ke atas</string>
     <string name="tool_pager_position">Panggilan alat %1$d dari %2$d di percakapan ini</string>
+    <string name="noir_steps_done">%1$d langkah</string>
+    <string name="noir_steps_failed">%1$d gagal</string>
+    <string name="noir_step_thinking">Berpikir</string>
 </resources>

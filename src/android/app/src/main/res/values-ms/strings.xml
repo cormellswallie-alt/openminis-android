@@ -1828,4 +1828,7 @@
     <string name="sub_agents_move_down">Alih ke bawah</string>
     <string name="sub_agents_move_up">Alih ke atas</string>
     <string name="tool_pager_position">Panggilan alat %1$d daripada %2$d dalam perbualan ini</string>
+    <string name="noir_steps_done">%1$d langkah</string>
+    <string name="noir_steps_failed">%1$d gagal</string>
+    <string name="noir_step_thinking">Berfikir</string>
 </resources>

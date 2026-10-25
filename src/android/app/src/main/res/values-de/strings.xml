@@ -1854,4 +1854,7 @@
     <string name="sub_agent_builtin_name">Allgemeiner Subagent</string>
     <string name="sub_agent_builtin_description">Offene Aufgaben, die eine eigene Tool-Schleife brauchen: eine Codebasis oder das Web über viele Runden erkunden, große Ausgaben zu einem Ergebnis verdichten oder unabhängige Zweige parallel ausführen.</string>
     <string name="tool_pager_position">Werkzeugaufruf %1$d von %2$d in dieser Unterhaltung</string>
+    <string name="noir_steps_done">%1$d Schritte</string>
+    <string name="noir_steps_failed">%1$d fehlgeschlagen</string>
+    <string name="noir_step_thinking">Denken</string>
 </resources>

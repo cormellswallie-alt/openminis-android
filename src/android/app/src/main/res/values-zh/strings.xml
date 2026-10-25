@@ -2143,4 +2143,7 @@
     <string name="chat_import_done_body">已导入 %1$d 个对话（%2$d 条消息），跳过 %3$d 个（已导入过或为空）。格式：%4$s</string>
     <string name="chat_import_failed_title">导入失败</string>
     <string name="chat_import_ok">好</string>
+    <string name="noir_steps_done">已完成 %1$d 个步骤</string>
+    <string name="noir_steps_failed">%1$d 个失败</string>
+    <string name="noir_step_thinking">思考</string>
 </resources>

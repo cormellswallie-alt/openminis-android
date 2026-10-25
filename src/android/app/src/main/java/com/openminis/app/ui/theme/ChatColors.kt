@@ -68,8 +68,10 @@ val LightChatPalette = ChatPalette(
     background = Noir.Paper,
     secondaryBg = Noir.PaperCard,
     inputBg = Noir.PaperRaised,
-    inputIconBg = Noir.PaperSunk,
-    inputIconBorder = Color.Transparent,
+    // [T-noir-step-timeline] Composer tools are hairline rings, not beige
+    // discs — the fills were half of why the chat read as one flat beige.
+    inputIconBg = Color.Transparent,
+    inputIconBorder = Noir.PaperHairlineStrong,
     inputBorder = Noir.PaperHairline,
     primaryText = Noir.Ink,
     secondaryText = Noir.InkSoft,
@@ -84,7 +86,7 @@ val LightChatPalette = ChatPalette(
     toolCapsuleBg = Noir.PaperSunk,
     separator = Noir.PaperHairline,
     sendButton = Noir.Ink,
-    sendButtonDisabled = Noir.InkFaint,
+    sendButtonDisabled = Noir.PaperSunk,
     // Code stays a dark island in light mode (as before), now onyx + ivory
     // with a champagne-tinted foreground rather than terminal green.
     codeBlockBg = Color(0xFF161616),
@@ -123,8 +125,8 @@ val DarkChatPalette = ChatPalette(
     background = Noir.Onyx,
     secondaryBg = Noir.Onyx1,
     inputBg = Noir.Onyx2,
-    inputIconBg = Noir.Onyx3,
-    inputIconBorder = Noir.OnyxHairline,
+    inputIconBg = Color.Transparent,
+    inputIconBorder = Noir.OnyxHairlineStrong,
     inputBorder = Noir.OnyxHairlineStrong,
     primaryText = Noir.Ivory,
     secondaryText = Noir.IvorySoft,
@@ -139,7 +141,7 @@ val DarkChatPalette = ChatPalette(
     toolCapsuleBg = Noir.Onyx2,
     separator = Noir.OnyxHairline,
     sendButton = Noir.Ivory,
-    sendButtonDisabled = Noir.IvoryFaint,
+    sendButtonDisabled = Noir.Onyx3,
     codeBlockBg = Color(0xFF111112),
     codeBlockText = Color(0xFFE9DFC9),
     // [T-inline-code-dark-bg-android] lifted above both the wash and code

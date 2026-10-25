@@ -4172,6 +4172,23 @@ fun ChatScreen(
                 // tells us whether the bottleneck is row-list build,
                 // initial list measure, or per-row composition.
                 val perfFirstLayoutFired = remember(sessionId) { java.util.concurrent.atomic.AtomicBoolean(false) }
+                // [T-noir-step-timeline] Group consecutive tool / thinking rows
+                // into runs: rail flags per row, and finished runs of 3+ fold
+                // into one summary card. Expansion is per run, per session.
+                val stepExpandedRuns = remember(sessionId) { androidx.compose.runtime.mutableStateMapOf<String, Boolean>() }
+                val stepThinkingLevel = viewModel.thinkingLevel.value
+                val stepRuns = remember(flatItems, isStreaming, stepThinkingLevel) {
+                    computeStepRuns(flatItems, isStreaming) { row ->
+                        when (row) {
+                            is FlatChatItem.AssistantThinking ->
+                                (row.messageThinkingLevel ?: stepThinkingLevel).isEnabled
+                            is FlatChatItem.AssistantToolUse ->
+                                !com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(row.block.toolName) ||
+                                    helperControlSummary(row.block) != null
+                            else -> false
+                        }
+                    }
+                }
                 Box {
                 AlwaysStretchOverscrollBox { sharedEffect ->
                 LazyColumn(
@@ -4268,7 +4285,9 @@ fun ChatScreen(
                     // hits ~1300 px while listState still reports
                     // firstVisible=0, firstOffset=0 (logged as the "tool on
                     // screen but not pushed into view" repro on Pixel 4a).
-                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.Bottom),
+                    // [T-noir-step-timeline] The 2dp gap is applied per row (see
+                    // the row Box below) so folded step rows collapse to 0dp.
+                    verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Bottom),
                     overscrollEffect = sharedEffect,
                 ) {
                     // T13 Resume banner — placed BEFORE items() so reverseLayout
@@ -4381,8 +4400,11 @@ fun ChatScreen(
                             }
                         }
                         val isNewestItem = item == flatItems.lastOrNull()
+                        val stepInfo = stepRuns[item.key]
+                        val stepFolded = stepInfo.isFoldedAway(stepExpandedRuns)
                         Box(
                             modifier = Modifier
+                                .padding(top = if (stepFolded) 0.dp else StepItemGap)
                                 .alpha(rowAlpha)
                                 .then(
                                     if (isNewestItem) {
@@ -4585,11 +4607,15 @@ fun ChatScreen(
                                     // edge ThinkingBlock's LaunchedEffect
                                     // hooks for auto-collapse, matching iOS
                                     // ThinkingBlockView semantics.
-                                    ThinkingBlock(
-                                        block = item.block,
-                                        isStreaming = item.isLastBlockOverall && item.messageIsStreaming,
-                                        isLast = item.isLast,
-                                    )
+                                    StepRunSlot(stepInfo, stepExpandedRuns) { railUp, railDown ->
+                                        ThinkingBlock(
+                                            block = item.block,
+                                            isStreaming = item.isLastBlockOverall && item.messageIsStreaming,
+                                            isLast = item.isLast,
+                                            railUp = railUp,
+                                            railDown = railDown,
+                                        )
+                                    }
                                 }
                             }
                             // [T-android-scheduled-task-card] A fired scheduled
@@ -4618,11 +4644,15 @@ fun ChatScreen(
                                 com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(item.block.toolName) &&
                                 helperControlSummary(item.block) != null
                             ) {
-                                ToolCallPill(
-                                    item.block,
-                                    allToolBlocks = item.allToolBlocks,
-                                    onOpenDetail = { viewModel.openToolDetail(it) },
-                                )
+                                StepRunSlot(stepInfo, stepExpandedRuns) { railUp, railDown ->
+                                    ToolCallPill(
+                                        item.block,
+                                        allToolBlocks = item.allToolBlocks,
+                                        onOpenDetail = { viewModel.openToolDetail(it) },
+                                        railUp = railUp,
+                                        railDown = railDown,
+                                    )
+                                }
                             } else if (com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(item.block.toolName)) HelperToolBlock(
                                 block = item.block,
                                 onOpenDetail = { viewModel.openToolDetail(it) },
@@ -4680,7 +4710,8 @@ fun ChatScreen(
                                     }
                                     outcome != ChatViewModel.CardResume.REFUSED
                                 },
-                            ) else ToolCallPill(
+                            ) else StepRunSlot(stepInfo, stepExpandedRuns) { railUp, railDown ->
+                                ToolCallPill(
                                 block = item.block,
                                 allToolBlocks = item.allToolBlocks,
                                 onRetry = if (item.isLastCancelled && !isStreaming && !canResume) ({ safeMutate { viewModel.retryLast() } }) else null,
@@ -4723,7 +4754,10 @@ fun ChatScreen(
                                         android.widget.Toast.LENGTH_SHORT,
                                     ).show()
                                 },
-                            )
+                                railUp = railUp,
+                                railDown = railDown,
+                                )
+                            }
                             is FlatChatItem.AssistantInfo -> FallbackInfoBlock(
                                 block = item.block,
                                 // Only the compact-divider info block should

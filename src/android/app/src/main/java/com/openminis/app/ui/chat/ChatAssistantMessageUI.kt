@@ -179,6 +179,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -271,6 +272,7 @@ import com.openminis.app.data.repository.MemoryRepository
 import com.openminis.app.data.repository.ProviderRepository
 import com.openminis.app.ui.browser.BrowserSheet
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.Noir
 import com.openminis.app.ui.components.MinisTextButton
 import com.openminis.app.ui.components.DecorativeSpinner
 import com.openminis.app.ui.components.rememberDecorativeTick
@@ -758,6 +760,10 @@ internal fun ToolCallPill(
     // streaming or when there's no preceding user turn to re-run from).
     onRerunFromHere: (() -> Unit)? = null,
     onCopyDetails: (() -> Unit)? = null,
+    // [T-noir-step-timeline] Hairline rail joining this step to its
+    // neighbours in the same run (see ChatStepTimeline.kt).
+    railUp: Boolean = false,
+    railDown: Boolean = false,
 ) {
     // T-android-jank-profile: this log was firing on every ToolCallPill
     // recomposition (every streaming token while a tool call is live),
@@ -797,14 +803,6 @@ internal fun ToolCallPill(
     }
     val toolIcon = if (controlSummary != null) Icons.Default.Tune else toolIconFor(block.toolName)
 
-    // Icon color: tool color when running/done, error/cancel colors on failure
-    val iconTint = when {
-        isFailed -> ToolErrorColor
-        isCancelled -> ToolCancelColor
-        isDone -> ToolCheckColor
-        else -> toolAccent
-    }
-
     // iOS: always shows tool-type icon, only changes color based on status
     val displayIcon = toolIcon
 
@@ -838,117 +836,104 @@ internal fun ToolCallPill(
     // Pill stretches up to the full row width so long titles can ellipsize
     // without pushing the duration out of view. Title takes the remaining
     // space via weight(1f), duration stays fixed-width (softWrap=false).
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+    // [T-noir-step-timeline] The capsule became a timeline row: colour moved
+    // from a beige fill on every pill into the tool's own tinted node, so a
+    // long run reads as distinct kinds of work instead of a wall of
+    // identical lozenges. Failure turns the node ember; cancel greys it.
+    val railColor = stepRailColor()
+    val nodeAccent = when {
+        isFailed -> Noir.Ember
+        isCancelled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        else -> toolAccent
+    }
+    val stepShape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .stepRail(railUp, railDown, railColor),
+    ) {
       Box(modifier = Modifier.weight(1f, fill = false)) {
         Row(
             modifier = Modifier
-                .background(
-                    ChatColors.toolCapsuleBg,
-                    CircleShape,
-                )
-                .border(0.5.dp, ChatColors.toolBorder, CircleShape)
-                .clip(CircleShape)
+                .clip(stepShape)
                 .combinedClickable(
                     onClick = { onOpenDetail(block.id) },
                     onLongClick = if (onRerunFromHere != null || onCopyDetails != null) {
                         { showToolMenu = true }
                     } else null,
                 )
-                .padding(horizontal = 12.dp)
-                .height(36.dp),
+                .height(StepRowHeight)
+                .padding(end = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Status icon — always the typed tool icon. Color shifts to
-            // reflect terminal status (success / failed / cancelled); while
-            // running it stays in the tool's accent color so the user can
-            // still recognize the tool at a glance.
-            Icon(
-                displayIcon,
-                contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(14.dp),
-            )
+            // Node — the typed tool icon in its spectrum ink; a thin arc
+            // spins around it while the tool runs.
+            StepNode(icon = displayIcon, accent = nodeAccent, running = isRunning)
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // [T-step-timestamp v2 aa8b1128] Inline HH:mm:ss prefix removed
-            // — user found it visually noisy on every tool pill. Start
-            // time + elapsed duration now live in the tool detail bottom
-            // sheet header instead (ToolDetailSheet, this file ~line
-            // 5209). formatStepTimestamp() is still defined further down
-            // because the detail sheet calls it.
-
-            // Tool title + streaming dots after title (iOS: Text + bouncing "...").
-            // weight(1f) lets the title absorb leftover width, ellipsis trims overflow.
+            // [T-step-timestamp v2 aa8b1128] Start time + elapsed duration live
+            // in the tool detail bottom sheet header (formatStepTimestamp).
             Row(
                 modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     // [T-android-subagent-control-capsule] Prefer the
-                    // operation description for a control call. `tool_title`
-                    // names the RUN it acted on, so using it would label a
-                    // status check, a steer and a resume on the same sub agent
-                    // identically.
+                    // operation description for a control call.
                     text = controlSummary ?: block.toolTitle.ifEmpty { block.toolName },
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = if (isCancelled) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (isRunning) {
-                    // iOS streaming: "..." bouncing dots after title text
                     StreamingDotsText()
                 }
             }
 
-            // Duration badge (iOS: monospaced gray text after title) — fixed width,
-            // never compressed by the title. The HH:mm:ss start time is
-            // surfaced inside the tool detail bottom sheet's bottom bar
-            // instead of here — the inline pill list stays clean.
             if (durationText != null) {
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = durationText,
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    color = if (isFailed) Noir.Ember.copy(alpha = 0.85f)
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     softWrap = false,
                     maxLines = 1,
                 )
             }
-            // T168: restore per-tool stop button (reverts T117). Renders only
-            // for running/streaming/pending blocks so completed pills stay
-            // clean. Routes to the same global cancelStream() — there is no
-            // per-tool cancellation API on either platform.
+            // T168: per-tool stop button for running blocks only.
             if (isRunning && onStop != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 ToolStopButton(onStop = onStop)
             }
         }
-        // [T-android-decorative-anim-perf] Shimmer overlay: its own layer, so
-        // the per-tick translation invalidates nothing but this band. The outer
-        // clip pins the sweep to the pill's capsule; the gradient is built once
-        // per size in drawWithCache — the frame path writes one float.
+        // [T-android-decorative-anim-perf] Shimmer overlay on its own layer.
+        // Tinted with the tool's ink so the sweep is visible on Paper too.
         if (shimmerTick != null) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(CircleShape)
+                    .clip(stepShape)
                     .graphicsLayer {
                         val phase = decorativePhase(shimmerTick.value, SHIMMER_PERIOD_MS)
-                        // Same -1f..2f sweep, in pill widths, the old tween produced.
                         translationX = (-1f + phase * 3f) * size.width
                     }
                     .drawWithCache {
                         val band = size.width * 0.6f
                         val brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0f),
-                                Color.White.copy(alpha = 0.18f),
-                                Color.White.copy(alpha = 0f),
+                                toolAccent.copy(alpha = 0f),
+                                toolAccent.copy(alpha = 0.12f),
+                                toolAccent.copy(alpha = 0f),
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(band, 0f),
@@ -1032,7 +1017,14 @@ internal fun shouldAutoCollapseThinking(isStreaming: Boolean, userIntent: Boolea
 }
 
 @Composable
-internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: Boolean = true) {
+internal fun ThinkingBlock(
+    block: AssistantBlock,
+    isStreaming: Boolean,
+    isLast: Boolean = true,
+    // [T-noir-step-timeline] rail to neighbouring steps.
+    railUp: Boolean = false,
+    railDown: Boolean = false,
+) {
     // Per-block expand state, keyed by block.id so the user's manual toggle on
     // an earlier (finished) thinking block survives recomposition while a
     // later block is still streaming. The previous LaunchedEffect snapped
@@ -1072,108 +1064,100 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
         // One-shot auto-collapse when streaming for this block ends.
         if (shouldAutoCollapseThinking(isStreaming, userIntent)) expanded = false
     }
-    val thinkingBlue = Color(0xFF9A7A48)
+    // [T-noir-step-timeline] Gold is reserved for thinking: it is the one
+    // step kind drawn in the brand ink, everything else uses the spectrum.
+    val thinkingInkColor = thinkingInk()
     val charCount = block.content.length
     val charLabel = when {
         charCount >= 1000 -> "${charCount / 1000}K"
         else -> "$charCount"
     }
-    // [T-thinking-render-perf-android] Compose `Text` measures/lays out the
-    // ENTIRE string even when only ~300dp is visible, so a 200k-char thinking
-    // block froze the UI (and a per-token recomposition re-measured all 200k
-    // each tick). Two tiers guard this:
-    //  • > HARD_CAP: the inline scroller can't render it at all — show a
-    //    "View full content" entry that opens a native TextView dialog
-    //    (Android TextView handles large text far better than Compose Text).
-    //  • otherwise: render only the last WINDOW chars (tail) — capping layout
-    //    cost to O(WINDOW) regardless of total length.
+    // [T-thinking-render-perf-android] Tail window / hard cap — see history.
     val thinkingWindowSize = 8000
     val thinkingHardCap = 100_000
     val overHardCap = charCount > thinkingHardCap
     var showFullContent by remember(block.id) { mutableStateOf(false) }
+    val liveThinking = isStreaming && block.toolStatus != ToolBlockStatus.SUCCESS
+    // Live one-liner beside the label: O(600) per token, never the whole block.
+    val preview = remember(block.id, charCount) { thinkingPreviewLine(block.content) }
+    val chevronAngle by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(240),
+        label = "thinkingChevron",
+    )
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .background(thinkingBlue.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
-            .border(0.5.dp, thinkingBlue.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .stepRail(railUp, railDown, stepRailColor()),
     ) {
-        // Header row — only the header reacts to taps. Mirrors iOS, where
-        // .onTapGesture is on the header HStack, not the whole VStack. With
-        // clickable on the outer Column, a release after dragging in the
-        // inner scroller registered as a tap and toggled `expanded`.
+        // Header row — only the header reacts to taps (a drag-release in the
+        // inner scroller must not toggle).
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
                 .clickable {
-                    // [T-android-thinking-collapse-latch] Record the direction,
-                    // not merely that a tap happened. `overHardCap` opens the
-                    // native viewer instead of toggling, so it expresses no
-                    // expand/collapse intent and must not touch this.
+                    // [T-android-thinking-collapse-latch] Record the direction.
                     if (!overHardCap) userIntent = !expanded
-                    // [T-thinking-render-perf-android] Over the hard cap the
-                    // inline scroller is bypassed entirely; tapping the header
-                    // opens the native full-content viewer instead of toggling
-                    // the (never-shown) inline expansion.
                     if (overHardCap) showFullContent = true
                     else expanded = !expanded
-                },
+                }
+                .height(StepRowHeight)
+                .padding(end = 6.dp),
         ) {
-            if (isStreaming && block.toolStatus != ToolBlockStatus.SUCCESS) {
-                // iOS: ProgressView().controlSize(.mini) while streaming
-                // [T-android-decorative-anim-perf] See DecorativeAnimation.kt.
-                DecorativeSpinner(
-                    color = thinkingBlue,
-                    modifier = Modifier.size(13.dp),
-                    strokeWidth = 1.5.dp,
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Psychology,
-                    contentDescription = null,
-                    tint = thinkingBlue,
-                    modifier = Modifier.size(14.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-            Text(
-                text = "Deep Thinking",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = thinkingBlue,
+            StepNode(
+                icon = Icons.Default.Psychology,
+                accent = thinkingInkColor,
+                running = liveThinking,
             )
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.noir_step_thinking),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = thinkingInkColor,
+                maxLines = 1,
+            )
+            if (!expanded && preview.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = preview,
+                    fontSize = 13.sp,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
             if (charCount > 0) {
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = charLabel,
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
                     fontFamily = FontFamily.Monospace,
-                    color = thinkingBlue.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    softWrap = false,
                 )
-                Spacer(modifier = Modifier.width(4.dp))
             }
+            Spacer(modifier = Modifier.width(4.dp))
             if (overHardCap) {
-                // [T-thinking-render-perf-android] No expand/collapse chevron —
-                // the content is too large for the inline Compose scroller.
-                // Offer the native full-content viewer instead.
                 Text(
                     text = stringResource(R.string.thinking_view_full),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = thinkingBlue,
+                    color = thinkingInkColor,
                 )
             } else {
                 Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = thinkingBlue.copy(alpha = 0.5f),
-                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.size(16.dp).rotate(chevronAngle),
                 )
             }
         }
@@ -1245,9 +1229,19 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
             }
             Column(
                 modifier = Modifier
-                    .padding(top = 6.dp)
+                    .padding(start = StepTextIndent, top = 2.dp, bottom = 6.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(thinkingInkColor.copy(alpha = if (ChatColors.isDark) 0.08f else 0.06f))
+                    .drawBehind {
+                        drawRect(
+                            color = thinkingInkColor.copy(alpha = 0.55f),
+                            size = androidx.compose.ui.geometry.Size(2.dp.toPx(), size.height),
+                        )
+                    }
                     .heightIn(max = 300.dp)
-                    .verticalScroll(scrollState),
+                    .verticalScroll(scrollState)
+                    .padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
             ) {
                 if (isTruncated) {
                     Text(
@@ -1264,8 +1258,8 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
                 Text(
                     text = displayContent,
                     fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                    lineHeight = 20.sp,
                 )
             }
         }
@@ -1304,10 +1298,10 @@ private fun ThinkingFullContentDialog(content: String, onDismiss: () -> Unit) {
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) {
                     Text(
-                        text = "Deep Thinking",
+                        text = stringResource(R.string.noir_step_thinking),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF9A7A48),
+                        color = thinkingInk(),
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     MinisTextButton(onClick = onDismiss) {

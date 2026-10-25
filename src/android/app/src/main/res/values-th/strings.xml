@@ -1829,4 +1829,7 @@
     <string name="sub_agents_move_down">ย้ายลง</string>
     <string name="sub_agents_move_up">ย้ายขึ้น</string>
     <string name="tool_pager_position">การเรียกเครื่องมือที่ %1$d จาก %2$d ในบทสนทนานี้</string>
+    <string name="noir_steps_done">%1$d ขั้นตอน</string>
+    <string name="noir_steps_failed">ล้มเหลว %1$d</string>
+    <string name="noir_step_thinking">กำลังคิด</string>
 </resources>

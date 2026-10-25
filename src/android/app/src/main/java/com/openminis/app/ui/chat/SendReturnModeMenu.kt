@@ -269,7 +269,7 @@ fun ComposerSendButton(
             Icons.Default.ArrowUpward,
             contentDescription = "Send",
             tint = if (canActivate) ChatColors.background
-            else ChatColors.primaryText.copy(alpha = 0.5f),
+            else ChatColors.secondaryText,
             modifier = Modifier
                 .size(20.dp)
                 .graphicsLayer { translationY = 3.dp.toPx() * arrowLift },

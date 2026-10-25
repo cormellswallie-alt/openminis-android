@@ -1831,4 +1831,7 @@
     <string name="sub_agents_move_down">Mover para baixo</string>
     <string name="sub_agents_move_up">Mover para cima</string>
     <string name="tool_pager_position">Chamada de ferramenta %1$d de %2$d nesta conversa</string>
+    <string name="noir_steps_done">%1$d etapas</string>
+    <string name="noir_steps_failed">%1$d com falha</string>
+    <string name="noir_step_thinking">Raciocínio</string>
 </resources>

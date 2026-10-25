@@ -1836,4 +1836,7 @@
     <string name="sub_agents_move_down">Przenieś w dół</string>
     <string name="sub_agents_move_up">Przenieś w górę</string>
     <string name="tool_pager_position">Wywołanie narzędzia %1$d z %2$d w tej rozmowie</string>
+    <string name="noir_steps_done">Kroki: %1$d</string>
+    <string name="noir_steps_failed">Nieudane: %1$d</string>
+    <string name="noir_step_thinking">Myślenie</string>
 </resources>

@@ -1832,4 +1832,7 @@
     <string name="sub_agents_move_down">Mută mai jos</string>
     <string name="sub_agents_move_up">Mută mai sus</string>
     <string name="tool_pager_position">Apelul de instrument %1$d din %2$d în această conversație</string>
+    <string name="noir_steps_done">%1$d pași</string>
+    <string name="noir_steps_failed">%1$d eșuați</string>
+    <string name="noir_step_thinking">Gândire</string>
 </resources>

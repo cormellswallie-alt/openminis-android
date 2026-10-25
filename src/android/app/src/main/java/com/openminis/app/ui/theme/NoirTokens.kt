@@ -72,6 +72,22 @@ object Noir {
     val Sage = Color(0xFF7FA88B)
     val Ember = Color(0xFFD9775B)
 
+    /**
+     * Step spectrum. Gold-on-ink alone read as monotone once a turn ran a
+     * dozen tools, so every tool kind gets its own muted ink. All nine sit
+     * at similar lightness/chroma, so they read as one family on both Paper
+     * and Onyx and never shout over the gold accents.
+     */
+    val Moss = Color(0xFF5E9466)       // shell
+    val Slate = Color(0xFF5B83B0)      // read
+    val Terracotta = Color(0xFFC2714F) // write
+    val Amber = Color(0xFFC9902F)      // edit
+    val Lagoon = Color(0xFF3E9490)     // web / browser
+    val Orchid = Color(0xFF9C6BB0)     // image
+    val Rose = Color(0xFFC75D7B)       // memory
+    val Indigo = Color(0xFF6C72C4)     // search
+    val Stone = Color(0xFF8F8A80)      // everything else
+
     /** Brushed champagne, 115° like the design boards. */
     fun goldBrush(start: Offset = Offset.Zero, end: Offset = Offset.Infinite): Brush =
         Brush.linearGradient(

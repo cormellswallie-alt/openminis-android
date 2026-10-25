@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.ui.graphics.Color
+import com.openminis.app.ui.theme.Noir
 
 // [T-android-split-chat] Pure tool-label / duration / timestamp formatting
 // helpers extracted verbatim from ChatScreen.kt. `internal` so the rest of the
@@ -54,17 +55,17 @@ internal fun formatStepDuration(seconds: Long, stillRunning: Boolean): String {
 
 // Helper: tool accent color
 internal fun toolAccentColor(toolName: String): Color = when (toolName) {
-    "shell_execute" -> Color(0xFF6E9C7B)
-    "file_read" -> Color(0xFF6F9A9E)
-    "file_write" -> Color(0xFF9A7A48)
-    "file_edit" -> Color(0xFFC98A3E)
-    "browser_use" -> Color(0xFF9A7A48)
-    "read_image" -> Color(0xFF9A7FA8)
-    "memory_write", "memory_get" -> Color(0xFFC2677A)
-    "web_search" -> Color(0xFF6F9A9E)    // iOS: .cyan for search
+    "shell_execute" -> Noir.Moss
+    "file_read" -> Noir.Slate
+    "file_write" -> Noir.Terracotta
+    "file_edit" -> Noir.Amber
+    "browser_use" -> Noir.Lagoon
+    "read_image" -> Noir.Orchid
+    "memory_write", "memory_get" -> Noir.Rose
+    "web_search" -> Noir.Indigo    // iOS: .cyan for search
     // [T-sub-agents-v1] Current name + the pre-rename one still in shipped transcripts.
     "subagent_task", "delegate_task", "agent_status" -> HelperAccentStatic  // iOS: HelperAccent.color (electric violet)
-    else -> Color(0xFF8F8A80)
+    else -> Noir.Stone
 }
 
 // Helper: tool icon (iOS: distinct SF Symbols per tool type)
@@ -105,16 +106,16 @@ internal fun toolIconResFor(toolName: String?): Int = when (toolName) {
 // literals, as a packed ARGB Int rather than a Compose Color.
 @androidx.annotation.ColorInt
 internal fun toolAccentColorInt(toolName: String?): Int = when (toolName) {
-    "shell_execute" -> 0xFF34C759.toInt()
-    "file_read" -> 0xFF32ADE6.toInt()
-    "file_write" -> 0xFF007AFF.toInt()
-    "file_edit" -> 0xFFFF9500.toInt()
-    "browser_use" -> 0xFF007AFF.toInt()
-    "read_image" -> 0xFFAF52DE.toInt()
-    "memory_write", "memory_get" -> 0xFFFF2D55.toInt()
-    "web_search" -> 0xFF32ADE6.toInt()
-    "subagent_task", "delegate_task", "agent_status" -> 0xFFAF52DE.toInt()
-    else -> 0xFF8E8E93.toInt()
+    "shell_execute" -> 0xFF5E9466.toInt()
+    "file_read" -> 0xFF5B83B0.toInt()
+    "file_write" -> 0xFFC2714F.toInt()
+    "file_edit" -> 0xFFC9902F.toInt()
+    "browser_use" -> 0xFF3E9490.toInt()
+    "read_image" -> 0xFF9C6BB0.toInt()
+    "memory_write", "memory_get" -> 0xFFC75D7B.toInt()
+    "web_search" -> 0xFF6C72C4.toInt()
+    "subagent_task", "delegate_task", "agent_status" -> 0xFF8B6CF6.toInt()
+    else -> 0xFF8F8A80.toInt()
 }
 
 /**

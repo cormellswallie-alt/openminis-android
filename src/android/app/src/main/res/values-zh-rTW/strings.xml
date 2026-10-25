@@ -2133,4 +2133,7 @@
     <string name="chat_import_done_body">已匯入 %1$d 個對話（%2$d 則訊息），略過 %3$d 個（已匯入過或為空）。格式：%4$s</string>
     <string name="chat_import_failed_title">匯入失敗</string>
     <string name="chat_import_ok">好</string>
+    <string name="noir_steps_done">已完成 %1$d 個步驟</string>
+    <string name="noir_steps_failed">%1$d 個失敗</string>
+    <string name="noir_step_thinking">思考</string>
 </resources>

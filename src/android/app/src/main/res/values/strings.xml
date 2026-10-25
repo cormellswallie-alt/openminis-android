@@ -2337,4 +2337,7 @@
     <string name="chat_import_done_body">Imported %1$d conversations (%2$d messages). Skipped %3$d (already imported or empty). Format: %4$s</string>
     <string name="chat_import_failed_title">Import failed</string>
     <string name="chat_import_ok">OK</string>
+    <string name="noir_steps_done">%1$d steps</string>
+    <string name="noir_steps_failed">%1$d failed</string>
+    <string name="noir_step_thinking">Thinking</string>
 </resources>
