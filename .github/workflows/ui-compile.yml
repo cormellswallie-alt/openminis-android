@@ -5,6 +5,11 @@ name: UI compile check
 # entry points RcloneBridge calls. Not an APK — just "does it compile".
 on:
   workflow_dispatch:
+  push:
+    branches: [feat/claude-ui]
+    paths:
+      - "src/android/app/src/main/**"
+      - ".github/workflows/ui-compile.yml"
 
 concurrency:
   group: ui-compile-${{ github.ref }}
