@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -68,69 +71,141 @@ fun TokenUsageSheet(
         // a screenful of stat rows max and looked overgrown at 90%.
         heightFraction = 0.5f,
     ) {
+        // [T-claude-ui] Design board r12 "本对话": no cards — serif numbers,
+        // hairlines and air. Same data as before, nothing dropped.
+        val dark = com.openminis.app.ui.theme.LocalChatPalette.current.isDark
+        val hair = if (dark) com.openminis.app.ui.theme.Noir.OnyxHairline else androidx.compose.ui.graphics.Color(0xFFE8E4DA)
+        val label = if (dark) com.openminis.app.ui.theme.Noir.IvoryMute else androidx.compose.ui.graphics.Color(0xFF8A867F)
+        val faint = if (dark) com.openminis.app.ui.theme.Noir.IvoryFaint else androidx.compose.ui.graphics.Color(0xFF9A968E)
+        val ink = if (dark) com.openminis.app.ui.theme.Noir.Ivory else androidx.compose.ui.graphics.Color(0xFF2A2825)
+        val clay = if (dark) com.openminis.app.ui.theme.Noir.ClayOnOnyx else com.openminis.app.ui.theme.Noir.Clay
+        val serif = com.openminis.app.ui.theme.ClaudeSerif
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(horizontal = 22.dp)
+                .padding(top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             val s = stats
             val onText = stringResource(R.string.common_on)
             val offText = stringResource(R.string.common_off)
-            val yesText = stringResource(R.string.common_yes)
-            val noText = stringResource(R.string.common_no)
-            StatSection(title = stringResource(R.string.token_usage_section_context)) {
-                StatRow(stringResource(R.string.token_usage_context_used), formatTokens(s?.context ?: 0))
-                contextWindow?.let { StatRow(stringResource(R.string.token_usage_context_window), formatTokens(it)) }
-                maxOutput?.let { StatRow(stringResource(R.string.token_usage_max_output), formatTokens(it)) }
+            val used = s?.context ?: 0
+            val win = contextWindow ?: 0
+            val frac = if (win > 0) (used.toFloat() / win).coerceIn(0f, 1f) else 0f
+            val hot = frac >= 0.85f
+
+            // ── Context ──
+            Column {
+                SecHead(stringResource(R.string.token_usage_section_context), contextWindow?.let { formatTokens(it) } ?: "", label, faint)
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(bottom = 12.dp)) {
+                    Text(
+                        text = if (win > 0) "${Math.round(frac * 100)}%" else formatTokens(used),
+                        fontFamily = serif, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 36.sp,
+                        color = if (hot) com.openminis.app.ui.theme.Noir.Err else ink,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (win > 0) "${formatTokens(used)} / ${formatTokens(win)}" else "",
+                        fontSize = 13.sp, color = label, modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                }
+                androidx.compose.foundation.layout.Box(
+                    Modifier.fillMaxWidth().height(6.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                        .background(if (dark) com.openminis.app.ui.theme.Noir.Onyx3 else androidx.compose.ui.graphics.Color(0xFFE6E1D6)),
+                ) {
+                    androidx.compose.foundation.layout.Box(
+                        Modifier.fillMaxWidth(frac).height(6.dp).background(clay),
+                    )
+                }
+                maxOutput?.let {
+                    KvLine(stringResource(R.string.token_usage_max_output), formatTokens(it), label, ink, Modifier.padding(top = 12.dp))
+                }
+            }
+            Hair(hair)
+
+            // ── Tokens ──
+            Column {
+                SecHead(stringResource(R.string.token_usage_section_tokens), "${s?.loopCount ?: 0} ×", label, faint)
+                val inputTotal = (s?.input ?: 0L) + (s?.cacheRead ?: 0L) + (s?.cacheWrite ?: 0L)
+                Row {
+                    Cell(stringResource(R.string.token_usage_input_with_cache), formatTokens(inputTotal), null, label, ink, serif, Modifier.weight(1f))
+                    Spacer(Modifier.width(16.dp))
+                    Cell(stringResource(R.string.token_usage_output), formatTokens(s?.output ?: 0L), null, label, ink, serif, Modifier.weight(1f))
+                }
+                Row {
+                    Cell(
+                        stringResource(R.string.token_usage_cache_read), formatTokens(s?.cacheRead ?: 0L),
+                        s?.cacheHitRate?.let { String.format(java.util.Locale.US, "%.0f%%", it) },
+                        label, ink, serif, Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Cell(stringResource(R.string.token_usage_cache_write), formatTokens(s?.cacheWrite ?: 0L), null, label, ink, serif, Modifier.weight(1f))
+                }
+            }
+            Hair(hair)
+
+            // ── Speed ──
+            Column {
+                SecHead(stringResource(R.string.token_usage_section_speed), "", label, faint)
+                val speed = s?.outputTokensPerSecond
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = if (speed != null) String.format(java.util.Locale.US, "%.0f", speed) else "—",
+                        fontFamily = serif, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 36.sp, color = ink,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("tok/s", fontSize = 13.sp, color = label, modifier = Modifier.padding(bottom = 4.dp))
+                }
             }
 
             thinking?.let { t ->
-                StatSection(title = stringResource(R.string.token_usage_section_thinking)) {
-                    StatRow(stringResource(R.string.token_usage_thinking_label), if (t.enabled) onText else offText)
-                    if (t.enabled) StatRow(stringResource(R.string.token_usage_thinking_level), t.level)
-                    StatRow(stringResource(R.string.token_usage_thinking_supported), if (t.supported) yesText else noText)
+                Hair(hair)
+                Column {
+                    SecHead(stringResource(R.string.token_usage_section_thinking), "", label, faint)
+                    KvLine(stringResource(R.string.token_usage_thinking_label), if (t.enabled) onText else offText, label, ink)
+                    if (t.enabled) KvLine(stringResource(R.string.token_usage_thinking_level), t.level, label, ink, Modifier.padding(top = 8.dp))
                 }
-            }
-
-            StatSection(title = stringResource(R.string.token_usage_section_tokens)) {
-                val inputTotal = (s?.input ?: 0L) + (s?.cacheRead ?: 0L) + (s?.cacheWrite ?: 0L)
-                StatRow(stringResource(R.string.token_usage_input_with_cache), formatTokens(inputTotal))
-                StatRow(stringResource(R.string.token_usage_output), formatTokens(s?.output ?: 0L))
-            }
-
-            StatSection(title = stringResource(R.string.token_usage_section_cache)) {
-                StatRow(stringResource(R.string.token_usage_cache_read), formatTokens(s?.cacheRead ?: 0L))
-                StatRow(stringResource(R.string.token_usage_cache_write), formatTokens(s?.cacheWrite ?: 0L))
-                // [T-android-token-usage-cache-hit-rate] iOS parity. Hidden
-                // rather than shown as 0.0% when nothing was cached, so a
-                // provider that does no caching does not look like a cache
-                // miss — see SessionTokenStats.cacheHitRate.
-                s?.cacheHitRate?.let {
-                    StatRow(
-                        stringResource(R.string.token_usage_cache_hit_rate),
-                        String.format(java.util.Locale.US, "%.1f%%", it),
-                    )
-                }
-            }
-
-            // [T-android-token-usage-output-speed] iOS parity. Always shown,
-            // with "—" until a turn has streamed measurably — the row's
-            // absence would otherwise read as "this build has no speed".
-            StatSection(title = stringResource(R.string.token_usage_section_speed)) {
-                val speed = s?.outputTokensPerSecond
-                StatRow(
-                    stringResource(R.string.token_usage_output_speed),
-                    if (speed != null) String.format(java.util.Locale.US, "%.1f tok/s", speed) else "—",
-                )
-            }
-
-            StatSection(title = stringResource(R.string.token_usage_section_agent_loop)) {
-                StatRow(stringResource(R.string.token_usage_total_loops), (s?.loopCount ?: 0).toString())
             }
         }
+    }
+}
+
+@Composable
+private fun SecHead(title: String, right: String, label: androidx.compose.ui.graphics.Color, faint: androidx.compose.ui.graphics.Color) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = label)
+        Spacer(Modifier.weight(1f))
+        if (right.isNotEmpty()) Text(right, fontSize = 12.sp, color = faint)
+    }
+}
+
+@Composable
+private fun Hair(c: androidx.compose.ui.graphics.Color) {
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(1.dp).background(c))
+}
+
+@Composable
+private fun KvLine(k: String, v: String, label: androidx.compose.ui.graphics.Color, ink: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(k, fontSize = 13.5.sp, color = label)
+        Spacer(Modifier.weight(1f))
+        Text(v, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ink)
+    }
+}
+
+@Composable
+private fun Cell(
+    k: String, v: String, x: String?,
+    label: androidx.compose.ui.graphics.Color, ink: androidx.compose.ui.graphics.Color,
+    serif: androidx.compose.ui.text.font.FontFamily, modifier: Modifier,
+) {
+    Column(modifier.padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(k, fontSize = 12.5.sp, color = label, maxLines = 1)
+        Text(v, fontFamily = serif, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 24.sp, color = ink)
+        if (x != null) Text(x, fontSize = 12.sp, color = label)
     }
 }
 
