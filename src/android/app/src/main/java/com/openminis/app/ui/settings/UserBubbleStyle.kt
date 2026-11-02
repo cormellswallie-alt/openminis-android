@@ -61,13 +61,13 @@ enum class UserBubbleTone(
     val dark: Color,
     val darkText: Color,
 ) {
-    MIST("mist", R.string.user_bubble_tone_mist, Color(0xFFF1F1F3), Noir.Ink, Color(0xFF26262A), Noir.Ivory),
-    INK("ink", R.string.user_bubble_tone_ink, Color(0xFF0A0A0B), Color.White, Color(0xFFF4F4F5), Color(0xFF0A0A0B)),
+    MIST("mist", R.string.user_bubble_tone_mist, Color(0xFFE9E5DA), Color(0xFF2A2825), Color(0xFF3A3936), Color(0xFFE8E5DC)),
+    INK("ink", R.string.user_bubble_tone_ink, Color(0xFF1F1E1C), Color(0xFFFAF9F7), Color(0xFFECE9E1), Color(0xFF1F1E1C)),
     IRIS("iris", R.string.user_bubble_tone_iris, Color(0xFF6650E8), Color.White, Color(0xFF7A66F2), Color.White),
     OCEAN("ocean", R.string.user_bubble_tone_ocean, Color(0xFF2563EB), Color.White, Color(0xFF3B74F0), Color.White),
     JADE("jade", R.string.user_bubble_tone_jade, Color(0xFF0B8A6A), Color.White, Color(0xFF14A07C), Color.White),
     ROSE("rose", R.string.user_bubble_tone_rose, Color(0xFFD63A6E), Color.White, Color(0xFFE04F80), Color.White),
-    CORAL("coral", R.string.user_bubble_tone_coral, Color(0xFFDD4F3B), Color.White, Color(0xFFE8604B), Color.White);
+    CORAL("coral", R.string.user_bubble_tone_coral, Color(0xFFC96442), Color.White, Color(0xFFD97757), Color.White);
 
     fun fill(dark: Boolean) = if (dark) this.dark else light
     fun text(dark: Boolean) = if (dark) darkText else lightText

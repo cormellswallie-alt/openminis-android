@@ -101,21 +101,36 @@ import kotlin.math.roundToInt
 internal val ThinkingLevel.depthLabel: String get() = displayName
 
 internal fun depthColor(level: ThinkingLevel, dark: Boolean): Color = when (level) {
-    ThinkingLevel.OFF -> if (dark) Color(0xFF6B6D74) else Color(0xFF9A9CA3)
-    ThinkingLevel.LOW -> if (dark) Color(0xFF5FD6BC) else Color(0xFF13A388)
-    ThinkingLevel.MEDIUM -> if (dark) Color(0xFF8DB2FF) else Color(0xFF2F74F0)
-    ThinkingLevel.HIGH -> if (dark) Color(0xFFB7A6FF) else Color(0xFF6E56F0)
-    ThinkingLevel.XHIGH -> if (dark) Color(0xFFF09AD9) else Color(0xFFB8429F)
-    ThinkingLevel.MAX -> if (dark) Color(0xFFFF9A86) else Color(0xFFE0533A)
-    ThinkingLevel.ULTRA -> if (dark) Color(0xFFFF7A9A) else Color(0xFFE11D48)
+    // [T-claude-ui] Design board r6 level inks.
+    ThinkingLevel.OFF -> if (dark) Color(0xFF8F8B82) else Color(0xFF9A968E)
+    ThinkingLevel.LOW -> if (dark) Color(0xFFB9C2BC) else Color(0xFF8C958F)
+    ThinkingLevel.MEDIUM -> if (dark) Color(0xFF8CC2AC) else Color(0xFF4F8A72)
+    ThinkingLevel.HIGH -> if (dark) Color(0xFFA9C4E3) else Color(0xFF3D6FA3)
+    ThinkingLevel.XHIGH -> if (dark) Color(0xFFC4B5EC) else Color(0xFF6B53B0)
+    ThinkingLevel.MAX -> if (dark) Color(0xFFF08FB8) else Color(0xFFDE4F8C)
+    ThinkingLevel.ULTRA -> if (dark) Color(0xFFF4A259) else Color(0xFFC43F7A)
+}
+
+/** Chip fill / hairline / label ink per level (design board r6). */
+internal fun depthChipTriple(level: ThinkingLevel, dark: Boolean): Triple<Color, Color, Color> = if (dark) when (level) {
+    ThinkingLevel.OFF -> Triple(Noir.Onyx3, Noir.OnyxHairline, Noir.IvoryMute)
+    ThinkingLevel.LOW -> Triple(Color(0xFF33363A), Color(0xFF454A4C), Color(0xFFB9C2BC))
+    ThinkingLevel.MEDIUM -> Triple(Color(0xFF2B3A33), Color(0xFF3B5246), Color(0xFF8CC2AC))
+    ThinkingLevel.HIGH -> Triple(Color(0xFF2B3542), Color(0xFF3B4B60), Color(0xFFA9C4E3))
+    ThinkingLevel.XHIGH -> Triple(Color(0xFF34304A), Color(0xFF4A4366), Color(0xFFC4B5EC))
+    else -> Triple(Color(0xFF3D2A33), Color(0xFF5A3A4A), Color(0xFFF08FB8))
+} else when (level) {
+    ThinkingLevel.OFF -> Triple(Color(0xFFF0EEE9), Color(0xFFE2DED3), Color(0xFF6B6862))
+    ThinkingLevel.LOW -> Triple(Color(0xFFF1F2F0), Color(0xFFDDE1DE), Color(0xFF4F5752))
+    ThinkingLevel.MEDIUM -> Triple(Color(0xFFE7EFEA), Color(0xFFCDDCD3), Color(0xFF2C463B))
+    ThinkingLevel.HIGH -> Triple(Color(0xFFE7EDF5), Color(0xFFCFDCEA), Color(0xFF284A6E))
+    ThinkingLevel.XHIGH -> Triple(Color(0xFFEFEBF8), Color(0xFFDCD4F0), Color(0xFF47367A))
+    else -> Triple(Color(0xFFFBECF2), Color(0xFFF2CFDF), Color(0xFFC43F7A))
 }
 
 /** Deepened orb spectrum so the peak fill holds contrast on white. */
-private val PeakSpectrumLight = listOf(
-    Color(0xFF19B394), Color(0xFF3F7CF2), Color(0xFF7A5CF2),
-    Color(0xFFD552B6), Color(0xFF2FA6E3), Color(0xFF19B394),
-)
-private val PeakSpectrumDark = Noir.Spectrum
+private val PeakSpectrumLight = Noir.MaxGradient
+private val PeakSpectrumDark = Noir.MaxGradient
 
 private val noPad = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
 
@@ -208,18 +223,17 @@ internal fun SpectraDepthChip(
     val idx = stops.indexOf(level).coerceAtLeast(0)
     val ratio = if (stops.size > 1) idx / (stops.size - 1f) else 0f
     val peak = idx == stops.lastIndex && stops.size > 1 && level.isEnabled
-    val idle = if (dark) Noir.Onyx3 else Noir.PaperHairlineStrong
+    val idle = if (dark) Noir.OnyxHairlineStrong else Color(0xFFD6D2CA)
     val haptics = LocalHapticFeedback.current
+    val (chipFill, chipEdge, chipInk) = depthChipTriple(level, dark)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
-            .height(34.dp)
+            .height(36.dp)
             .clip(RoundedCornerShape(50))
-            .background(chipBg())
-            .then(
-                if (open) Modifier.border(1.dp, tint.copy(alpha = 0.55f), RoundedCornerShape(50)) else Modifier,
-            )
+            .background(chipFill)
+            .border(1.dp, if (open) tint.copy(alpha = 0.7f) else chipEdge, RoundedCornerShape(50))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = {
@@ -256,7 +270,7 @@ internal fun SpectraDepthChip(
             fontSize = 13.5.sp,
             lineHeight = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = if (level.isEnabled) tint else ChatColors.secondaryText,
+            color = chipInk,
             maxLines = 1,
             style = noPad,
         )
@@ -281,7 +295,8 @@ internal fun SpectraDepthTray(
             .fillMaxWidth()
             .padding(start = 12.dp, end = 12.dp, top = 6.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(if (dark) Noir.Onyx2 else Noir.PaperSunk)
+            .background(if (dark) Noir.Onyx1 else Noir.PaperCard)
+            .border(1.dp, if (dark) Noir.OnyxHairline else Color(0xFFE9E5DC), RoundedCornerShape(18.dp))
             .padding(start = 14.dp, end = 14.dp, top = 11.dp, bottom = 10.dp),
     ) {
         SpectraDepthSlider(stops = stops, current = current, onSelect = onSelect)

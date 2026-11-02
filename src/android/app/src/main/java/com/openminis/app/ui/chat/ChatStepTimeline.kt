@@ -496,10 +496,10 @@ internal enum class ThoughtSeg { LONE, TOP, MIDDLE, BOTTOM }
 
 // [T-spectra-v5-thought] Folio: white sheet + soft shadow (light), lifted onyx (dark).
 @Composable
-internal fun thoughtCardFill(): Color = if (ChatColors.isDark) Noir.Onyx1 else Noir.PaperCard
+internal fun thoughtCardFill(): Color = Color.Transparent
 
 @Composable
-internal fun thoughtCardEdge(): Color = if (ChatColors.isDark) Noir.OnyxHairlineStrong else Noir.PaperHairline
+internal fun thoughtCardEdge(): Color = Color.Transparent
 
 internal val ThoughtCardRadius: Dp = 22.dp
 

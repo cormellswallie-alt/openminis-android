@@ -312,7 +312,7 @@ internal val ToolCancelColor = Color(0xFFF2B11E) // iOS .yellow
 internal val ToolMemoryAccent = Color(0xFFE5578A)
 // Sparkle gradient colors (iOS uses linear gradient)
 /** [T-noir-iris-layout] Composer card corner. */
-internal val ComposerCardRadius = 26.dp
+internal val ComposerCardRadius = 28.dp
 
 internal val SparkleColor1 = Color(0xFF8E90FF) // rgb(0.72, 0.69, 0.59)
 internal val SparkleColor2 = Color(0xFF9B6CF6) // rgb(0.6, 0.6, 0.55)
@@ -2852,20 +2852,15 @@ fun ChatScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         // [T-spectra-v3] The assistant's face leads the island.
-                        com.openminis.app.ui.theme.SpectraOrb(
-                            size = 30.dp,
-                            state = if (isStreaming) com.openminis.app.ui.theme.OrbState.Live else com.openminis.app.ui.theme.OrbState.Idle,
-                            modifier = Modifier.padding(end = 8.dp),
-                        )
                         Box(
                         modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart,
+                        contentAlignment = Alignment.Center,
                     ) {
                         val noFontPad = androidx.compose.ui.text.TextStyle(
                             platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
                         )
                         Column(
-                            horizontalAlignment = Alignment.Start,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
                                 // [T-android-topbar-shrink] vertical 4dp→2dp.
@@ -2900,8 +2895,8 @@ fun ChatScreen(
                             }
                             Text(
                                 text = displayTitle,
-                                fontSize = 17.sp,
-                                lineHeight = 21.sp,
+                                fontSize = 15.sp,
+                                lineHeight = 19.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = ChatColors.primaryText,
                                 maxLines = 1,
@@ -2920,9 +2915,21 @@ fun ChatScreen(
                             // badge moved into the composer (SpectraModelChip /
                             // SpectraDepthChip). The header is the chat's name
                             // and, while a turn runs, its live status.
+                            // [T-claude-ui] r5 header: centred title, quiet model line.
+                            if (!isStreaming && modelName.isNotBlank()) {
+                                Text(
+                                    text = modelName,
+                                    fontSize = 12.sp,
+                                    lineHeight = 15.sp,
+                                    color = ChatColors.tertiaryText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = noFontPad,
+                                )
+                            }
                             SpectraLiveChip(
                                 isStreaming = isStreaming,
-                                modifier = Modifier.padding(start = 4.dp, top = 3.dp),
+                                modifier = Modifier.padding(top = 2.dp),
                             )
                         }
                     }
@@ -5713,7 +5720,7 @@ fun ChatScreen(
                         )
                         // [T-noir-iris-layout] Hairline edge so the white card
                         // still reads on the white chat page.
-                        .border(0.75.dp, if (ChatColors.isDark) ChatColors.inputBorder else ChatColors.inputBorder.copy(alpha = 0.55f), RoundedCornerShape(ComposerCardRadius))
+                        .border(1.dp, ChatColors.inputBorder, RoundedCornerShape(ComposerCardRadius))
                         .padding(top = if (attachments.isNotEmpty()) 8.dp else 4.dp),
                 ) {
                     // T185: Move-to capsule lives INSIDE the composer card,

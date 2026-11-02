@@ -406,7 +406,7 @@ internal fun UserMessageBubble(
                         // [T-noir-redesign] Noir bubble: 22dp corners with a tight
                         // 6dp "tail" corner pointing back at the sender (bottom-end).
                         val shape = RoundedCornerShape(
-                            topStart = 22.dp, topEnd = 22.dp, bottomEnd = 6.dp, bottomStart = 22.dp,
+                            topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 20.dp,
                         )
                         val dashedStroke = if (isQueued) {
                             Modifier.drawBehind {
@@ -463,7 +463,7 @@ internal fun UserMessageBubble(
                                     text = message.content,
                                     color = textColor,
                                     style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontSize = if (bubbleMode) 16.5.sp else if (isShort) 19.sp else 16.sp,
+                                        fontSize = if (bubbleMode) 15.5.sp else if (isShort) 19.sp else 16.sp,
                                         lineHeight = if (bubbleMode) 24.sp else if (isShort) 28.sp else 25.sp,
                                         fontWeight = if (bubbleMode) androidx.compose.ui.text.font.FontWeight.Normal
                                         else if (isShort) androidx.compose.ui.text.font.FontWeight.SemiBold
@@ -475,7 +475,7 @@ internal fun UserMessageBubble(
                                         .clip(shape)
                                         .then(dashedStroke)
                                         .padding(
-                                            horizontal = if (isQueued || bubbleMode) 16.dp else 2.dp,
+                                            horizontal = if (isQueued || bubbleMode) 15.dp else 2.dp,
                                             vertical = if (isQueued || bubbleMode) 10.dp else 2.dp,
                                         ),
                                 )

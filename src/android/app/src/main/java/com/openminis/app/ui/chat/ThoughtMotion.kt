@@ -41,6 +41,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Bookmarks
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -299,7 +310,7 @@ internal fun Modifier.thoughtPaper(
 }
 
 @Composable
-internal fun thoughtShadow(): Color = if (ChatColors.isDark) Color.Transparent else Color(0x1A0A0A0B)
+internal fun thoughtShadow(): Color = Color.Transparent
 
 /**
  * The thinking underline. [live]: faint track + a violet comet that travels
@@ -435,124 +446,128 @@ internal fun ThoughtHeader(
     trailing: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
-    val metaColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val ink = thinkingInk()
     val dark = ChatColors.isDark
+    val live = liveSecs != null
+    val labelInk = if (dark) Noir.IvorySoft else Noir.InkSoft
+    val metaInk = if (dark) Noir.IvoryMute else Noir.InkFaint
+    val chevInk = if (dark) Noir.IvoryMute else Noir.InkMute
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .offset(x = (-8).dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(top = 14.dp, bottom = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 6.dp),
     ) {
-        Box(modifier = Modifier.size(StepNodeSize), contentAlignment = Alignment.Center) {
-            SpectraOrb(size = 24.dp, state = orb)
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AnimatedContent(
-                    targetState = title,
-                    transitionSpec = {
-                        (fadeIn(tween(240, delayMillis = 80)) + slideInVertically(tween(320, easing = ThoughtEase)) { it / 2 }) togetherWith
-                            (fadeOut(tween(120)) + slideOutVertically(tween(200)) { -it / 2 })
-                    },
-                    label = "thoughtTitle",
-                    modifier = Modifier.weight(1f, fill = false),
-                ) { t ->
-                    Text(
-                        text = t,
-                        fontSize = 15.5.sp,
-                        lineHeight = 21.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = (-0.01).em,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (liveSecs != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "%d:%02d".format(liveSecs / 60, liveSecs % 60),
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        style = TextStyle(fontFeatureSettings = "tnum"),
-                        color = ink,
-                        maxLines = 1,
-                        softWrap = false,
-                    )
-                }
-                if (meta.isNotEmpty()) {
-                    AnimatedContent(
-                        targetState = meta,
-                        transitionSpec = {
-                            (fadeIn(tween(220)) + slideInVertically(tween(260, easing = ThoughtEase)) { it }) togetherWith
-                                (fadeOut(tween(120)) + slideOutVertically(tween(180)) { -it })
-                        },
-                        label = "thoughtMeta",
-                    ) { m ->
-                        Text(
-                            text = "  $m",
-                            fontSize = 12.5.sp,
-                            style = TextStyle(fontFeatureSettings = "tnum"),
-                            color = metaColor,
-                            maxLines = 1,
-                            softWrap = false,
-                        )
-                    }
-                }
-                if (failed != null) {
-                    Text(
-                        text = " · $failed",
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (dark) Noir.ErrOnOnyx else Noir.Err,
-                        maxLines = 1,
-                        softWrap = false,
-                    )
-                }
-            }
-            AnimatedVisibility(
-                visible = !expanded && preview.isNotEmpty(),
-                enter = fadeIn(tween(220, delayMillis = 60)) + expandVertically(tween(260, easing = ThoughtEase)),
-                exit = fadeOut(tween(120)) + shrinkVertically(tween(220, easing = ThoughtEase)),
-            ) {
-                AnimatedContent(
-                    targetState = preview,
-                    contentKey = { it.take(18) },
-                    transitionSpec = {
-                        (fadeIn(tween(260, delayMillis = 40)) + slideInVertically(tween(300, easing = ThoughtEase)) { it / 3 }) togetherWith
-                            fadeOut(tween(140))
-                    },
-                    label = "thoughtPreview",
-                ) { p ->
-                    val serif = remember(p.take(80)) { isMostlyLatin(p.take(80)) }
-                    Text(
-                        text = p,
-                        fontFamily = if (serif) ThoughtSerif else null,
-                        fontStyle = if (serif) FontStyle.Italic else FontStyle.Normal,
-                        fontSize = if (serif) 15.sp else 13.5.sp,
-                        lineHeight = 20.sp,
-                        color = metaColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 3.dp),
-                    )
-                }
+        Box(modifier = Modifier.size(16.dp), contentAlignment = Alignment.Center) {
+            when {
+                live -> androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = if (dark) Noir.Ivory else Noir.Ink,
+                    trackColor = if (dark) Noir.OnyxHairlineStrong else Noir.PaperSunk2,
+                )
+                failed != null -> Icon(
+                    androidx.compose.material.icons.Icons.Outlined.ErrorOutline, null,
+                    tint = Noir.Err, modifier = Modifier.size(16.dp),
+                )
+                tools.isEmpty() -> Icon(
+                    androidx.compose.material.icons.Icons.Outlined.Schedule, null,
+                    tint = chevInk, modifier = Modifier.size(16.dp),
+                )
+                else -> Icon(
+                    toolIconFor(tools.last()), null,
+                    tint = chevInk, modifier = Modifier.size(16.dp),
+                )
             }
         }
-        if (tools.isNotEmpty()) {
+        Spacer(modifier = Modifier.width(10.dp))
+        val label = title
+        if (live) {
+            ShimmerLabel(text = label, base = metaInk, hi = if (dark) Noir.Ivory else Noir.Ink)
+        } else {
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = labelInk,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+        }
+        val metaText = when {
+            live -> "${liveSecs} 秒".takeIf { java.util.Locale.getDefault().language == "zh" } ?: "${liveSecs}s"
+            failed != null -> failed
+            else -> meta
+        }
+        if (metaText.isNotEmpty()) {
             Spacer(modifier = Modifier.width(8.dp))
-            ThoughtToolStack(tools = tools, key = toolsKey, animate = animateTools)
+            Text(
+                text = metaText,
+                fontSize = 13.sp,
+                color = if (failed != null && !live) Noir.Err else metaInk,
+                maxLines = 1,
+                style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
+            )
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         if (trailing != null) {
             trailing()
         } else {
-            ThoughtChevron(expanded = expanded)
+            val rot by animateFloatAsState(if (expanded) 90f else 0f, tween(220, easing = ThoughtEase), label = "thoughtChev")
+            Icon(
+                androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                tint = chevInk,
+                modifier = Modifier.size(16.dp).rotate(rot),
+            )
         }
+    }
+}
+
+/** Live label: grey text with an ink band sweeping left → right (design r5). */
+@Composable
+private fun ShimmerLabel(text: String, base: Color, hi: Color) {
+    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "thoughtShimmer")
+    val p by t.animateFloat(
+        initialValue = -1f, targetValue = 2f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(tween(1800, easing = androidx.compose.animation.core.LinearEasing)),
+        label = "thoughtShimmerP",
+    )
+    Text(
+        text = text,
+        fontSize = 13.5.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = androidx.compose.ui.text.TextStyle(
+            brush = object : androidx.compose.ui.graphics.ShaderBrush() {
+                override fun createShader(size: Size): androidx.compose.ui.graphics.Shader {
+                    val w = size.width.coerceAtLeast(1f)
+                    val c = p * w
+                    return androidx.compose.ui.graphics.LinearGradientShader(
+                        from = Offset(c - w * 0.35f, 0f), to = Offset(c + w * 0.35f, 0f),
+                        colors = listOf(base, hi, base),
+                    )
+                }
+            },
+        ),
+    )
+}
+
+/** Stroke glyph per tool family, shared by the header and the step rows. */
+internal fun toolIconFor(tool: String?): androidx.compose.ui.graphics.vector.ImageVector {
+    val n = tool?.lowercase().orEmpty()
+    val I = androidx.compose.material.icons.Icons.Outlined
+    return when {
+        "search" in n || "web" in n -> I.Search
+        "shell" in n || "exec" in n || "terminal" in n || "run" in n || "code" in n -> I.Code
+        "read" in n || "file" in n -> I.Description
+        "write" in n || "edit" in n -> I.Edit
+        "browser" in n -> I.Language
+        "memory" in n -> I.Bookmarks
+        "subagent" in n || "agent" in n -> I.Hub
+        else -> I.Build
     }
 }
 
