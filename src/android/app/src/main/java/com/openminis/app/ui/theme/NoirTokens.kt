@@ -12,94 +12,103 @@ import androidx.compose.ui.unit.sp
 import com.openminis.app.R
 
 /**
- * [T-spectra-v3] Minis "Spectra" — design tokens.
+ * [T-claude-ui] OpenMinis "Claude" design tokens (design board v2, rounds 2–12).
  *
- * Round 4. Pure white / ink, no accent hue in the chrome:
- *   • Paper  — #FFFFFF chat and cards, #F7F7F8 grouped page, #F4F4F6 sunk
- *   • Ink    — #0A0A0B text and the ONE primary fill (send, FAB, switches)
- *   • Onyx   — #0A0A0B dark ground, #151517 / #1C1C1F / #26262A lifted
- *   • Spectrum — belongs to the assistant orb ONLY (see SpectraOrb.kt).
- *     No gradient buttons, no gradient text anywhere else.
- *
- * Tool kinds keep a restrained ink each; they only tint the 30dp step node
- * and the fingerprint bar, never a fill or a glow.
+ *   • Paper  — #F5F4ED page (chat, settings, drawers), #FBFAF6 groups/sheets,
+ *              #FFFFFF composer and cards, #EBE8DE tiles, #E9E5DA user bubble
+ *   • Ink    — #1F1E1C primary fill (send, switches), #2A2825 prose
+ *   • Onyx   — #262624 dark page, #2C2C2A sheet, #30302E card, #3A3936 tile
+ *   • Accent — terracotta #C96442 (#D97757 on onyx), used sparingly
  *
  * Legacy names (Paper/Ink/Onyx/Ivory/Iris…) are kept so the ~100 call sites
- * that reference them did not churn; their VALUES are the Spectra palette.
+ * that reference them did not churn; their VALUES are the Claude palette.
  */
 object Noir {
     // ── Onyx (dark) ramp ─────────────────────────────────────────────
-    val Onyx = Color(0xFF0A0A0B)
-    val Onyx1 = Color(0xFF151517)      // cards / grouped rows
-    val Onyx2 = Color(0xFF1C1C1F)      // elevated: sheets, menus, input
-    val Onyx3 = Color(0xFF26262A)      // capsules, pressed states
-    val OnyxHairline = Color(0x14FFFFFF)       // 8%
-    val OnyxHairlineStrong = Color(0x24FFFFFF) // 14%
+    val Onyx = Color(0xFF262624)
+    val Onyx1 = Color(0xFF2C2C2A)      // sheets / grouped rows
+    val Onyx2 = Color(0xFF30302E)      // cards, composer, menus
+    val Onyx3 = Color(0xFF3A3936)      // tiles, bubble, pressed
+    val OnyxHairline = Color(0xFF3E3D39)
+    val OnyxHairlineStrong = Color(0xFF4A4844)
 
-    // ── Light text on onyx (contrast ≥ 4.5 down to IvoryMute) ────────
-    val Ivory = Color(0xFFF4F4F5)
-    val IvorySoft = Color(0xFFCACBD0)
-    val IvoryMute = Color(0xFF8F9198)
-    val IvoryFaint = Color(0x52F4F4F5)
+    // ── Light text on onyx ───────────────────────────────────────────
+    val Ivory = Color(0xFFECE9E1)
+    val IvorySoft = Color(0xFFC2BFB6)
+    val IvoryMute = Color(0xFF8F8B82)
+    val IvoryFaint = Color(0xFF6B6862)
 
     // ── Paper (light) ramp ───────────────────────────────────────────
-    val Paper = Color(0xFFF7F7F8)          // grouped page (settings, lists)
-    val PaperCard = Color(0xFFFFFFFF)      // cards / chat
-    val PaperRaised = Color(0xFFFFFFFF)    // sheets, input
-    val PaperSunk = Color(0xFFF4F4F6)      // capsules, chips, inline code
-    val PaperSunk2 = Color(0xFFECECEF)
-    val PaperHairline = Color(0x120A0A0B)  // 7%
-    val PaperHairlineStrong = Color(0x1F0A0A0B) // 12%
+    val Paper = Color(0xFFF5F4ED)          // page
+    val PaperCard = Color(0xFFFBFAF6)      // groups, sheets, menus
+    val PaperRaised = Color(0xFFFFFFFF)    // composer, white cards
+    val PaperSunk = Color(0xFFEBE8DE)      // tiles, chips, inline code
+    val PaperSunk2 = Color(0xFFE2DED3)
+    val PaperHairline = Color(0xFFE6E2DB)
+    val PaperHairlineStrong = Color(0xFFE2DED3)
 
-    // ── Ink text on paper (InkMute 5.2:1 on white) ───────────────────
-    val Ink = Color(0xFF0A0A0B)
-    val InkSoft = Color(0xFF3A3B40)
-    val InkMute = Color(0xFF6B6D74)
-    val InkFaint = Color(0xFFA3A5AB)
+    // ── Ink text on paper ────────────────────────────────────────────
+    val Ink = Color(0xFF1F1E1C)
+    val InkBody = Color(0xFF2A2825)
+    val InkSoft = Color(0xFF3D3A35)
+    val InkThought = Color(0xFF6B6862)
+    val InkMute = Color(0xFF8A867F)
+    val InkMeta = Color(0xFF9A968E)
+    val InkFaint = Color(0xFFB5B0A7)
 
-    // ── "Iris" slots are now neutral ink — the chrome has no hue ─────
+    /** Terracotta — the one warm accent. */
+    val Clay = Color(0xFFC96442)
+    val ClayOnOnyx = Color(0xFFD97757)
+    val ClaySoft = Color(0xFFF3E4DA)
+    val ClaySoftOnOnyx = Color(0xFF3D2A25)
+    val ClayInk = Color(0xFF7A3F2A)
+
+    /** Brand mark (app avatar). */
+    val Brand = Color(0xFF3F5F52)
+    val BrandOnOnyx = Color(0xFF7FB59C)
+
+    // ── "Iris" slots are neutral ink — the chrome has no hue ─────────
     val Iris = Ink
     val IrisDeep = Ink
     val IrisBright = Ivory
     val IrisFill = Ivory
     val IrisSoft = PaperSunk
     val IrisSoftDark = Onyx3
-    val Violet = Color(0xFF6E56F0)
-    val Sky = Color(0xFF2563EB)
+    val Violet = Color(0xFF6B53B0)
+    val Sky = Color(0xFF3D6FA3)
 
-    /** Links: the only blue in the chrome, used for tappable text. */
-    val LinkOnPaper = Color(0xFF2563EB)
-    val LinkOnOnyx = Color(0xFF6EA8FE)
+    /** Links. */
+    val LinkOnPaper = Color(0xFFC96442)
+    val LinkOnOnyx = Color(0xFFD97757)
 
-    /** Thinking ink — hairline, depth tag and caret only. */
-    val ThinkOnPaper = Color(0xFF6E56F0)
-    val ThinkOnOnyx = Color(0xFFB7A6FF)
+    /** Thinking ink — summaries, step bodies. */
+    val ThinkOnPaper = Color(0xFF6B6862)
+    val ThinkOnOnyx = Color(0xFFA9A69D)
 
     /** Status. */
-    val Ok = Color(0xFF12A150)
-    val OkOnOnyx = Color(0xFF3DD68C)
-    val Err = Color(0xFFE5484D)
-    val ErrOnOnyx = Color(0xFFFF6369)
-    val Timeout = Color(0xFFE5622A)
+    val Ok = Color(0xFF4F8A72)
+    val OkOnOnyx = Color(0xFF7FB59C)
+    val Err = Color(0xFFB5523F)
+    val ErrOnOnyx = Color(0xFFD98572)
+    val Timeout = Color(0xFFB5703F)
     val Sage = Ok
     val Ember = Timeout
 
     /**
-     * Tool kinds. Mid-lightness so one value reads on both paper and onyx
-     * (toolAccentColor is not @Composable). Used at ~10% for the node fill
-     * and 100% for the node glyph only.
+     * Tool kinds — muted earth tones; the design keeps step glyphs grey, so
+     * these only ever tint a node at low alpha.
      */
-    val Moss = Color(0xFF15A673)       // shell
-    val Slate = Color(0xFF3B7BEA)      // read
-    val Terracotta = Color(0xFF8257F0) // write
-    val Amber = Color(0xFFA24FEA)      // edit
-    val Lagoon = Color(0xFF0E9DBE)     // web / browser
-    val Orchid = Color(0xFF5B56EC)     // image
-    val Rose = Color(0xFFDB3F86)       // memory
-    val Indigo = Color(0xFF0B8FD6)     // search
-    val Stone = Color(0xFF7D7F86)      // everything else
+    val Moss = Color(0xFF4F8A72)       // shell
+    val Slate = Color(0xFF3D6FA3)      // read
+    val Terracotta = Color(0xFFC96442) // write
+    val Amber = Color(0xFFB08A3E)      // edit
+    val Lagoon = Color(0xFF3F7F86)     // web / browser
+    val Orchid = Color(0xFF6B53B0)     // image
+    val Rose = Color(0xFFB5527A)       // memory
+    val Indigo = Color(0xFF4E6A9E)     // search
+    val Stone = Color(0xFF8A867F)      // everything else
 
-    /** Kept for source compatibility — a flat ink brush (no gradients in Spectra). */
+    /** Kept for source compatibility — a flat ink brush. */
     fun accentBrush(start: Offset = Offset.Zero, end: Offset = Offset.Infinite): Brush =
         Brush.linearGradient(listOf(Ink, Ink), start = start, end = end)
 
@@ -107,36 +116,55 @@ object Noir {
         listOf(Color.Transparent, InkFaint, Color.Transparent),
     )
 
-    /** The assistant spectrum — orb ring only. */
+    /** Assistant orb ring — warm clay / sand. */
     val Spectrum = listOf(
-        Color(0xFF8FE3D2), Color(0xFF9CBBFF), Color(0xFFC5B2FF),
-        Color(0xFFF1BEEA), Color(0xFFA6E4FF), Color(0xFF8FE3D2),
+        Color(0xFFD97757), Color(0xFFE8B48A), Color(0xFFC96442),
+        Color(0xFFB49A74), Color(0xFFE09A73), Color(0xFFD97757),
     )
     val SpectrumThink = listOf(
-        Color(0xFFC5B2FF), Color(0xFFF1BEEA), Color(0xFF9CBBFF),
-        Color(0xFFB9A6FF), Color(0xFFC5B2FF),
+        Color(0xFFB49A74), Color(0xFFD97757), Color(0xFFCFC3AE),
+        Color(0xFFC96442), Color(0xFFB49A74),
     )
     val SpectrumErr = listOf(
-        Color(0xFFFF8A8F), Color(0xFFF1BEEA), Color(0xFFC5B2FF), Color(0xFFFF8A8F),
+        Color(0xFFB5523F), Color(0xFFD98572), Color(0xFFC96442), Color(0xFFB5523F),
+    )
+
+    /** Max-depth flowing gradient (depth chip / slider only). */
+    val MaxGradient = listOf(
+        Color(0xFFF4A259), Color(0xFFEF6F5E), Color(0xFFDE4F8C), Color(0xFF9A63E8),
+        Color(0xFFDE4F8C), Color(0xFFEF6F5E), Color(0xFFF4A259),
     )
 }
 
 /**
- * MiSans — one family for CJK and Latin (subset: GB2312 + every glyph in the
- * zh / zh-TW string tables + Latin/Greek/Cyrillic/punctuation; anything else
- * falls back to the system face). Weights map 330/380/520/630 →
- * Normal/Medium/SemiBold/Bold.
+ * Geist (Latin) — CJK falls back to the system Noto Sans CJK, which is the
+ * design's "Geist, Noto Sans SC" stack.
  */
 val SpectraSans: FontFamily = FontFamily(
-    Font(R.font.misans_regular, FontWeight.Normal),
-    Font(R.font.misans_medium, FontWeight.Medium),
-    Font(R.font.misans_semibold, FontWeight.SemiBold),
-    Font(R.font.misans_bold, FontWeight.Bold),
+    Font(R.font.om_sans_regular, FontWeight.Normal),
+    Font(R.font.om_sans_medium, FontWeight.Medium),
+    Font(R.font.om_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.om_sans_bold, FontWeight.Bold),
 )
 
-/** Legacy aliases — Spectra has no serif; both resolve to MiSans. */
+/**
+ * Noto Serif SC (its Latin is the Source Serif design) — assistant prose,
+ * sheet titles and display numbers: "Source Serif 4, Noto Serif SC".
+ */
+val ClaudeSerif: FontFamily = FontFamily(
+    Font(R.font.om_serif_regular, FontWeight.Normal),
+    Font(R.font.om_serif_semibold, FontWeight.SemiBold),
+    Font(R.font.om_serif_semibold, FontWeight.Bold),
+)
+
+/** Geist Mono — code, commands, model ids. */
+val ClaudeMono: FontFamily = FontFamily(
+    Font(R.font.om_mono_regular, FontWeight.Normal),
+    Font(R.font.om_mono_medium, FontWeight.Medium),
+)
+
 val NoirSans: FontFamily = SpectraSans
-val NoirSerif: FontFamily = SpectraSans
+val NoirSerif: FontFamily = ClaudeSerif
 
 /** Section label ("进行中", "通用") — sentence case, no tracking games. */
 val NoirEyebrow = TextStyle(
@@ -147,11 +175,11 @@ val NoirEyebrow = TextStyle(
     lineHeight = 18.sp,
 )
 
-/** Large display — home wordmark and hero titles. */
+/** Large display — serif titles. */
 val NoirDisplay = TextStyle(
-    fontFamily = SpectraSans,
-    fontWeight = FontWeight.Bold,
-    fontSize = 30.sp,
-    lineHeight = 36.sp,
-    letterSpacing = (-0.02).em,
+    fontFamily = ClaudeSerif,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 28.sp,
+    lineHeight = 34.sp,
+    letterSpacing = (-0.01).em,
 )

@@ -1,0 +1,71 @@
+name: UI compile check
+
+# [T-claude-ui] Fast Kotlin compile of the app module without the native /
+# Go pipeline: rclone.aar is replaced by a stub exposing the two gomobile
+# entry points RcloneBridge calls. Not an APK — just "does it compile".
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ui-compile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Stub build-time inputs
+        run: |
+          mkdir -p src/android/app/libs
+          cp src/android/app/provider-customization.properties.example src/android/app/provider-customization.properties
+          echo "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT=compile-check" >> src/android/app/provider-customization.properties
+
+      - name: Stub rclone.aar
+        run: |
+          set -e
+          d=$(mktemp -d); mkdir -p $d/src/com/openminis/rclone/gomobile $d/cls $d/aar
+          cat > $d/src/com/openminis/rclone/gomobile/RcloneRPCResult.java <<'J'
+          package com.openminis.rclone.gomobile;
+          public final class RcloneRPCResult {
+            public String getOutput() { return ""; }
+            public long getStatus() { return 500L; }
+          }
+          J
+          cat > $d/src/com/openminis/rclone/gomobile/Gomobile.java <<'J'
+          package com.openminis.rclone.gomobile;
+          public abstract class Gomobile {
+            public static void rcloneInitialize() {}
+            public static RcloneRPCResult rcloneRPC(String method, String input) { return new RcloneRPCResult(); }
+          }
+          J
+          javac --release 11 -d $d/cls $(find $d/src -name '*.java')
+          (cd $d/cls && jar cf ../aar/classes.jar .)
+          printf '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.openminis.rclone"/>' > $d/aar/AndroidManifest.xml
+          touch $d/aar/R.txt
+          (cd $d/aar && zip -q -r ../rclone.aar .)
+          cp $d/rclone.aar src/android/app/libs/rclone.aar
+
+      - name: Compile Kotlin (debug)
+        working-directory: src/android
+        timeout-minutes: 30
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:compileDebugKotlin --stacktrace 2>&1 | tee /tmp/compile.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload compile log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-log
+          path: /tmp/compile.log

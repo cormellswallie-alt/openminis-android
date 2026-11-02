@@ -60,109 +60,81 @@ data class ChatPalette(
     val fabAccent: Color,
 )
 
-// [T-spectra-v3] Pure white chat, ink text and ink primary. The user's turn
-// has no bubble (it is the page heading), so userBubble only backs legacy
-// surfaces such as the edit-in-place field.
+// [T-claude-ui] Warm paper chat (design board v2). Light code cards, a sand
+// user bubble, white composer with a warm hairline.
 val LightChatPalette = ChatPalette(
     isDark = false,
-    // [T-noir-iris] Clean white chat page, ink text, hairlines instead of
-    // fills; Iris is the accent (user bubble, send, links), violet marks
-    // thinking, and the step spectrum colours the tool rows.
-    background = Noir.PaperCard,
+    background = Noir.Paper,
     secondaryBg = Noir.PaperCard,
     inputBg = Noir.PaperRaised,
-    // [T-noir-step-timeline] Composer tools are hairline rings, not beige
-    // discs — the fills were half of why the chat read as one flat beige.
-    inputIconBg = Noir.PaperSunk,
-    inputIconBorder = Color.Transparent,
-    inputBorder = Noir.PaperHairline,
+    inputIconBg = Color.Transparent,
+    inputIconBorder = Noir.PaperSunk2,
+    inputBorder = Noir.PaperSunk2,
     primaryText = Noir.Ink,
     secondaryText = Noir.InkSoft,
     tertiaryText = Noir.InkMute,
     disabledText = Noir.InkFaint,
-    // The user's own message: solid ink with paper text — the strongest
-    // object on the page, like the design boards.
-    userBubble = Noir.PaperSunk,
-    userBubbleText = Noir.Ink,
-    toolBg = Noir.Paper,
-    toolBorder = Noir.PaperHairline,
-    toolCapsuleBg = Noir.PaperSunk,
-    separator = Noir.PaperHairline,
+    userBubble = Color(0xFFE9E5DA),
+    userBubbleText = Noir.InkBody,
+    toolBg = Noir.PaperRaised,
+    toolBorder = Color(0xFFE9E5DF),
+    toolCapsuleBg = Color(0xFFF0EEE9),
+    separator = Color(0xFFE8E4DA),
     sendButton = Noir.Ink,
     sendButtonDisabled = Noir.PaperSunk2,
-    // Code stays a dark island in light mode (as before), now onyx + ivory
-    // with a cool light foreground rather than terminal green.
-    codeBlockBg = Color(0xFF111113),
-    codeBlockText = Color(0xFFE4E4E7),
+    codeBlockBg = Noir.PaperRaised,
+    codeBlockText = Color(0xFF2F2D2A),
     inlineCodeBg = Noir.PaperSunk,
-    inlineCodeText = Noir.InkSoft,
+    inlineCodeText = Noir.InkBody,
     link = Noir.LinkOnPaper,
-    blockquoteBar = Color(0xFFDCDCE0),
+    blockquoteBar = Noir.PaperSunk2,
     thinking = Noir.ThinkOnPaper,
-    warningBg = Color(0x12E5484D),
-    warningText = Noir.InkSoft,
-    tableBorder = Noir.PaperHairlineStrong,
-    inputShadow = Color(0x1A0A0A0B),
-    toastBg = Color(0xF00A0A0B),
+    warningBg = Noir.ClaySoft,
+    warningText = Noir.ClayInk,
+    tableBorder = Noir.PaperSunk2,
+    inputShadow = Color(0x0F28241E),
+    toastBg = Color(0xF01F1E1C),
     thumbnailBorder = Noir.PaperHairline,
-    sheetHeaderBg = Noir.PaperRaised,
-    sheetHeaderBorder = Noir.PaperHairline,
-    // New-chat FAB: solid ink pearl on paper.
+    sheetHeaderBg = Noir.PaperCard,
+    sheetHeaderBorder = Color(0xFFEFECE5),
     fabAccent = Noir.Ink,
 )
 
-// T153: Android-specific dark palette tweaks. iOS borrows the system
-// palette (#1C1C1E / #2C2C2E etc.) which reads as "layered dark grey"
-// on a 1000+ nit display, but on a typical Android phone (Pixel 6 ≈
-// 500 nits, mid-range OEMs even less) those layers crush together
-// into a single near-black wash and the user can't tell tool capsules
-// from background or input from message list. Lift the non-background
-// layers ~6-10% so the contrast survives the brightness gap; the pure
-// `background` itself stays #000 because every other color is keyed
-// to "darker than this".
 val DarkChatPalette = ChatPalette(
     isDark = true,
-    // [T-noir-redesign] Onyx. #0B0B0C rather than pure #000 so the lifted
-    // layers (Onyx1/2/3, ~4–6% steps) stay distinguishable on ≈500-nit
-    // panels — the T153 concern — while still reading as true black.
     background = Noir.Onyx,
     secondaryBg = Noir.Onyx1,
-    inputBg = Noir.Onyx1,
-    inputIconBg = Noir.Onyx3,
-    inputIconBorder = Color.Transparent,
+    inputBg = Noir.Onyx2,
+    inputIconBg = Color.Transparent,
+    inputIconBorder = Noir.OnyxHairline,
     inputBorder = Noir.OnyxHairline,
     primaryText = Noir.Ivory,
     secondaryText = Noir.IvorySoft,
     tertiaryText = Noir.IvoryMute,
     disabledText = Noir.IvoryFaint,
-    // [T-android-user-bubble-dark-contrast] still OPAQUE and clearly lifted
-    // from the background — warm graphite instead of slate blue.
-    userBubble = Noir.Onyx2,
-    userBubbleText = Noir.Ivory,
-    toolBg = Noir.Onyx1,
+    userBubble = Noir.Onyx3,
+    userBubbleText = Color(0xFFE8E5DC),
+    toolBg = Noir.Onyx2,
     toolBorder = Noir.OnyxHairline,
-    toolCapsuleBg = Noir.Onyx2,
+    toolCapsuleBg = Noir.Onyx3,
     separator = Noir.OnyxHairline,
     sendButton = Noir.Ivory,
-    sendButtonDisabled = Noir.Onyx3,
-    codeBlockBg = Color(0xFF111113),
-    codeBlockText = Color(0xFFE4E4E7),
-    // [T-inline-code-dark-bg-android] lifted above both the wash and code
-    // blocks so small chips stay visible.
+    sendButtonDisabled = Noir.OnyxHairlineStrong,
+    codeBlockBg = Color(0xFF2C2C2A),
+    codeBlockText = Color(0xFFE8E5DC),
     inlineCodeBg = Noir.Onyx3,
-    inlineCodeText = Noir.IvorySoft,
+    inlineCodeText = Color(0xFFE8E5DC),
     link = Noir.LinkOnOnyx,
-    blockquoteBar = Color(0xFF3A3A40),
+    blockquoteBar = Noir.OnyxHairlineStrong,
     thinking = Noir.ThinkOnOnyx,
-    warningBg = Color(0x1AFF6369),
-    warningText = Noir.IvorySoft,
+    warningBg = Noir.ClaySoftOnOnyx,
+    warningText = Color(0xFFE8B8A6),
     tableBorder = Noir.OnyxHairlineStrong,
-    inputShadow = Color(0x99000000),
-    toastBg = Color(0xF0F4F4F5),
+    inputShadow = Color(0x66000000),
+    toastBg = Color(0xF0ECE9E1),
     thumbnailBorder = Noir.OnyxHairline,
-    sheetHeaderBg = Noir.Onyx2,
+    sheetHeaderBg = Noir.Onyx1,
     sheetHeaderBorder = Noir.OnyxHairline,
-    // New-chat FAB: ivory pearl on onyx.
     fabAccent = Noir.Ivory,
 )
 

@@ -1730,7 +1730,7 @@ private fun ThinkingFullContentDialog(content: String, onDismiss: () -> Unit) {
                                 android.widget.TextView(ctx).apply {
                                     textSize = 16.5f
                                     setLineSpacing(0f, 1.7f)
-                                    typeface = androidx.core.content.res.ResourcesCompat.getFont(ctx, com.openminis.app.R.font.misans_regular)
+                                    typeface = androidx.core.content.res.ResourcesCompat.getFont(ctx, com.openminis.app.R.font.om_sans_regular)
                                     setTextColor(textColor.toArgb())
                                     setTextIsSelectable(true)
                                     val pad = (22 * ctx.resources.displayMetrics.density).toInt()
