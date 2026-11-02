@@ -74,9 +74,11 @@ import com.openminis.app.ui.theme.Noir
 internal const val STEP_RUN_COLLAPSE_MIN = 3
 
 /** Node geometry shared by rows and the rail. */
-internal val StepNodeSize: Dp = 28.dp
-internal val StepRowHeight: Dp = 46.dp
-internal val StepTextIndent: Dp = 40.dp // node + gap: where row text starts
+// [T-claude-ui] Design board r5: 16dp icon in a 22dp gutter, 12dp gap.
+internal val StepNodeSize: Dp = 22.dp
+internal val StepRowHeight: Dp = 36.dp
+internal val StepGutter: Dp = 22.dp
+internal val StepTextIndent: Dp = 34.dp // gutter + gap: where row text starts
 
 /** The rows between two LazyColumn items — see the item wrapper in ChatScreen. */
 internal val StepItemGap: Dp = 2.dp
@@ -283,8 +285,8 @@ internal fun Modifier.stepRail(
 ): Modifier = if (!railUp && !railDown) this else drawBehind {
     val x = (StepNodeSize / 2).toPx()
     val cy = nodeCenterY.toPx()
-    val gapAroundNode = (StepNodeSize / 2 + 4.dp).toPx()
-    val stroke = 1.dp.toPx()
+    val gapAroundNode = (8.dp + 6.dp).toPx()
+    val stroke = 1.5.dp.toPx()
     if (railUp) {
         drawLine(color, Offset(x, -StepItemGap.toPx()), Offset(x, cy - gapAroundNode), stroke)
     }
@@ -295,7 +297,7 @@ internal fun Modifier.stepRail(
 
 @Composable
 internal fun stepRailColor(): Color =
-    if (ChatColors.isDark) Noir.OnyxHairline else Noir.PaperHairline
+    if (ChatColors.isDark) Noir.OnyxHairlineStrong else Noir.PaperSunk2
 
 /** Thinking ink: gold that holds contrast on both grounds. */
 @Composable

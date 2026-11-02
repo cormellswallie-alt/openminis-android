@@ -97,6 +97,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
@@ -871,27 +872,23 @@ internal fun ToolCallPill(
     // [T-spectra-v3] Finished steps are one quiet two-line row; the running
     // step lifts into a white card (soft shadow, no glow, no shimmer).
     val dark = ChatColors.isDark
-    val stepShape = RoundedCornerShape(if (isRunning) 18.dp else 14.dp)
-    val liveCardBg = if (dark) Noir.Onyx1 else Noir.PaperCard
-    val liveHair = if (dark) Noir.OnyxHairline else Noir.PaperHairline
-    val metaColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val stepShape = RoundedCornerShape(10.dp)
+    val metaColor = if (dark) Noir.IvoryMute else Noir.InkMute
+    val glyphColor = when {
+        isFailed -> Noir.Ember
+        isRunning -> if (dark) Noir.Ivory else Noir.Ink
+        else -> if (dark) Noir.IvoryMute else Color(0xFF8A867F)
+    }
+    @Suppress("UNUSED_VARIABLE") val unusedAccent = nodeAccent
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .stepRail(railUp && !isRunning, railDown && !isRunning, railColor),
+            .stepRail(railUp, railDown, railColor),
     ) {
       Box(modifier = Modifier.weight(1f, fill = true)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    if (isRunning) Modifier
-                        .padding(vertical = 4.dp)
-                        .shadow(if (dark) 0.dp else 10.dp, stepShape, ambientColor = Color(0x140A0A0B), spotColor = Color(0x240A0A0B))
-                        .background(liveCardBg, stepShape)
-                        .border(0.5.dp, liveHair, stepShape)
-                    else Modifier,
-                )
                 .clip(stepShape)
                 .combinedClickable(
                     onClick = { onOpenDetail(block.id) },
@@ -900,65 +897,81 @@ internal fun ToolCallPill(
                     } else null,
                 )
                 .heightIn(min = StepRowHeight)
-                .padding(
-                    start = if (isRunning) 10.dp else 0.dp,
-                    end = if (isRunning) 8.dp else 4.dp,
-                    top = if (isRunning) 10.dp else 4.dp,
-                    bottom = if (isRunning) 10.dp else 4.dp,
-                ),
+                .padding(end = 2.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            StepNode(icon = displayIcon, accent = nodeAccent, running = isRunning)
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+            Box(Modifier.width(StepGutter), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = displayIcon,
+                    contentDescription = null,
+                    tint = glyphColor,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
                     // [T-android-subagent-control-capsule] Prefer the
                     // operation description for a control call.
                     text = controlSummary ?: block.toolTitle.ifEmpty { block.toolName },
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     lineHeight = 20.sp,
-                    fontWeight = if (isRunning) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isCancelled) metaColor else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Normal,
+                    color = when {
+                        isCancelled -> metaColor
+                        dark -> Noir.IvorySoft
+                        else -> Noir.InkSoft
+                    },
                     textDecoration = if (isCancelled) androidx.compose.ui.text.style.TextDecoration.LineThrough else null,
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 1.dp)) {
-                    Text(
-                        text = block.toolName,
-                        fontSize = 12.5.sp,
-                        fontFamily = com.openminis.app.ui.terminal.JetBrainsMonoFontFamily,
-                        color = if (isFailed) nodeAccent else metaColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (isRunning) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        StreamingDotsText()
-                    }
-                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = block.toolName,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = if (isFailed) Noir.Ember else Color(0xFF8A867F),
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
             }
-
             if (durationText != null) {
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = durationText,
                     fontSize = 12.5.sp,
-                    color = if (isFailed) nodeAccent else metaColor,
+                    color = if (isFailed) Noir.Ember else metaColor,
                     softWrap = false,
                     maxLines = 1,
                 )
             }
-            if (isDone) {
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
+            Spacer(modifier = Modifier.width(6.dp))
+            when {
+                isRunning -> androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(13.dp),
+                    strokeWidth = 1.8.dp,
+                    color = if (dark) Noir.Ivory else Noir.Ink,
+                    trackColor = if (dark) Noir.OnyxHairline else Noir.PaperSunk2,
+                )
+                isFailed -> Icon(
+                    imageVector = Icons.Outlined.ErrorOutline,
+                    contentDescription = null,
+                    tint = Noir.Ember,
+                    modifier = Modifier.size(15.dp),
+                )
+                isDone -> Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
-                    tint = if (dark) Noir.OkOnOnyx else Noir.Ok,
-                    modifier = Modifier.size(15.dp),
+                    tint = Color(0xFF8A867F),
+                    modifier = Modifier.size(14.dp),
                 )
             }
             // T168: per-tool stop button for running blocks only.

@@ -269,8 +269,8 @@ val LocalMarkdownImageTapHandler =
  */
 val LocalMarkdownSessionId = compositionLocalOf<String?> { null }
 
-private val BaseFontSizeDefault = 16.sp
-private val BaseLineHeightDefault = 24.sp
+private val BaseFontSizeDefault = 16.5.sp
+private val BaseLineHeightDefault = 29.sp
 
 private val BaseFontSize: TextUnit
     @Composable get() = BaseFontSizeDefault * LocalMarkdownFontScale.current
@@ -594,6 +594,7 @@ private fun MdText(
         // exactly as before — this is not a density change.
         style = LocalTextStyle.current.merge(
             TextStyle(
+                fontFamily = com.openminis.app.ui.theme.ClaudeSerif,
                 lineHeightStyle = LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
                     trim = LineHeightStyle.Trim.Both,
@@ -2370,38 +2371,52 @@ private fun RenderBlock(block: MdBlock) {
                     copied = false
                 }
             }
+            // [T-claude-ui] Code card: white sheet, warm hairline, header strip.
+            val claudeDark = com.openminis.app.ui.theme.LocalChatPalette.current.isDark
+            val cardEdge = if (claudeDark) Color(0x1FFFFFFF) else Color(0xFFE6E2DB)
+            val cardHead = if (claudeDark) Color(0xFF2C2C2A) else Color(0xFFF5F3EF)
+            val cardMeta = if (claudeDark) Color(0xFFA19D94) else Color(0xFF77736C)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(colors.codeBg),
+                    .padding(top = 2.dp, bottom = 10.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(colors.codeBg)
+                    .border(1.dp, cardEdge, RoundedCornerShape(14.dp)),
             ) {
-                // Header row: language label + copy button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp, end = 8.dp, top = 6.dp),
+                        .background(cardHead)
+                        .padding(start = 14.dp, end = 10.dp, top = 7.dp, bottom = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = block.language.ifEmpty { "code" },
-                        fontSize = 11.sp,
-                        color = MdCodeLangColor,
+                        fontSize = 12.sp,
+                        fontFamily = com.openminis.app.ui.theme.ClaudeMono,
+                        color = cardMeta,
                         modifier = Modifier.weight(1f),
                     )
-                    Icon(
-                        imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                        contentDescription = if (copied) "Copied" else "Copy code",
-                        tint = if (copied) Color(0xFF23A26D) else Color.White.copy(alpha = 0.4f),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .size(16.dp)
+                            .clip(RoundedCornerShape(8.dp))
                             .clickable {
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(block.code))
                                 copied = true
-                            },
-                    )
+                            }
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                    ) {
+                        Icon(
+                            imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                            contentDescription = if (copied) "Copied" else "Copy code",
+                            tint = if (copied) Color(0xFF4F8A72) else cardMeta,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
                 }
+                Box(Modifier.fillMaxWidth().height(1.dp).background(cardEdge))
                 // iOS parity (SelectableMarkdownView.swift L971): cap visual
                 // code-block height at ~400 pt and let an internal scroll
                 // view handle overflow vertically, so a 200-line dump
@@ -2422,14 +2437,14 @@ private fun RenderBlock(block: MdBlock) {
                     Box(
                         modifier = Modifier
                             .horizontalScroll(hScroll)
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                            .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 2.dp),
                     ) {
                         Text(
                             text = block.code,
-                            fontSize = BaseFontSize * 0.85f,
-                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.5.sp,
+                            fontFamily = com.openminis.app.ui.theme.ClaudeMono,
                             color = colors.codeText,
-                            lineHeight = BaseLineHeight * 0.9f,
+                            lineHeight = 21.sp,
                         )
                     }
                 }
