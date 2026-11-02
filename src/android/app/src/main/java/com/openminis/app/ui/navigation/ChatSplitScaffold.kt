@@ -596,6 +596,39 @@ fun ChatSplitScaffold(
                         sidebarCollapsed = listCollapsed,
                     )
                 } else {
+                    // [T-claude-ui] Single pane: the session list also lives in a
+                    // left drawer (design r2c) behind the chat's menu button.
+                    // System back still returns to the full list as before.
+                    val drawerState = androidx.compose.material3.rememberDrawerState(androidx.compose.material3.DrawerValue.Closed)
+                    androidx.activity.compose.BackHandler(enabled = !twoPane && drawerState.isOpen) {
+                        scope.launch { drawerState.close() }
+                    }
+                    androidx.compose.material3.ModalNavigationDrawer(
+                        drawerState = drawerState,
+                        gesturesEnabled = !twoPane && drawerState.isOpen,
+                        scrimColor = androidx.compose.ui.graphics.Color(0x6626241F),
+                        drawerContent = {
+                            if (!twoPane) {
+                                androidx.compose.material3.ModalDrawerSheet(
+                                    drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp),
+                                    drawerContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
+                                    modifier = Modifier.width(320.dp),
+                                ) {
+                                    if (drawerState.isOpen || drawerState.isAnimationRunning) {
+                                        listPane(sessionId, null) { picked ->
+                                            scope.launch {
+                                                drawerState.close()
+                                                if (picked != sessionId) {
+                                                    selectedSessionId = picked
+                                                    navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, picked)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    ) {
                     detailPane(
                         sessionId,
                         {
@@ -628,10 +661,11 @@ fun ChatSplitScaffold(
                                     .apply()
                             }
                         } else {
-                            null
+                            { scope.launch { drawerState.open() } }
                         },
                         listCollapsed,
                     )
+                    }
                 }
                     }
                 }

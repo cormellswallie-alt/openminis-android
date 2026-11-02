@@ -2937,7 +2937,12 @@ fun ChatScreen(
                 },
                 navigationIcon = {
                     // [T-android-tablet-split] See `isTwoPane`.
-                    if (!isTwoPane) {
+                    if (!isTwoPane && onToggleSidebar != null) {
+                        // [T-claude-ui] r5 header: menu opens the session drawer.
+                        IconButton(onClick = onToggleSidebar) {
+                            Icon(Icons.Filled.Menu, contentDescription = "Sessions")
+                        }
+                    } else if (!isTwoPane) {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }

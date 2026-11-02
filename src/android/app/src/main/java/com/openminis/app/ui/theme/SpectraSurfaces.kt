@@ -36,18 +36,18 @@ import androidx.compose.ui.unit.sp
  *  - page titles are a large 30sp left-aligned title, not a 20sp app bar.
  */
 object SpectraSurface {
-    val CardShape: Shape = RoundedCornerShape(22.dp)
+    val CardShape: Shape = RoundedCornerShape(20.dp)
 
     val SectionHeaderStyle = TextStyle(
         fontFamily = SpectraSans,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.005.em,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.em,
     )
 
     val LargeTitleStyle = TextStyle(
-        fontFamily = SpectraSans,
+        fontFamily = ClaudeSerif,
         fontWeight = FontWeight.SemiBold,
         fontSize = 30.sp,
         lineHeight = 36.sp,
@@ -65,15 +65,11 @@ fun Modifier.spectraCard(shape: Shape = SpectraSurface.CardShape): Modifier {
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, shape)
     } else {
+        // [T-claude-ui] r10e: white card, warm hairline, no drop shadow.
         this
-            .shadow(
-                elevation = 10.dp,
-                shape = shape,
-                ambientColor = Color(0x14000000),
-                spotColor = Color(0x1F0A0A0C),
-            )
             .clip(shape)
             .background(Color.White)
+            .border(1.dp, Color(0xFFEEEBE6), shape)
     }
 }
 
@@ -83,7 +79,7 @@ fun SpectraSectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = SpectraSurface.SectionHeaderStyle,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+        color = if (LocalChatPalette.current.isDark) Noir.IvoryMute else Color(0xFF8A867F),
         modifier = modifier,
     )
 }
@@ -107,7 +103,7 @@ fun SpectraSettingsHero(title: String, subtitle: String, modifier: Modifier = Mo
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontFamily = SpectraSans,
+                fontFamily = ClaudeSerif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 20.sp,
                 letterSpacing = (-0.01).em,

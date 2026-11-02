@@ -1,5 +1,10 @@
 package com.openminis.app.ui.settings
 
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.offset
 import com.openminis.app.ui.theme.spectraCard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -194,15 +199,56 @@ fun SettingsSwitch(
     enabled: Boolean = true,
     colors: androidx.compose.material3.SwitchColors = SwitchDefaults.colors(),
 ) {
-    CompositionLocalProvider(
-        LocalMinimumInteractiveComponentSize provides Dp.Unspecified,
+    @Suppress("UNUSED_VARIABLE") val unusedColors = colors
+    OmSwitch(checked = checked, onCheckedChange = onCheckedChange, modifier = modifier, enabled = enabled)
+}
+
+/**
+ * [T-claude-ui] Design-board switch: 40×24 track (ink on / #D6D2CA off),
+ * 18dp white knob with a soft shadow, 3dp inset. Replaces the Material3
+ * thumb-grows switch everywhere [SettingsSwitch] is used.
+ */
+@Composable
+fun OmSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val dark = com.openminis.app.ui.theme.LocalChatPalette.current.isDark
+    val on = if (dark) com.openminis.app.ui.theme.Noir.Ivory else com.openminis.app.ui.theme.Noir.Ink
+    val off = if (dark) com.openminis.app.ui.theme.Noir.OnyxHairlineStrong else androidx.compose.ui.graphics.Color(0xFFD6D2CA)
+    val knob = if (dark && checked) com.openminis.app.ui.theme.Noir.Onyx else androidx.compose.ui.graphics.Color.White
+    val p by androidx.compose.animation.core.animateFloatAsState(
+        if (checked) 1f else 0f,
+        androidx.compose.animation.core.tween(200),
+        label = "omSwitch",
+    )
+    val track = androidx.compose.ui.graphics.lerp(off, on, p)
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+    androidx.compose.foundation.layout.Box(
+        modifier = modifier
+            .size(width = 40.dp, height = 24.dp)
+            .alpha(if (enabled) 1f else 0.45f)
+            .clip(shape)
+            .background(track, shape)
+            .then(
+                if (onCheckedChange != null && enabled) {
+                    Modifier.toggleable(
+                        value = checked,
+                        role = androidx.compose.ui.semantics.Role.Switch,
+                        onValueChange = onCheckedChange,
+                    )
+                } else Modifier,
+            )
+            .padding(3.dp),
     ) {
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = modifier,
-            enabled = enabled,
-            colors = colors,
+        androidx.compose.foundation.layout.Box(
+            Modifier
+                .offset(x = 16.dp * p)
+                .size(18.dp)
+                .shadow(1.5.dp, androidx.compose.foundation.shape.CircleShape)
+                .background(knob, androidx.compose.foundation.shape.CircleShape),
         )
     }
 }
