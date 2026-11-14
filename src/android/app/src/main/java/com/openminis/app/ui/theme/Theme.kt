@@ -58,101 +58,101 @@ private val ExpressiveLightColorScheme = lightColorScheme(
     tertiary = Color(0xFF8C4168),
     onTertiary = Color(0xFFFFFFFF),
     tertiaryContainer = Color(0xFFFFD8E8),
-    onTertiaryContainer = Color(0xFF3A0022),
+    onTertiaryContainer = Color(0xFF390022),
     error = Color(0xFFBA1A1A),
     onError = Color(0xFFFFFFFF),
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFF410002),
-    background = Color(0xFFF8F9FF),
-    onBackground = Color(0xFF171B24),
-    surface = Color(0xFFF8F9FF),
-    onSurface = Color(0xFF171B24),
-    surfaceVariant = Color(0xFFE0E5F5),
-    onSurfaceVariant = Color(0xFF434857),
-    outline = Color(0xFF737888),
-    outlineVariant = Color(0xFFC3C8D9),
-    scrim = Color(0xFF000000),
-    inverseSurface = Color(0xFF2C303A),
-    inverseOnSurface = Color(0xFFEEF0FA),
-    surfaceBright = Color(0xFFF8F9FF),
-    surfaceDim = Color(0xFFD7DAE5),
+    background = Color(0xFFF6F7FC),
+    onBackground = Color(0xFF171B23),
+    surface = Color(0xFFF6F7FC),
+    onSurface = Color(0xFF171B23),
+    surfaceVariant = Color(0xFFE0E3F0),
+    onSurfaceVariant = Color(0xFF434753),
+    surfaceDim = Color(0xFFD7DAE4),
+    surfaceBright = Color(0xFFFCF8FF),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFF1F3FD),
-    surfaceContainer = Color(0xFFEBEEF8),
-    surfaceContainerHigh = Color(0xFFE5E8F3),
-    surfaceContainerHighest = Color(0xFFDFE2ED),
+    surfaceContainerLow = Color(0xFFF0F2FA),
+    surfaceContainer = Color(0xFFEAEDF7),
+    surfaceContainerHigh = Color(0xFFE3E7F3),
+    surfaceContainerHighest = Color(0xFFDCE1EF),
+    outline = Color(0xFF737785),
+    outlineVariant = Color(0xFFC3C6D6),
+    inverseSurface = Color(0xFF2C3039),
+    inverseOnSurface = Color(0xFFEEF0FA),
+    scrim = Color(0xFF000000),
 )
 
 private val ExpressiveDarkColorScheme = darkColorScheme(
     primary = Color(0xFFB5C4FF),
-    onPrimary = Color(0xFF00297B),
-    primaryContainer = Color(0xFF123FBF),
+    onPrimary = Color(0xFF00287D),
+    primaryContainer = Color(0xFF1E3FA8),
     onPrimaryContainer = Color(0xFFDCE3FF),
     inversePrimary = Color(0xFF2956D8),
-    secondary = Color(0xFFB3C7F2),
-    onSecondary = Color(0xFF1A2F52),
-    secondaryContainer = Color(0xFF304569),
+    secondary = Color(0xFFB8C6EA),
+    onSecondary = Color(0xFF22304F),
+    secondaryContainer = Color(0xFF334263),
     onSecondaryContainer = Color(0xFFD9E2FF),
-    tertiary = Color(0xFFFFB0D3),
-    onTertiary = Color(0xFF541239),
-    tertiaryContainer = Color(0xFF6F2950),
+    tertiary = Color(0xFFFFB0D0),
+    onTertiary = Color(0xFF541238),
+    tertiaryContainer = Color(0xFF6F294F),
     onTertiaryContainer = Color(0xFFFFD8E8),
     error = Color(0xFFFFB4AB),
     onError = Color(0xFF690005),
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
     background = Color(0xFF0F131B),
-    onBackground = Color(0xFFE0E2EE),
+    onBackground = Color(0xFFE2E5F0),
     surface = Color(0xFF0F131B),
-    onSurface = Color(0xFFE0E2EE),
-    surfaceVariant = Color(0xFF424756),
-    onSurfaceVariant = Color(0xFFC2C6D8),
-    outline = Color(0xFF8C91A2),
-    outlineVariant = Color(0xFF424756),
-    scrim = Color(0xFF000000),
-    inverseSurface = Color(0xFFE0E2EE),
-    inverseOnSurface = Color(0xFF2C303A),
-    surfaceBright = Color(0xFF353943),
+    onSurface = Color(0xFFE2E5F0),
+    surfaceVariant = Color(0xFF434754),
+    onSurfaceVariant = Color(0xFFC3C6D6),
     surfaceDim = Color(0xFF0F131B),
-    surfaceContainerLowest = Color(0xFF0A0E16),
+    surfaceBright = Color(0xFF353944),
+    surfaceContainerLowest = Color(0xFF0A0D14),
     surfaceContainerLow = Color(0xFF171B24),
-    surfaceContainer = Color(0xFF1B2029),
-    surfaceContainerHigh = Color(0xFF252A34),
-    surfaceContainerHighest = Color(0xFF303540),
+    surfaceContainer = Color(0xFF1D222D),
+    surfaceContainerHigh = Color(0xFF272C3A),
+    surfaceContainerHighest = Color(0xFF323848),
+    outline = Color(0xFF8D91A0),
+    outlineVariant = Color(0xFF434754),
+    inverseSurface = Color(0xFFE2E5F0),
+    inverseOnSurface = Color(0xFF2C3039),
+    scrim = Color(0xFF000000),
 )
 
+/** Expressive primary FAB container color (replaces legacy iOS warm beige). */
+@Composable
+fun minisFabColor(): Color = MaterialTheme.colorScheme.primaryContainer
+
 // ============================================================================
-// Material 3 Expressive Shape Architecture & Articulated List Helpers
+// Material 3 Expressive Shape Architecture & Articulated Group Helpers
 // ============================================================================
 
 val ExpressiveShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
+    extraSmall = RoundedCornerShape(10.dp),
     small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp),
+    medium = RoundedCornerShape(22.dp),
+    large = RoundedCornerShape(26.dp),
+    extraLarge = RoundedCornerShape(32.dp),
 )
 
 object ExpressiveTokens {
-    /** Outer corner radius of an articulated M3 Expressive card group. */
-    val OuterGroupRadius: Dp = 26.dp
-    /** Inner ("kissing") corner radius between adjacent items in a group. */
-    val InnerGroupRadius: Dp = 6.dp
-    /** Gap between articulated sibling cards inside a group. */
-    val GroupItemGap: Dp = 2.dp
-    /** Top corner radius of M3 Expressive modal sheets. */
-    val SheetTopRadius: Dp = 32.dp
-    /** Standard horizontal gutter for screen-level bento layouts. */
-    val ScreenHorizontalPadding: Dp = 16.dp
+    val OuterGroupRadius = 26.dp
+    val InnerGroupRadius = 6.dp
+    val GroupItemGap = 3.dp
+    val BentoCornerRadius = 26.dp
+    val SheetTopRadius = 32.dp
+    val PillCornerRadius = 999.dp
 }
 
 /**
- * Computes the Material 3 Expressive articulated shape for item [index] inside
- * a group of [count] items:
- * - Single item (`count == 1`): fully rounded `OuterGroupRadius`
- * - First item: large top corners + crisp `InnerGroupRadius` bottom corners
- * - Middle items: crisp `InnerGroupRadius` on all 4 corners
- * - Last item: crisp `InnerGroupRadius` top corners + large bottom corners
+ * Computes the signature Material 3 Expressive articulated card shape for item [index]
+ * inside a vertical segmented stack of [count] items:
+ * - Single item: 26dp all around
+ * - First item:  26dp top, 6dp bottom
+ * - Middle item: 6dp all around
+ * - Last item:   6dp top, 26dp bottom
  */
 fun articulatedItemShape(
     index: Int,
@@ -179,18 +179,21 @@ fun articulatedItemShape(
 }
 
 /**
- * Decorative Material 3 Expressive polygon shapes from `MaterialShapes` for
- * hero badges, category avatars, onboarding emblems, and active indicators.
+ * Returns a distinctive Material 3 Expressive polygon [Shape] for category badges,
+ * avatars, and hero accents using `MaterialShapes`.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun expressiveBadgeShape(seed: Int = 0): Shape {
-    val polygon = when (seed.mod(5)) {
-        0 -> MaterialShapes.Cookie9Sided
-        1 -> MaterialShapes.Sunny
-        2 -> MaterialShapes.SoftBurst
-        3 -> MaterialShapes.Clover4Leaf
-        else -> MaterialShapes.Cookie12Sided
+fun expressivePolygonShape(seed: Int): Shape {
+    val polygon = when (seed.mod(8)) {
+        0 -> MaterialShapes.Sunny
+        1 -> MaterialShapes.Cookie9Sided
+        2 -> MaterialShapes.Clover4Leaf
+        3 -> MaterialShapes.Pentagon
+        4 -> MaterialShapes.SoftBurst
+        5 -> MaterialShapes.Cookie12Sided
+        6 -> MaterialShapes.Arch
+        else -> MaterialShapes.Gem
     }
     return polygon.toShape()
 }
@@ -255,8 +258,9 @@ fun ExpressiveLoadingIndicator(
 }
 
 // ============================================================================
-// Material 3 Expressive Editorial Typography Scale
-// High-contrast display/headline weights + crisp readable body/label rhythm.
+// Material 3 Expressive Editorial Typography Architecture
+// High-contrast display/headline hierarchy with tight negative tracking,
+// confident semi-bold titles/labels, and generous readable body leading.
 // ============================================================================
 
 private val ExpressiveBaseTypography = Typography(
@@ -264,43 +268,43 @@ private val ExpressiveBaseTypography = Typography(
         fontSize = 54.sp,
         lineHeight = 60.sp,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.5).sp,
+        letterSpacing = (-1.2).sp,
     ),
     displayMedium = TextStyle(
         fontSize = 42.sp,
         lineHeight = 48.sp,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.25).sp,
+        letterSpacing = (-0.8).sp,
     ),
     displaySmall = TextStyle(
         fontSize = 34.sp,
         lineHeight = 40.sp,
         fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.15).sp,
+        letterSpacing = (-0.5).sp,
     ),
     headlineLarge = TextStyle(
         fontSize = 30.sp,
         lineHeight = 36.sp,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = (-0.2).sp,
+        letterSpacing = (-0.5).sp,
     ),
     headlineMedium = TextStyle(
-        fontSize = 26.sp,
-        lineHeight = 32.sp,
+        fontSize = 25.sp,
+        lineHeight = 31.sp,
         fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.15).sp,
+        letterSpacing = (-0.3).sp,
     ),
     headlineSmall = TextStyle(
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+        fontSize = 21.sp,
+        lineHeight = 27.sp,
         fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.1).sp,
+        letterSpacing = (-0.2).sp,
     ),
     titleLarge = TextStyle(
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
+        fontSize = 19.sp,
+        lineHeight = 25.sp,
         fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.05).sp,
+        letterSpacing = (-0.15).sp,
     ),
     titleMedium = TextStyle(
         fontSize = 16.sp,
@@ -322,7 +326,7 @@ private val ExpressiveBaseTypography = Typography(
     ),
     bodyMedium = TextStyle(
         fontSize = 14.sp,
-        lineHeight = 20.sp,
+        lineHeight = 21.sp,
         fontWeight = FontWeight.Normal,
         letterSpacing = 0.15.sp,
     ),
