@@ -129,6 +129,7 @@ object ExpressiveTokens {
     val InnerGroupRadius = 6.dp
     val GroupItemGap = 3.dp
     val BentoCornerRadius = 26.dp
+    val SheetTopRadius = 32.dp
     val PillCornerRadius = 999.dp
 }
 

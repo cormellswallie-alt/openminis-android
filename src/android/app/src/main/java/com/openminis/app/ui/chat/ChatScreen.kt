@@ -4570,7 +4570,7 @@ fun ChatScreen(
                                     pending = pendingQuestionnaire,
                                     onSubmit = { id, res -> viewModel.submitQuestionnaire(id, res) },
                                     onSkip = { id -> viewModel.skipQuestionnaire(id) },
-                                    onOpenDetail = { viewModel.openToolDetail(it) },
+                                    onOpenDetail = { viewModel.openToolDetail(it.id) },
                                 )
                             } else if (
                                 com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(item.block.toolName) &&
