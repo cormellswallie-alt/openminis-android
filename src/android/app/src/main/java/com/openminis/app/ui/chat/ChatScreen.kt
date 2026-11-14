@@ -96,6 +96,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
@@ -2819,50 +2820,12 @@ fun ChatScreen(
                             fallbackPulseAlpha.animateTo(0f, animationSpec = androidx.compose.animation.core.tween(350))
                         }
                     }
-                    val hasCustomSessionTitle = showChatTitlePill
-                        && sessionTitle.isNotBlank()
-                        && sessionTitle != "New Chat"
-
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    Box(
+                        contentAlignment = Alignment.CenterStart,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(end = 4.dp),
                     ) {
-                        if (hasCustomSessionTitle) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            editingSession = viewModel.loadSessionEntity()
-                                        }
-                                    }
-                                    .padding(horizontal = 6.dp, vertical = 1.dp),
-                            ) {
-                                Text(
-                                    text = sessionTitle,
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = noFontPad,
-                                    modifier = Modifier.weight(1f, fill = false),
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                                    modifier = Modifier.size(11.dp),
-                                )
-                            }
-                        }
-
                         // M3 Expressive Interactive Model Selector Capsule
                         val capsuleShape = RoundedCornerShape(16.dp)
                         val pulseOverlay = fallbackPulseAlpha.value
@@ -3121,6 +3084,18 @@ fun ChatScreen(
                                     MenuItemIcon(MinisIcons.SquareAndPencil)
                                 },
                             )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.sessionlist_edit_title_category)) },
+                                onClick = {
+                                    showChatMenu = false
+                                    coroutineScope.launch {
+                                        editingSession = viewModel.loadSessionEntity()
+                                    }
+                                },
+                                leadingIcon = {
+                                    MenuItemIcon(Icons.Outlined.Edit)
+                                },
+                            )
                             MinisMenuDivider()
                             // Clear Chat (iOS parity, red)
                             DropdownMenuItem(
@@ -3344,7 +3319,7 @@ fun ChatScreen(
                     containerColor = ChatColors.background.copy(alpha = 0.94f),
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.96f),
                 ),
-                expandedHeight = 74.dp,
+                expandedHeight = 58.dp,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
