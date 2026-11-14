@@ -11,9 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,7 +73,6 @@ internal fun StreamingDotsText() {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CompactProgressIndicator(
     progress: ChatViewModel.CompactProgress,
@@ -97,7 +95,7 @@ internal fun CompactProgressIndicator(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LoadingIndicator(
+            ExpressiveLoadingIndicator(
                 modifier = Modifier.size(22.dp),
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -137,7 +135,6 @@ internal fun CompactProgressIndicator(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun TypingIndicator() {
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
@@ -153,7 +150,7 @@ internal fun TypingIndicator() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LoadingIndicator(
+            ExpressiveLoadingIndicator(
                 modifier = Modifier.size(22.dp),
                 color = MaterialTheme.colorScheme.primary,
             )

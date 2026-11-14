@@ -27,8 +27,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -98,7 +98,7 @@ fun RootfsManagementScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        LoadingIndicator(
+                        ExpressiveLoadingIndicator(
                             modifier = Modifier.size(28.dp),
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -387,7 +387,7 @@ private fun SandboxHeroBentoCard(
                                 color = contentColor,
                             )
                         } else if (isInstalled) {
-                            LoadingIndicator(
+                            ExpressiveLoadingIndicator(
                                 modifier = Modifier.size(16.dp),
                                 color = contentColor,
                             )

@@ -205,15 +205,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingActionButtonMenu
-import androidx.compose.material3.FloatingActionButtonMenuItem
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.ToggleFloatingActionButton
 import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 
 private data class CategoryStyle(val icon: ImageVector, val color: Color)
 
@@ -638,15 +633,27 @@ fun SessionListScreen(
     // initial-load flag) so an existing user with providers but zero sessions
     // doesn't flash the "add a provider" onboarding before the real config emits.
     val configLoaded by providerRepository.configLoaded.collectAsState()
-    // Guard against permanent blank home screen when ProviderRepository's async
-    // loader finishes with an unreadable/empty store (`configLoadComplete` completes
-    // while `_configLoaded` stays false) or stalls on slow cold-start IO.
+    // Bound both startup gates (`isInitialLoadComplete` and `configLoaded`) so a
+    // slow/locked SQLite DB or unreadable provider store can NEVER trap the user
+    // on an infinite loading screen or blank white screen. Once real emissions
+    // arrive later, `collectAsState()` seamlessly updates the UI in place.
+    var initialLoadSettled by remember { mutableStateOf(false) }
+    LaunchedEffect(isInitialLoadComplete) {
+        if (isInitialLoadComplete) {
+            initialLoadSettled = true
+        } else {
+            kotlinx.coroutines.delay(1200L)
+            initialLoadSettled = true
+        }
+    }
+    val effectiveInitialReady = isInitialLoadComplete || initialLoadSettled
+
     var configLoadSettled by remember { mutableStateOf(false) }
     LaunchedEffect(configLoaded) {
         if (configLoaded) {
             configLoadSettled = true
         } else {
-            kotlinx.coroutines.withTimeoutOrNull(2500L) {
+            kotlinx.coroutines.withTimeoutOrNull(1000L) {
                 providerRepository.awaitConfigLoaded()
             }
             configLoadSettled = true
@@ -1150,7 +1157,7 @@ fun SessionListScreen(
                                         )
                                     }
                                     if (isSearching) {
-                                        LoadingIndicator(
+                                        ExpressiveLoadingIndicator(
                                             modifier = Modifier.size(22.dp),
                                             color = MaterialTheme.colorScheme.primary,
                                         )
@@ -1188,7 +1195,7 @@ fun SessionListScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            val isWaitingInitialLoad = !isInitialLoadComplete ||
+            val isWaitingInitialLoad = !effectiveInitialReady ||
                 (sessions.isEmpty() && !effectiveConfigReady && !(isSearchActive && searchQuery.isNotBlank()))
 
             if (isWaitingInitialLoad) {
@@ -1205,7 +1212,7 @@ fun SessionListScreen(
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        LoadingIndicator(
+                        ExpressiveLoadingIndicator(
                             modifier = Modifier.size(42.dp),
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -1497,7 +1504,7 @@ fun SessionListScreen(
                     onDelete = { showBulkDeleteDialog = true },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
-            } else if (isInitialLoadComplete) {
+            } else if (!isWaitingInitialLoad) {
                 ExpressiveWorkspaceDock(
                     scheduledTaskCount = scheduledTaskCount,
                     modelGroups = providerConfig.modelGroups,
@@ -1762,6 +1769,7 @@ private fun ExpressiveWorkspaceDock(
 ) {
     var fabMenuExpanded by remember { mutableStateOf(false) }
     val topGroups = remember(modelGroups) { modelGroups.take(8) }
+    val fabShape = MaterialShapes.Cookie9Sided.toShape()
 
     Box(
         modifier = modifier
@@ -1772,120 +1780,114 @@ private fun ExpressiveWorkspaceDock(
     ) {
         Row(
             modifier = Modifier.align(Alignment.BottomCenter),
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            HorizontalFloatingToolbar(
-                expanded = true,
-                colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
-                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
-                modifier = Modifier.shadow(
-                    elevation = 14.dp,
-                    shape = CircleShape,
-                    ambientColor = Color.Black.copy(alpha = 0.22f),
-                    spotColor = Color.Black.copy(alpha = 0.22f),
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                tonalElevation = 3.dp,
+                shadowElevation = 10.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                 ),
             ) {
-                IconButton(onClick = onScheduledClick) {
-                    if (scheduledTaskCount > 0) {
-                        BadgedBox(badge = { Badge { Text("$scheduledTaskCount") } }) {
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = 56.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    IconButton(onClick = onScheduledClick) {
+                        if (scheduledTaskCount > 0) {
+                            BadgedBox(badge = { Badge { Text("$scheduledTaskCount") } }) {
+                                Icon(
+                                    Icons.Outlined.Schedule,
+                                    contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
+                                )
+                            }
+                        } else {
                             Icon(
                                 Icons.Outlined.Schedule,
                                 contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
                             )
                         }
-                    } else {
+                    }
+                    IconButton(onClick = onTerminalClick) {
                         Icon(
-                            Icons.Outlined.Schedule,
-                            contentDescription = stringResource(R.string.sessionlist_scheduled_tasks),
+                            Icons.Outlined.Terminal,
+                            contentDescription = stringResource(R.string.sessionlist_shell_terminal),
                         )
                     }
-                }
-                IconButton(onClick = onTerminalClick) {
-                    Icon(
-                        Icons.Outlined.Terminal,
-                        contentDescription = stringResource(R.string.sessionlist_shell_terminal),
-                    )
-                }
-                IconButton(onClick = onBrowserClick) {
-                    Icon(
-                        Icons.Outlined.Language,
-                        contentDescription = stringResource(R.string.sessionlist_open_browser),
-                    )
-                }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        contentDescription = stringResource(R.string.sessionlist_settings),
-                    )
+                    IconButton(onClick = onBrowserClick) {
+                        Icon(
+                            Icons.Outlined.Language,
+                            contentDescription = stringResource(R.string.sessionlist_open_browser),
+                        )
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = stringResource(R.string.sessionlist_settings),
+                        )
+                    }
                 }
             }
 
             if (topGroups.size > 1) {
-                // Tap starts a new chat immediately; long-press expands M3 Expressive FAB menu!
+                // Tap starts a new chat immediately; long-press opens model-group quick menu.
                 Box(contentAlignment = Alignment.BottomEnd) {
-                    if (fabMenuExpanded) {
-                        FloatingActionButtonMenu(
-                            expanded = true,
-                            button = {
-                                ToggleFloatingActionButton(
-                                    checked = true,
-                                    onCheckedChange = { fabMenuExpanded = it },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.sessionlist_dismiss),
-                                    )
-                                }
+                    Surface(
+                        shape = fabShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shadowElevation = 10.dp,
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(fabShape)
+                            .combinedClickable(
+                                onClick = onNewChat,
+                                onLongClick = { fabMenuExpanded = true },
+                            ),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = stringResource(R.string.new_chat),
+                                modifier = Modifier.size(26.dp),
+                            )
+                        }
+                    }
+                    MinisMenu(
+                        expanded = fabMenuExpanded,
+                        onDismissRequest = { fabMenuExpanded = false },
+                        alignEnd = true,
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.new_chat)) },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+                            onClick = {
+                                fabMenuExpanded = false
+                                onNewChat()
                             },
-                        ) {
-                            FloatingActionButtonMenuItem(
+                        )
+                        MinisMenuDivider()
+                        topGroups.forEach { group ->
+                            DropdownMenuItem(
+                                text = { Text(group.name) },
+                                leadingIcon = { Icon(Icons.Outlined.Forum, contentDescription = null) },
                                 onClick = {
                                     fabMenuExpanded = false
-                                    onNewChat()
+                                    onNewChatWithGroup(group.id)
                                 },
-                                text = { Text(stringResource(R.string.new_chat)) },
-                                icon = { Icon(Icons.Default.Add, contentDescription = null) },
                             )
-                            topGroups.forEach { group ->
-                                FloatingActionButtonMenuItem(
-                                    onClick = {
-                                        fabMenuExpanded = false
-                                        onNewChatWithGroup(group.id)
-                                    },
-                                    text = { Text(group.name) },
-                                    icon = { Icon(Icons.Outlined.Forum, contentDescription = null) },
-                                )
-                            }
-                        }
-                    } else {
-                        val fabShape = MaterialShapes.Cookie9Sided.toShape()
-                        Surface(
-                            shape = fabShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                            shadowElevation = 10.dp,
-                            modifier = Modifier
-                                .size(58.dp)
-                                .clip(fabShape)
-                                .combinedClickable(
-                                    onClick = onNewChat,
-                                    onLongClick = { fabMenuExpanded = true },
-                                ),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = stringResource(R.string.new_chat),
-                                    modifier = Modifier.size(26.dp),
-                                )
-                            }
                         }
                     }
                 }
             } else {
-                val fabShape = MaterialShapes.Cookie9Sided.toShape()
                 FloatingActionButton(
                     onClick = onNewChat,
                     shape = fabShape,
@@ -1907,7 +1909,6 @@ private fun ExpressiveWorkspaceDock(
 
 // ─── Material 3 Expressive Selection Floating Toolbar ───────────────────────
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SelectionToolbar(
     selectedCount: Int,
@@ -1923,83 +1924,91 @@ private fun SelectionToolbar(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        HorizontalFloatingToolbar(
-            expanded = true,
-            colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
-                toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-            modifier = Modifier.shadow(
-                elevation = 14.dp,
-                shape = CircleShape,
-                ambientColor = Color.Black.copy(alpha = 0.24f),
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 3.dp,
+            shadowElevation = 10.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
             ),
         ) {
-            var showExportMenu by remember { mutableStateOf(false) }
-            Box {
+            Row(
+                modifier = Modifier
+                    .heightIn(min = 54.dp)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                var showExportMenu by remember { mutableStateOf(false) }
+                Box {
+                    MinisTextButton(
+                        onClick = { showExportMenu = true },
+                        enabled = selectedCount > 0,
+                    ) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = stringResource(R.string.sessionlist_export),
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.sessionlist_export), style = MaterialTheme.typography.labelLarge)
+                    }
+                    MinisMenu(expanded = showExportMenu, onDismissRequest = { showExportMenu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.sessionlist_export_json)) },
+                            onClick = {
+                                showExportMenu = false
+                                onExport(com.openminis.app.share.SessionExporter.Format.JSON)
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.sessionlist_export_plain)) },
+                            onClick = {
+                                showExportMenu = false
+                                onExport(com.openminis.app.share.SessionExporter.Format.PLAIN_TEXT)
+                            },
+                        )
+                    }
+                }
+
                 MinisTextButton(
-                    onClick = { showExportMenu = true },
+                    onClick = onMove,
                     enabled = selectedCount > 0,
                 ) {
                     Icon(
-                        Icons.Default.Share,
-                        contentDescription = stringResource(R.string.sessionlist_export),
+                        Icons.Default.Folder,
+                        contentDescription = stringResource(R.string.group_move_action),
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.sessionlist_export), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.group_move_action), style = MaterialTheme.typography.labelLarge)
                 }
-                MinisMenu(expanded = showExportMenu, onDismissRequest = { showExportMenu = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.sessionlist_export_json)) },
-                        onClick = {
-                            showExportMenu = false
-                            onExport(com.openminis.app.share.SessionExporter.Format.JSON)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.sessionlist_export_plain)) },
-                        onClick = {
-                            showExportMenu = false
-                            onExport(com.openminis.app.share.SessionExporter.Format.PLAIN_TEXT)
-                        },
-                    )
-                }
-            }
 
-            MinisTextButton(
-                onClick = onMove,
-                enabled = selectedCount > 0,
-            ) {
-                Icon(
-                    Icons.Default.Folder,
-                    contentDescription = stringResource(R.string.group_move_action),
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.group_move_action), style = MaterialTheme.typography.labelLarge)
-            }
-
-            MinisTextButton(
-                onClick = onDelete,
-                enabled = selectedCount > 0,
-            ) {
-                val delColor = if (selectedCount > 0) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                MinisTextButton(
+                    onClick = onDelete,
+                    enabled = selectedCount > 0,
+                ) {
+                    val delColor = if (selectedCount > 0) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    }
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete),
+                        tint = delColor,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.delete),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = delColor,
+                    )
                 }
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete),
-                    tint = delColor,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    stringResource(R.string.delete),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = delColor,
-                )
             }
         }
     }
@@ -2982,9 +2991,9 @@ private fun OnboardingLanding(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(top = 16.dp, bottom = 116.dp),
+            .padding(top = 28.dp, bottom = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
     ) {
         Box(
             modifier = Modifier
@@ -3361,7 +3370,7 @@ internal fun SessionEditSheet(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (isRegenerating) {
-                    LoadingIndicator(
+                    ExpressiveLoadingIndicator(
                         modifier = Modifier.size(20.dp),
                         color = MaterialTheme.colorScheme.primary,
                     )

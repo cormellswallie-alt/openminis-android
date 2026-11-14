@@ -153,8 +153,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
@@ -1059,7 +1059,7 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
                 contentAlignment = Alignment.Center,
             ) {
                 if (activeStreaming) {
-                    LoadingIndicator(
+                    ExpressiveLoadingIndicator(
                         color = thinkingAccent,
                         modifier = Modifier.size(18.dp),
                     )

@@ -278,9 +278,9 @@ import com.openminis.app.ui.DisplayBitmapLimits
 import com.openminis.app.ui.components.MinisTextButton
 import com.openminis.app.ui.components.MinisTonalButton
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -902,7 +902,7 @@ internal fun ToolDetailSheet(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
-                                        LoadingIndicator(
+                                        ExpressiveLoadingIndicator(
                                             modifier = Modifier.size(28.dp),
                                             color = MaterialTheme.colorScheme.primary,
                                         )
@@ -1091,7 +1091,7 @@ internal fun ToolDetailSheet(
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         if (isLive) {
-                                            LoadingIndicator(
+                                            ExpressiveLoadingIndicator(
                                                 color = toolAccent,
                                                 modifier = Modifier.size(32.dp),
                                             )
@@ -1137,7 +1137,7 @@ internal fun ToolDetailSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (isLive) {
-                        LoadingIndicator(
+                        ExpressiveLoadingIndicator(
                             modifier = Modifier.size(20.dp),
                             color = toolAccent,
                         )
@@ -1610,7 +1610,7 @@ private fun EditorCard(
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    LoadingIndicator(
+                    ExpressiveLoadingIndicator(
                         modifier = Modifier.size(24.dp),
                         color = iconTint,
                     )

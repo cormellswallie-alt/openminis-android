@@ -366,16 +366,21 @@ fun AppNavigation(
             com.openminis.app.diagnostics.LaunchCycleBeacon.shouldForceHomeOnLaunch()
         ) 3 else rawMode
         val autoThresholdMs = 15L * 60 * 1000
-        // [T-android-first-launch-lands-home] Read once, before the mode
-        // branches: "is this device set up at all?" is the question that
-        // outranks the launch preference.
-        val hasAnySession = chatRepository.dao.listSessions().isNotEmpty()
+        // [T-android-first-launch-lands-home] Read once, off-main and bounded,
+        // before the mode branches so a slow/locked SQLite DB can never stall
+        // cold-start navigation or re-query the full session list twice.
+        val launchSessions = kotlinx.coroutines.withTimeoutOrNull(1_500L) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { chatRepository.dao.listSessions() }.getOrElse { emptyList() }
+            }
+        } ?: emptyList()
+        val hasAnySession = launchSessions.isNotEmpty()
         // [T-android-hang-false-positive] Wait for the provider config to load
         // by SUSPENDING, bounded, instead of blocking the main thread: the
         // getter used to take configLock and waited up to 21 s behind a
         // saveConfig. If the load never completes (unreadable store), fall
         // through after the bound and read what is published, as before.
-        kotlinx.coroutines.withTimeoutOrNull(2_000) { providerRepository.awaitConfigLoaded() }
+        kotlinx.coroutines.withTimeoutOrNull(1_200L) { providerRepository.awaitConfigLoaded() }
         val hasAnyProvider = providerRepository.instances.isNotEmpty()
         // [XSessionDiag] Hypothesis 1 context: which launch mode actually applied.
         // rawMode is the user's preference (0 = auto, the default); mode is what
@@ -402,7 +407,7 @@ fun AppNavigation(
             // steps that explain why. Once the user has either a session or a
             // provider, their preference is honoured again.
             !hasAnySession && !hasAnyProvider -> null
-            mode == 1 -> chatRepository.dao.listSessions().firstOrNull { !it.isChild }?.let { Routes.chat(it.id) }
+            mode == 1 -> launchSessions.firstOrNull { !it.isChild }?.let { Routes.chat(it.id) }
             mode == 2 -> Routes.chat("__new__${java.util.UUID.randomUUID()}")
             mode == 3 -> null
             else -> {
@@ -414,7 +419,7 @@ fun AppNavigation(
                 // when nothing was ever done.
                 // [T-child-session-leak] "Resume what I was doing" must never
                 // land in a hidden agent child session.
-                val latest = chatRepository.dao.listSessions().firstOrNull { !it.isChild }
+                val latest = launchSessions.firstOrNull { !it.isChild }
                     ?: return@LaunchedEffect
                 val fresh = System.currentTimeMillis() - latest.updatedAt < autoThresholdMs
                 // [XSessionDiag] Hypothesis 1: auto mode silently RESUMES the most

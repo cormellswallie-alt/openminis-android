@@ -337,6 +337,9 @@ class MinisApp : Application(), ImageLoaderFactory {
         // the task store off disk and makes one binder call per task, and cold
         // start is not the place for either.
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            // Defer non-critical alarm re-registration past initial UI paint so
+            // cold-start session/config loads get uncontended disk + binder access.
+            kotlinx.coroutines.delay(2500L)
             runCatching {
                 com.openminis.app.scheduled.ScheduledTaskManager(this@MinisApp).rescheduleAll()
             }.onFailure {
@@ -606,6 +609,7 @@ class MinisApp : Application(), ImageLoaderFactory {
         // build simply waits for it. Failure is non-fatal — an unbuilt index
         // means models fall back to their unranked order, never a crash.
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            kotlinx.coroutines.delay(2500L)
             runCatching { com.openminis.app.provider.ModelReleaseIndex.warmUp() }
                 .onFailure {
                     com.openminis.app.logging.AppLogger.warning(
@@ -757,6 +761,9 @@ class MinisApp : Application(), ImageLoaderFactory {
         // message tail is the durable source of truth — scan it off-main and
         // reconcile. Runs after init() so it merges with the restored queues.
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            // Defer heavy `lastMessageTailPerSession()` table scan past cold-start
+            // frame paint so `observeSessions()` never queues behind message-tail JSON scans.
+            kotlinx.coroutines.delay(2500L)
             val interrupted = runCatching { chatRepository.interruptedSessionIds() }.getOrElse { emptySet() }
             // Exclude any session that is already actively streaming (defensive;
             // at cold start this is empty, but keeps the rule "active ⇒ never
@@ -771,6 +778,7 @@ class MinisApp : Application(), ImageLoaderFactory {
         // repository is up, on IO, and only at cold start: a restore happens
         // within a single app run, so it can never straddle this.
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            kotlinx.coroutines.delay(3000L)
             runCatching {
                 com.openminis.app.data.session.OrphanChildSweeper.sweep(this@MinisApp, chatRepository)
             }.onFailure {
