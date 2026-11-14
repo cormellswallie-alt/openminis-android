@@ -308,23 +308,13 @@ internal fun UserMessageBubble(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            // [T-android-user-assistant-spacing-16] 14dp top when stacked on
-            // another user bubble (User→User, left intentionally larger to
-            // separate distinct user messages — unchanged). When preceded by an
-            // ASSISTANT turn, 10dp so the Assistant→User boundary reads ~16dp
-            // together with the assistant trailing-block bottom + LazyColumn
-            // spacedBy(2). Bottom stays 4dp: the User→Assistant boundary is
-            // user.bottom(4) + spacedBy(2) + AssistantHeader.top(10) = 16.
-            .padding(top = if (precededByUser) 14.dp else 10.dp, bottom = 4.dp),
+            .padding(top = if (precededByUser) 10.dp else 18.dp, bottom = 6.dp),
     ) {
-        // Cap the bubble at 80% of the LazyColumn's available width (mirrors iOS
-        // proportional sizing; prevents single-line messages from spanning the
-        // full row and losing their "trailing bubble" shape).
-        val bubbleMaxWidth = this.maxWidth * 0.8f
+        val bubbleMaxWidth = this.maxWidth * 0.82f
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Spacer(modifier = Modifier.weight(1f).widthIn(min = 60.dp))
+        Spacer(modifier = Modifier.weight(1f).widthIn(min = 48.dp))
         Box(
             modifier = Modifier
                 .widthIn(max = bubbleMaxWidth)
@@ -428,6 +418,15 @@ internal fun UserMessageBubble(
                             // but legacy sessions can carry pasted log dumps) blow
                             // up text layout the same way large assistant content
                             // does. User bubbles never stream so isStreaming=false.
+                            val rimStroke = if (!isQueued) {
+                                Modifier.border(
+                                    width = 0.75.dp,
+                                    color = MaterialTheme.colorScheme.primary.copy(
+                                        alpha = if (ChatColors.isDark) 0.24f else 0.14f,
+                                    ),
+                                    shape = shape,
+                                )
+                            } else Modifier
                             LargeContentGuard(
                                 content = message.content,
                                 isStreaming = false,
@@ -438,13 +437,14 @@ internal fun UserMessageBubble(
                                     color = textColor,
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontSize = 16.sp,
-                                        lineHeight = 23.sp,
+                                        lineHeight = 23.5.sp,
                                     ),
                                     modifier = bubbleModifier
                                         .background(bubbleBg, shape)
+                                        .then(rimStroke)
                                         .clip(shape)
                                         .then(dashedStroke)
-                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                        .padding(horizontal = 17.dp, vertical = 11.dp),
                                 )
                             }
                         }
@@ -601,7 +601,7 @@ internal fun UserAttachmentList(
     val imageCount = imageUris.size
     val fileNames = allFileNames.drop(imageCount)
 
-    val tileSize = 72.dp
+    val tileSize = 74.dp
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -615,9 +615,9 @@ internal fun UserAttachmentList(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(tileSize)
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .border(1.dp, ChatColors.thumbnailBorder, RoundedCornerShape(18.dp))
+                    .border(1.dp, ChatColors.thumbnailBorder, RoundedCornerShape(20.dp))
                     .clickable { previewImageIndex = idx },
             )
         }
@@ -668,8 +668,9 @@ private fun FileAttachmentTile(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .size(tileSize)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(20.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 7.dp),
     ) {

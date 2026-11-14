@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -317,36 +318,94 @@ fun SkillsManagementScreen(
     if (showAddMenu) {
         ModalBottomSheet(
             onDismissRequest = { showAddMenu = false },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Column(modifier = Modifier.padding(bottom = 32.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            androidx.compose.foundation.shape.RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp,
+                                bottomStart = 6.dp,
+                                bottomEnd = 6.dp,
+                            ),
+                        )
+                        .clip(
+                            androidx.compose.foundation.shape.RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp,
+                                bottomStart = 6.dp,
+                                bottomEnd = 6.dp,
+                            ),
+                        )
                         .clickable {
                             showAddMenu = false
                             showImportSheet = true
                         }
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 18.dp, vertical = 15.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Text(stringResource(R.string.skill_import_modal_title), style = MaterialTheme.typography.bodyLarge)
+                    Icon(
+                        Icons.Outlined.Description,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Text(
+                        stringResource(R.string.skill_import_modal_title),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            androidx.compose.foundation.shape.RoundedCornerShape(
+                                topStart = 6.dp,
+                                topEnd = 6.dp,
+                                bottomStart = 24.dp,
+                                bottomEnd = 24.dp,
+                            ),
+                        )
+                        .clip(
+                            androidx.compose.foundation.shape.RoundedCornerShape(
+                                topStart = 6.dp,
+                                topEnd = 6.dp,
+                                bottomStart = 24.dp,
+                                bottomEnd = 24.dp,
+                            ),
+                        )
                         .clickable {
                             showAddMenu = false
                             onMinisSkillsClick()
                         }
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 18.dp, vertical = 15.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Outlined.Language, contentDescription = null, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Text(stringResource(R.string.skill_minis_skills_modal), style = MaterialTheme.typography.bodyLarge)
+                    Icon(
+                        Icons.Outlined.Language,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Text(
+                        stringResource(R.string.skill_minis_skills_modal),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
             }
         }
@@ -362,6 +421,8 @@ fun SkillsManagementScreen(
     if (deleteSkillId != null) {
         val skill = skills.find { it.id == deleteSkillId }
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { deleteSkillId = null },
             title = { Text("Delete ${skill?.name ?: "skill"}?") },
             text = { Text(stringResource(R.string.skill_delete_confirm_text)) },
@@ -440,7 +501,12 @@ private fun SkillImportSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -448,17 +514,55 @@ private fun SkillImportSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(R.string.skill_import_modal_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.skill_import_modal_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
 
-            TabRow(selectedTabIndex = selectedTab) {
-                Tab(selected = selectedTab == 0, onClick = { selectedTab = 0; errorText = null }) {
-                    Text(stringResource(R.string.skill_import_tab_url), modifier = Modifier.padding(12.dp))
-                }
-                Tab(selected = selectedTab == 1, onClick = { selectedTab = 1; errorText = null }) {
-                    Text(stringResource(R.string.skill_import_tab_paste), modifier = Modifier.padding(12.dp))
-                }
-                Tab(selected = selectedTab == 2, onClick = { selectedTab = 2; errorText = null }) {
-                    Text(stringResource(R.string.skill_import_tab_file), modifier = Modifier.padding(12.dp))
+            val importTabs = listOf(
+                stringResource(R.string.skill_import_tab_url),
+                stringResource(R.string.skill_import_tab_paste),
+                stringResource(R.string.skill_import_tab_file),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                        androidx.compose.foundation.shape.CircleShape,
+                    )
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                importTabs.forEachIndexed { idx, label ->
+                    val active = selectedTab == idx
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                if (active) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
+                                androidx.compose.foundation.shape.CircleShape,
+                            )
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .clickable {
+                                selectedTab = idx
+                                errorText = null
+                            }
+                            .padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            color = if (active) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
                 }
             }
 
@@ -887,6 +991,8 @@ fun SkillDetailScreen(
 
     if (showDeleteDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete ${skill.name}?") },
             text = { Text(stringResource(R.string.skill_delete_confirm_text)) },
@@ -909,6 +1015,7 @@ fun SkillDetailScreen(
     // repository call, so removing the affordance keeps the UX honest.
     if (showEditNameDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
             onDismissRequest = { showEditNameDialog = false },
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             title = { Text(stringResource(R.string.skill_detail_edit_name_title)) },

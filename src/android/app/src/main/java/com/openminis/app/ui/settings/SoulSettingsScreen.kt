@@ -419,6 +419,8 @@ fun SoulSettingsScreen(onBack: () -> Unit) {
     // conservative reading of an ambiguous gesture.
     if (showDiscardDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showDiscardDialog = false },
             title = { Text(stringResource(R.string.soul_discard_confirm_title)) },
             text = { Text(stringResource(R.string.soul_discard_confirm_body)) },
@@ -438,6 +440,8 @@ fun SoulSettingsScreen(onBack: () -> Unit) {
 
     if (showRestoreDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showRestoreDialog = false },
             title = { Text(stringResource(R.string.soul_restore_confirm_title)) },
             text = { Text(stringResource(R.string.soul_restore_confirm_body)) },
@@ -463,6 +467,8 @@ fun SoulSettingsScreen(onBack: () -> Unit) {
 
     saveError?.let { err ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { saveError = null },
             title = { Text(stringResource(R.string.soul_save_error_title)) },
             text = { Text(err) },
@@ -479,6 +485,8 @@ fun SoulSettingsScreen(onBack: () -> Unit) {
     // which can be predicted before the user picks a file.
     iconError?.let { err ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { iconError = null },
             title = { Text(stringResource(R.string.soul_icon_error_title)) },
             text = { Text(err) },

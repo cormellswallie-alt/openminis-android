@@ -1,16 +1,22 @@
 package com.openminis.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -22,25 +28,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 
 /**
- * Dropdown selector for use inside a [SectionCard]. Visual twin of
- * [SectionTextField] — same card color/shape, same row min-height
- * (44dp), same horizontal glyph inset (16dp). Trailing icon is
- * always Icons.Default.ArrowDropDown to signal the menu affordance.
- *
- * [items] is the list of selectable values; [itemLabel] maps each
- * value to its menu/textfield display string. The current selection
- * is shown read-only in the field; tapping anywhere on the field
- * toggles the menu.
- *
- * Callers must NOT add their own `Modifier.padding(horizontal=16.dp)` — the
- * dropdown draws itself with [SectionDesign.RowHorizontalPadding] inside
- * its own card surface (matches iOS form-cell behaviour).
+ * M3 Expressive dropdown selector for use inside a [SectionCard].
+ * Uses a 20dp rounded tonal popup surface (`surfaceContainerHigh`) and a
+ * tactile circular chevron indicator matching [MinisMenu].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,13 +102,29 @@ fun <T> SectionDropdown(
                         colors = colors,
                         contentPadding = contentPadding,
                         trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        CircleShape,
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (expanded) {
+                                        Icons.Default.KeyboardArrowUp
+                                    } else {
+                                        Icons.Default.KeyboardArrowDown
+                                    },
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(17.dp),
+                                )
+                            }
                         },
                         container = {
-                            OutlinedTextFieldDefaults.ContainerBox(
+                            OutlinedTextFieldDefaults.Container(
                                 enabled = enabled,
                                 isError = false,
                                 interactionSource = interactionSource,
@@ -123,10 +138,33 @@ fun <T> SectionDropdown(
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
+                shape = RoundedCornerShape(20.dp),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 items.forEach { item ->
+                    val isSelected = item == selected
                     DropdownMenuItem(
-                        text = { Text(itemLabel(item)) },
+                        text = {
+                            Text(
+                                text = itemLabel(item),
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            )
+                        },
+                        trailingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        } else null,
                         onClick = {
                             expanded = false
                             onSelect(item)

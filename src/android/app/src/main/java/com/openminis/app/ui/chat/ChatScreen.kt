@@ -168,6 +168,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonDefaults
 import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.ExpressiveTokens
+import com.openminis.app.ui.theme.articulatedItemShape
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import com.openminis.app.ui.theme.toShape
@@ -2802,80 +2804,36 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    // iOS-style centered layout: "Minis" + group row + provider·model row
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
+                    val noFontPad = androidx.compose.ui.text.TextStyle(
+                        platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                    )
+                    val fallbackTrigger by viewModel.fallbackTrigger.collectAsState()
+                    val fallbackPulseAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
+                    val fallbackPulseBaseline = remember(viewModel) {
+                        viewModel.fallbackTrigger.value
+                    }
+                    LaunchedEffect(fallbackTrigger) {
+                        if (!shouldPulse(fallbackTrigger, fallbackPulseBaseline)) return@LaunchedEffect
+                        repeat(3) {
+                            fallbackPulseAlpha.animateTo(1f, animationSpec = androidx.compose.animation.core.tween(350))
+                            fallbackPulseAlpha.animateTo(0f, animationSpec = androidx.compose.animation.core.tween(350))
+                        }
+                    }
+                    val hasCustomSessionTitle = showChatTitlePill
+                        && sessionTitle.isNotBlank()
+                        && sessionTitle != "New Chat"
+
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 4.dp),
                     ) {
-                        val noFontPad = androidx.compose.ui.text.TextStyle(
-                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
-                        )
-                        // Fallback pulse animation (iOS: 3× red pulse on model switch)
-                        val fallbackTrigger by viewModel.fallbackTrigger.collectAsState()
-                        val fallbackPulseAlpha = remember { androidx.compose.animation.core.Animatable(0f) }
-                        // [T-android-fallback-pulse-replay] Only pulse for a
-                        // fallback that happens while this screen is on show.
-                        //
-                        // `fallbackTrigger` is a monotonic counter that is never
-                        // reset, and ChatViewModel is reused across visits to a
-                        // session (ChatViewModelStore caches up to 4 normal /
-                        // 6 child VMs), so a session that fell back during an
-                        // EARLIER turn hands us a non-zero value the moment the
-                        // screen is composed. `LaunchedEffect(key)` runs on
-                        // first composition as well as on change, so the old
-                        // `== 0` guard only suppressed sessions that had never
-                        // fallen back at all: re-entering a session that had
-                        // recovered onto a working model replayed the red pulse
-                        // every time, reading as "it is switching models again"
-                        // when nothing was happening. (The model itself was
-                        // restored correctly from the persisted binding's
-                        // `lastEntryId` — this was purely the animation.)
-                        //
-                        // iOS does not have the bug because `.onChange(of:)`
-                        // ignores the initial value; baselining the counter at
-                        // first composition reproduces that semantic. Keyed on
-                        // `viewModel` so re-binding this composable to another
-                        // session's VM re-takes the baseline.
-                        val fallbackPulseBaseline = remember(viewModel) {
-                            viewModel.fallbackTrigger.value
-                        }
-                        LaunchedEffect(fallbackTrigger) {
-                            if (!shouldPulse(fallbackTrigger, fallbackPulseBaseline)) return@LaunchedEffect
-                            repeat(3) {
-                                fallbackPulseAlpha.animateTo(1f, animationSpec = androidx.compose.animation.core.tween(350))
-                                fallbackPulseAlpha.animateTo(0f, animationSpec = androidx.compose.animation.core.tween(350))
-                            }
-                        }
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    MaterialTheme.colorScheme.errorContainer.copy(
-                                        alpha = 0.7f * fallbackPulseAlpha.value,
-                                    ),
-                                )
-                                .padding(horizontal = 16.dp, vertical = 2.dp),
-                        ) {
-                            val topBarSoul by com.openminis.app.agent.SoulStore
-                                .cachedMetadata.collectAsState()
-                            val displayTitle = when {
-                                showChatTitlePill
-                                    && sessionTitle.isNotBlank()
-                                    && sessionTitle != "New Chat" -> sessionTitle
-                                topBarSoul.name.isNotBlank() -> topBarSoul.name
-                                else -> stringResource(R.string.app_name)
-                            }
-                            Text(
-                                text = displayTitle,
-                                fontSize = 16.sp,
-                                lineHeight = 19.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = noFontPad,
+                        if (hasCustomSessionTitle) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .clickable {
@@ -2883,24 +2841,82 @@ fun ChatScreen(
                                             editingSession = viewModel.loadSessionEntity()
                                         }
                                     }
-                                    .padding(horizontal = 8.dp, vertical = 1.dp),
-                            )
-                            // M3 Expressive Tonal Model & Group Capsule
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                                    .clickable(
-                                        interactionSource = modelPickerInteraction,
-                                        indication = ripple(),
-                                    ) { showModelPicker = true }
-                                    .padding(horizontal = 10.dp, vertical = 3.dp),
+                                    .padding(horizontal = 6.dp, vertical = 1.dp),
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
+                                Text(
+                                    text = sessionTitle,
+                                    fontSize = 12.5.sp,
+                                    lineHeight = 15.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = noFontPad,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                                    modifier = Modifier.size(11.dp),
+                                )
+                            }
+                        }
+
+                        // M3 Expressive Interactive Model Selector Capsule
+                        val capsuleShape = RoundedCornerShape(16.dp)
+                        val pulseOverlay = fallbackPulseAlpha.value
+                        val capsuleBg = if (pulseOverlay > 0.01f) {
+                            androidx.compose.ui.graphics.lerp(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                MaterialTheme.colorScheme.errorContainer,
+                                (0.75f * pulseOverlay).coerceIn(0f, 1f),
+                            )
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                                alpha = if (ChatColors.isDark) 0.78f else 0.92f,
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier
+                                .background(capsuleBg, capsuleShape)
+                                .border(
+                                    width = 0.75.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f),
+                                    shape = capsuleShape,
+                                )
+                                .clip(capsuleShape)
+                                .clickable(
+                                    interactionSource = modelPickerInteraction,
+                                    indication = ripple(),
+                                ) { showModelPicker = true }
+                                .padding(horizontal = 11.dp, vertical = 5.dp),
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            ) {
+                                val groupNameDisplay = selectedGroupName.ifEmpty {
+                                    if (selectedGroupId == null) {
+                                        modelName
+                                    } else {
+                                        val defaultGroupId = providerRepository.defaultPrimaryGroupId
+                                        availableGroups.firstOrNull { it.id == defaultGroupId }?.name
+                                            ?: stringResource(R.string.common_default)
+                                    }
+                                }.ifEmpty {
+                                    stringResource(R.string.model_picker_no_model_selected)
+                                }
+                                if (selectedGroupId != null) {
+                                    Icon(
+                                        Icons.Default.Layers,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(13.dp),
+                                    )
+                                } else {
                                     Box(
                                         modifier = Modifier
                                             .size(7.dp)
@@ -2910,202 +2926,74 @@ fun ChatScreen(
                                                 CircleShape,
                                             ),
                                     )
-                                    // T-android-topbar-group-name-fallback:
-                                    // _selectedGroupName is empty during the
-                                    // brief window before loadSession's group
-                                    // resolve runs, or whenever a binding
-                                    // resolve fails. Falling straight to the
-                                    // "Default" badge string masks the
-                                    // active group's real name (e.g. the
-                                    // onboarding-created "Default Models" or
-                                    // any user-renamed group). Insert a real
-                                    // fallback chain: collected VM value →
-                                    // active/default group name from the live
-                                    // config → terminal badge string. Mirrors
-                                    // the #476 TopBar title fallback pattern
-                                    // (commit b4c88775).
-                                    //
-                                    // [T-android-group-resolve-skip-uncredentialed]
-                                    // ...but only while a group is ACTUALLY
-                                    // bound. This chain used to run
-                                    // unconditionally, so a session that failed
-                                    // to resolve its group — and was therefore
-                                    // running on a model from the new-chat
-                                    // default chain, unrelated to any group —
-                                    // still displayed the default group's name.
-                                    // The header then contradicted the model
-                                    // line right below it and made a real
-                                    // routing failure read as normal operation,
-                                    // which is what made that bug hard to spot.
-                                    // Mirrors iOS, which keys the group glyph
-                                    // off the binding (`isGroupBound`) rather
-                                    // than off a name lookup.
-                                    //
-                                    // [T-android-topbar-manual-entry-name] What
-                                    // this row shows when NO group is bound.
-                                    // Returning "" there dropped the label and
-                                    // the chevron both, so picking a model by
-                                    // hand (which is exactly what unbinds the
-                                    // group) left a bare green dot with no text
-                                    // beside it — the row went blank precisely
-                                    // when the user had just made an explicit
-                                    // choice, and the only way back to the
-                                    // picker was tapping an unlabelled dot.
-                                    //
-                                    // iOS renders one always-populated label
-                                    // here: the group's name when bound, the
-                                    // MODEL's name on a direct-entry pick, and
-                                    // "No model selected" when nothing resolves
-                                    // (SessionModelPicker.displayName(for:)),
-                                    // marking the group case with an extra
-                                    // stack glyph rather than by swapping the
-                                    // text out. Match that chain so the row
-                                    // always names something.
-                                    val groupNameDisplay = selectedGroupName.ifEmpty {
-                                        if (selectedGroupId == null) {
-                                            // Direct-entry pick: name the model
-                                            // that is actually in effect.
-                                            modelName
-                                        } else {
-                                            val defaultGroupId = providerRepository.defaultPrimaryGroupId
-                                            // The full word, not the picker's
-                                            // model_picker_default_badge: that
-                                            // one is abbreviated in some locales
-                                            // to fit its capsule ("Predet.").
-                                            availableGroups.firstOrNull { it.id == defaultGroupId }?.name
-                                                ?: stringResource(R.string.common_default)
-                                        }
-                                    }.ifEmpty {
-                                        // Nothing bound and no model resolved
-                                        // yet. Still name the state instead of
-                                        // collapsing to a dot, so the picker
-                                        // keeps a visible, tappable label.
-                                        stringResource(R.string.model_picker_no_model_selected)
-                                    }
-                                    if (groupNameDisplay.isNotEmpty()) {
-                                        // [T-android-topbar-manual-entry-name]
-                                        // Row 1 now names a model as readily as
-                                        // a group, so the two cases would read
-                                        // identically without this. iOS marks
-                                        // the group case with a stack glyph
-                                        // ahead of the label; Layers is the
-                                        // same stand-in the model pickers here
-                                        // already use for `square.stack.3d.up`.
-                                        if (selectedGroupId != null) {
-                                            Icon(
-                                                Icons.Default.Layers,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(11.dp),
-                                            )
-                                        }
-                                        Text(
-                                            text = groupNameDisplay,
-                                            fontSize = 12.sp,
-                                            lineHeight = 14.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            style = noFontPad,
-                                        )
-                                        Icon(
-                                            Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(14.dp),
-                                        )
-                                    }
                                 }
-                                // Line 2: "provider · model" (iOS: "MiniMax ·
-                                // MiniMax-M2.7") + the thinking-level badge laid
-                                // out as a Row of two SEPARATE tappable siblings
-                                // (mirrors iOS AIChatView row-2 HStack).
-                                //
-                                // [T-android-thinking-badge-navbar] Gesture
-                                // separation: the whole subtitle Column above owns
-                                // `clickable { showModelPicker = true }`, so a tap
-                                // on the model text still opens the model picker.
-                                // The badge declares its OWN `clickable` (see
-                                // ThinkingLevelBadge), and in Compose the innermost
-                                // clickable consumes the down/up events — so a tap
-                                // that lands on the badge opens the thinking sheet
-                                // and never bubbles up to the Column's model-picker
-                                // handler. Two hit targets, zero gesture conflict,
-                                // no pointerInput plumbing needed.
-                                //
-                                // Sizing: the model text takes `weight(1f, fill =
-                                // false)` so it truncates first (Ellipsis) when the
-                                // navbar is narrow; the badge has no weight, so it
-                                // keeps its intrinsic width and always renders in
-                                // full — the level label never gets clipped.
-                                if (providerName.isNotEmpty() || modelName.isNotEmpty()) {
-                                    val thinkingLevelBadgeState by viewModel.thinkingLevel.collectAsState()
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        // [T-codex-fast-mode] ⚡ badge ahead of the
-                                        // resolved model name — small orange circle
-                                        // + white bolt, shown only while Fast Mode
-                                        // is enabled AND the active model is
-                                        // eligible (iOS 9e3c76ef row-3 placement,
-                                        // 09944220 9pt sizing).
-                                        val fastBadgeEligible by viewModel.showFastModeToggle.collectAsState()
-                                        val fastBadgeOn by viewModel.fastModeEnabled.collectAsState()
-                                        if (fastBadgeEligible && fastBadgeOn) {
-                                            Box(
-                                                contentAlignment = Alignment.Center,
-                                                modifier = Modifier
-                                                    .size(12.dp)
-                                                    .background(MaterialTheme.colorScheme.tertiary, CircleShape),
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Bolt,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onTertiary,
-                                                    modifier = Modifier.size(9.dp),
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            text = if (providerName.isNotEmpty() && modelName.isNotEmpty()) {
-                                                "$providerName · $modelName"
-                                            } else {
-                                                modelName.ifEmpty { providerName }
-                                            },
-                                            fontSize = 11.sp,
-                                            lineHeight = 13.sp,
-                                            color = ChatColors.tertiaryText,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = noFontPad,
-                                            // Yield first when space is tight; the
-                                            // badge to the right stays intrinsic.
-                                            modifier = Modifier.weight(1f, fill = false),
-                                        )
-                                        // Show the badge whenever thinking is on,
-                                        // and ALSO when it's Off but the active
-                                        // model supports deep thinking (iOS
-                                        // parity, e6bd75efc): the icon + "Off"
-                                        // pill is then a discoverable tap target
-                                        // for enabling thinking via the level
-                                        // sheet. The Off pill is gated on
-                                        // currentModelSupportsReasoning so
-                                        // non-reasoning models don't grow a dead
-                                        // toggle; an enabled level still shows
-                                        // unconditionally (user may have opted in
-                                        // on an unknown-capability model).
-                                        if (viewModel.availableThinkingLevels.isNotEmpty() &&
-                                            (
-                                                thinkingLevelBadgeState.isEnabled ||
-                                                    viewModel.currentModelSupportsReasoning
-                                            )
+                                if (groupNameDisplay.isNotEmpty()) {
+                                    Text(
+                                        text = groupNameDisplay,
+                                        fontSize = 13.5.sp,
+                                        lineHeight = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = noFontPad,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                    )
+                                    Icon(
+                                        Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(15.dp),
+                                    )
+                                }
+                            }
+                            if (providerName.isNotEmpty() || modelName.isNotEmpty()) {
+                                val thinkingLevelBadgeState by viewModel.thinkingLevel.collectAsState()
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                ) {
+                                    val fastBadgeEligible by viewModel.showFastModeToggle.collectAsState()
+                                    val fastBadgeOn by viewModel.fastModeEnabled.collectAsState()
+                                    if (fastBadgeEligible && fastBadgeOn) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(13.dp)
+                                                .background(MaterialTheme.colorScheme.tertiary, CircleShape),
                                         ) {
-                                            ThinkingLevelBadge(
-                                                level = thinkingLevelBadgeState,
-                                                onClick = { showThinkingLevelSheet = true },
+                                            Icon(
+                                                Icons.Default.Bolt,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onTertiary,
+                                                modifier = Modifier.size(9.dp),
                                             )
                                         }
+                                    }
+                                    Text(
+                                        text = if (providerName.isNotEmpty() && modelName.isNotEmpty()) {
+                                            "$providerName · $modelName"
+                                        } else {
+                                            modelName.ifEmpty { providerName }
+                                        },
+                                        fontSize = 11.sp,
+                                        lineHeight = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = noFontPad,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                    )
+                                    if (viewModel.availableThinkingLevels.isNotEmpty() &&
+                                        (
+                                            thinkingLevelBadgeState.isEnabled ||
+                                                viewModel.currentModelSupportsReasoning
+                                        )
+                                    ) {
+                                        ThinkingLevelBadge(
+                                            level = thinkingLevelBadgeState,
+                                            onClick = { showThinkingLevelSheet = true },
+                                        )
                                     }
                                 }
                             }
@@ -3118,11 +3006,11 @@ fun ChatScreen(
                             onClick = onBack,
                             shape = RoundedCornerShape(14.dp),
                             colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f),
                                 contentColor = MaterialTheme.colorScheme.onSurface,
                             ),
                             modifier = Modifier
-                                .padding(start = 6.dp)
+                                .padding(start = 6.dp, end = 2.dp)
                                 .size(40.dp),
                         ) {
                             Icon(
@@ -3136,11 +3024,11 @@ fun ChatScreen(
                             onClick = onToggleSidebar,
                             shape = RoundedCornerShape(14.dp),
                             colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f),
                                 contentColor = MaterialTheme.colorScheme.onSurface,
                             ),
                             modifier = Modifier
-                                .padding(start = 6.dp)
+                                .padding(start = 6.dp, end = 2.dp)
                                 .size(40.dp),
                         ) {
                             Icon(
@@ -3152,32 +3040,58 @@ fun ChatScreen(
                                         R.string.chat_hide_sidebar
                                     },
                                 ),
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(21.dp),
                             )
                         }
                     }
                 },
                 actions = {
-                    Box(modifier = Modifier.padding(end = 6.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.padding(end = 6.dp),
+                    ) {
                         androidx.compose.material3.FilledIconButton(
-                            onClick = { showChatMenu = true },
+                            onClick = {
+                                if (isStreaming) {
+                                    showNewChatStopDialog = true
+                                } else {
+                                    onNewChat()
+                                }
+                            },
                             shape = RoundedCornerShape(14.dp),
                             colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                             ),
                             modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = "More",
-                                modifier = Modifier.size(20.dp),
+                                MinisIcons.SquareAndPencil,
+                                contentDescription = stringResource(R.string.chat_menu_new_chat),
+                                modifier = Modifier.size(19.dp),
                             )
                         }
-                        MinisMenu(
-                            expanded = showChatMenu,
-                            onDismissRequest = { showChatMenu = false },
-                        ) {
+                        Box {
+                            androidx.compose.material3.FilledIconButton(
+                                onClick = { showChatMenu = true },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                ),
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "More",
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                            MinisMenu(
+                                expanded = showChatMenu,
+                                onDismissRequest = { showChatMenu = false },
+                            ) {
                             // [T-android-memory-enabled-minisconfig] Gate the
                             // "Memories in Session" item below on the session's
                             // live memoryEnabled — when memory is off the entry
@@ -3422,14 +3336,15 @@ fun ChatScreen(
                                 )
                             }
                         }
+                        }
                     }
                 },
                 windowInsets = WindowInsets.statusBars,
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                    containerColor = ChatColors.background.copy(alpha = 0.94f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.96f),
                 ),
-                expandedHeight = 72.dp,
+                expandedHeight = 74.dp,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -4140,8 +4055,8 @@ fun ChatScreen(
                     // breath under the title bar. Bottom padding and inter-
                     // message spacing are untouched.
                     contentPadding = PaddingValues(
-                        top = 4.dp,
-                        bottom = if (bottomReserve == 0.dp) 12.dp else bottomReserve,
+                        top = 8.dp,
+                        bottom = if (bottomReserve == 0.dp) 16.dp else bottomReserve,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -4216,7 +4131,7 @@ fun ChatScreen(
                     // hits ~1300 px while listState still reports
                     // firstVisible=0, firstOffset=0 (logged as the "tool on
                     // screen but not pushed into view" repro on Pixel 4a).
-                    verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.Bottom),
+                    verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.Bottom),
                     overscrollEffect = sharedEffect,
                 ) {
                     // T13 Resume banner — placed BEFORE items() so reverseLayout
@@ -5327,9 +5242,10 @@ fun ChatScreen(
                                     },
                                 )
                                 .padding(horizontal = 12.dp)
-                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(22.dp))
-                                .clip(RoundedCornerShape(22.dp)),
+                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(24.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f), RoundedCornerShape(24.dp))
+                                .clip(RoundedCornerShape(24.dp)),
                         ) {
                             androidx.compose.foundation.lazy.LazyColumn(
                                 state = slashListState,
@@ -5512,9 +5428,10 @@ fun ChatScreen(
                                     },
                                 )
                                 .padding(horizontal = 12.dp)
-                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(22.dp))
-                                .clip(RoundedCornerShape(22.dp)),
+                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(24.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f), RoundedCornerShape(24.dp))
+                                .clip(RoundedCornerShape(24.dp)),
                         ) {
                             if (mentionEntries.isEmpty()) {
                                 Row(
@@ -5654,11 +5571,16 @@ fun ChatScreen(
                     }
                 }
 
-                // M3 Expressive Floating Command Deck: 28dp tonal container
+                // M3 Expressive Floating Command Deck: 28dp elevated tonal container
                 val deckSurfaceColor = if (ChatColors.isDark) {
-                    MaterialTheme.colorScheme.surfaceContainer
+                    MaterialTheme.colorScheme.surfaceContainerHigh
                 } else {
-                    MaterialTheme.colorScheme.surfaceContainerLow
+                    MaterialTheme.colorScheme.surfaceContainerLowest
+                }
+                val deckBorderColor = if (inputFocused) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = if (ChatColors.isDark) 0.50f else 0.42f)
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (ChatColors.isDark) 0.42f else 0.58f)
                 }
                 val inputBgArgb = deckSurfaceColor.toArgb()
                 val shadowPaint = remember(inputBgArgb) {
@@ -5792,6 +5714,18 @@ fun ChatScreen(
                                 0f, 0f, size.width, size.height,
                                 radiusPx, radiusPx,
                                 shadowPaint,
+                            )
+                            val strokePx = (if (inputFocused) 1.25.dp else 1.dp).toPx()
+                            val half = strokePx * 0.5f
+                            drawRoundRect(
+                                color = deckBorderColor,
+                                topLeft = androidx.compose.ui.geometry.Offset(half, half),
+                                size = androidx.compose.ui.geometry.Size(
+                                    (size.width - strokePx).coerceAtLeast(0f),
+                                    (size.height - strokePx).coerceAtLeast(0f),
+                                ),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(radiusPx, radiusPx),
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokePx),
                             )
                         }
                         .contextUsageGlow(
@@ -7853,23 +7787,23 @@ private fun ThinkingLevelBadge(
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
         modifier = Modifier
+            .background(containerColor, CircleShape)
             .clip(CircleShape)
-            .background(containerColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 1.dp),
+            .padding(horizontal = 7.dp, vertical = 2.dp),
     ) {
         Icon(
             imageVector = Icons.Default.Lightbulb,
             contentDescription = null,
-            tint = if (level.isEnabled) badgeColor else badgeColor.copy(alpha = 0.5f),
-            modifier = Modifier.size(9.dp),
+            tint = if (level.isEnabled) badgeColor else badgeColor.copy(alpha = 0.55f),
+            modifier = Modifier.size(11.dp),
         )
         Text(
             text = level.localizedName(context),
-            fontSize = 9.sp,
-            lineHeight = 11.sp,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
             fontWeight = FontWeight.SemiBold,
             color = badgeColor,
             maxLines = 1,
@@ -7891,76 +7825,140 @@ private fun ThinkingLevelSheet(
     }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = RoundedCornerShape(
+            topStart = ExpressiveTokens.SheetTopRadius,
+            topEnd = ExpressiveTokens.SheetTopRadius,
+        ),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(bottom = 24.dp),
         ) {
-            Text(
-                text = stringResource(R.string.thinking_level_sheet_title),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            )
-            val context = LocalContext.current
-            rows.forEach { level ->
-                val isSelected = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) {
-                    !currentLevel.isEnabled
-                } else {
-                    currentLevel == level
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .size(34.dp)
                         .background(
-                            if (isSelected) {
-                                MaterialTheme.colorScheme.secondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainer
-                            },
-                        )
-                        .clickable { onSelect(level) }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            MaterialShapes.SoftBurst.toShape(),
+                        ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Lightbulb,
+                        imageVector = Icons.Default.Psychology,
                         contentDescription = null,
-                        tint = if (isSelected) {
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        } else {
-                            ChatColors.thinking.copy(
-                                alpha = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) 0.45f else 1f,
-                            )
-                        },
-                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = level.localizedName(context),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                        ),
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (isSelected) {
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = stringResource(R.string.thinking_level_sheet_title),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    modifier = Modifier.size(34.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            imageVector = Icons.Default.Close,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp),
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            val context = LocalContext.current
+            Column(
+                verticalArrangement = Arrangement.spacedBy(ExpressiveTokens.GroupItemGap),
+            ) {
+                rows.forEachIndexed { idx, level ->
+                    val isSelected = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) {
+                        !currentLevel.isEnabled
+                    } else {
+                        currentLevel == level
+                    }
+                    val itemShape = articulatedItemShape(index = idx, count = rows.size)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                },
+                                itemShape,
+                            )
+                            .clip(itemShape)
+                            .clickable { onSelect(level) }
+                            .padding(horizontal = 16.dp, vertical = 13.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(
+                                    if (isSelected) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerHighest
+                                    },
+                                    RoundedCornerShape(11.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = null,
+                                tint = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    ChatColors.thinking.copy(
+                                        alpha = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) 0.45f else 0.9f,
+                                    )
+                                },
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = level.localizedName(context),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            ),
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                            contentDescription = null,
+                            tint = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+                            },
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -7979,19 +7977,22 @@ private fun EmptyChatExpressiveHero(
     val heroName = heroSoul.name.ifBlank { stringResource(R.string.app_name) }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = modifier,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .size(88.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialShapes.Cookie12Sided.toShape()),
+                    .size(92.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        MaterialShapes.Cookie12Sided.toShape(),
+                    ),
             )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(58.dp)
                     .background(MaterialTheme.colorScheme.primary, MaterialShapes.Sunny.toShape()),
             ) {
                 Icon(
@@ -8002,6 +8003,7 @@ private fun EmptyChatExpressiveHero(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = heroName,
             style = MaterialTheme.typography.headlineMedium.copy(

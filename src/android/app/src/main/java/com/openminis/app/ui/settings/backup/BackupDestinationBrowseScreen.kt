@@ -122,6 +122,8 @@ fun BackupDestinationBrowseScreen(
 
     pendingDelete?.let { pkg ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { pendingDelete = null },
             title = { Text(stringResource(R.string.backup_dest_delete_title)) },
             // A deleted package cannot be recovered, and this is the copy the

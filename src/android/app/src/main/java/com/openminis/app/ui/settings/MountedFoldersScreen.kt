@@ -320,6 +320,8 @@ fun MountedFoldersScreen(
 
     addError?.let { msg ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { addError = null },
             confirmButton = {
                 MinisTextButton(onClick = { addError = null }) {
@@ -343,6 +345,8 @@ fun MountedFoldersScreen(
     // (b) land them somewhere selectable (see initialPickerUri()).
     if (showPickerIntro) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showPickerIntro = false },
             title = { Text(stringResource(R.string.mount_picker_intro_title)) },
             text = { Text(stringResource(R.string.mount_picker_intro_message)) },
@@ -627,6 +631,8 @@ private fun AddMountSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier

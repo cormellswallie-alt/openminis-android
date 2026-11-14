@@ -642,7 +642,11 @@ private fun EditFormBody(
         // every level and letting `setThinkingLevel` clamp at run time — it
         // already silently no-ops on a model that cannot reason — keeps the
         // editor honest about what it can and cannot know in advance.
-        ModalBottomSheet(onDismissRequest = { showThinkingPicker = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showThinkingPicker = false },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
             Column(modifier = Modifier.padding(bottom = 24.dp)) {
                 Text(
                     stringResource(R.string.scheduled_task_field_thinking),

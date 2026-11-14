@@ -210,6 +210,8 @@ fun EnvironmentVariablesScreen(
     if (deleteEntryId != null) {
         val entry = entries.find { it.id == deleteEntryId }
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { deleteEntryId = null },
             title = { Text("Delete ${entry?.key ?: "variable"}?") },
             text = { Text(stringResource(R.string.env_var_delete_confirm_text)) },
@@ -262,6 +264,8 @@ private fun EnvVarFormSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier

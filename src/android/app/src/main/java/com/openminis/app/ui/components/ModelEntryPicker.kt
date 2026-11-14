@@ -1,7 +1,12 @@
 package com.openminis.app.ui.components
 
+import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,76 +23,60 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.openminis.app.R
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.annotation.StringRes
+import com.openminis.app.R
 import com.openminis.app.data.model.LLMModel
 import com.openminis.app.data.model.ModelEntry
 import com.openminis.app.data.model.ProviderInstance
 import com.openminis.app.data.model.ProviderType
 import com.openminis.app.data.model.SystemVoiceEntries
+import com.openminis.app.data.model.hasImageInput
 import com.openminis.app.data.model.isVoiceInputCandidate
 import com.openminis.app.data.model.isVoiceOutputCandidate
-import com.openminis.app.data.model.hasImageInput
 import com.openminis.app.data.model.normalizeModalities
+import com.openminis.app.data.repository.ModelEntryRanking
+import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.ExpressiveTokens
 
-/**
- * [T-android-provider-voice] First-class modality scoping for the shared
- * picker — Android port of iOS ModelPickerConfig.explicitPreferModality.
- * iOS expresses preference as a ModelModality bitset with a superset match;
- * in practice the only prefs used are the two voice directions, so Android
- * models them directly:
- *
- *  - [AUDIO_INPUT]  — ASR scenario: only audio-consuming entries qualify,
- *    and the System Recognition (Online/Offline) virtual entries lead.
- *  - [AUDIO_OUTPUT] — TTS scenario: only audio-producing entries qualify,
- *    and the System Voice (Auto) virtual entry leads.
- *
- * When a filter is active the picker also injects the matching System
- * virtual entries as their own leading "System" section (iOS
- * candidateEntries appends systemASROnline/Offline / systemTTS). Callers in
- * a voice scenario should keep provider sections expanded (iOS d4e3798f
- * seedCollapse: multi-voice vendors would fold all-but-one voice).
- */
 enum class PickerModalityFilter {
     AUDIO_INPUT,
     AUDIO_OUTPUT,
-    // [T-android-vision-group] Vision scenario: only image-consuming entries
-    // qualify. No System virtual entry — there is no on-device vision engine.
     IMAGE_INPUT;
 
     fun matches(model: LLMModel): Boolean = when (this) {
-        // [T-openrouter-voice-catalog] Voice candidates, not raw audio flags:
-        // an OpenRouter chat model that merely hears audio is not an ASR engine.
         AUDIO_INPUT -> model.isVoiceInputCandidate
         AUDIO_OUTPUT -> model.isVoiceOutputCandidate
         IMAGE_INPUT -> model.hasImageInput
     }
 
-    /** System virtual entries that serve this direction, in display order. */
     fun systemEntries(): List<ModelEntry> = when (this) {
         AUDIO_INPUT -> listOf(SystemVoiceEntries.asrOnline, SystemVoiceEntries.asrOffline)
         AUDIO_OUTPUT -> listOf(SystemVoiceEntries.tts)
@@ -94,24 +84,6 @@ enum class PickerModalityFilter {
     }
 }
 
-/**
- * T185 — shared multi-select picker for model entries.
- *
- * Pre-T185 the agent-loop add sheet (`AgentLoopAddSheets.kt`) and
- * `AddModelsToGroupScreen` rendered the same conceptual list with
- * different visuals: the former a plain ModalBottomSheet with bare
- * tap-and-add rows, the latter a sectioned multi-select with collapsible
- * per-provider cards, search, and a confirm button. User reported the
- * mismatch (T185) — the iOS counterparts use the same sectioned-list
- * style for both. Extract the AddModelsToGroupScreen layout into a
- * reusable [LazyListScope] extension so both call sites share one
- * implementation.
- *
- * [modelEntryPickerItems] is consumed inside a parent `LazyColumn`
- * rather than being a self-contained Composable so the caller controls
- * the surrounding chrome (Scaffold + TopAppBar + confirm button) and
- * retains access to the LazyListState for reorder / scroll-to.
- */
 @OptIn(ExperimentalLayoutApi::class)
 fun LazyListScope.modelEntryPickerItems(
     instances: List<ProviderInstance>,
@@ -124,29 +96,10 @@ fun LazyListScope.modelEntryPickerItems(
     @StringRes emptySearchTextRes: Int,
     @StringRes searchPlaceholderRes: Int,
     @StringRes clearContentDescriptionRes: Int,
-    // [T-android-model-quick-test] Optional per-row Quick Test button. When
-    // provided, each model row shows a compact bolt icon that opens the shared
-    // QuickTestSheet for that entry (the caller owns the sheet + repository).
     onQuickTest: ((ModelEntry) -> Unit)? = null,
-    // [T-android-provider-voice] Modality scoping (see PickerModalityFilter):
-    // null = no filtering (all entries, no System injection) — the pre-voice
-    // behavior every existing caller keeps by default.
     modalityFilter: PickerModalityFilter? = null,
-    // Ids to exclude from the injected System entries (e.g. ids already in the
-    // target group). Regular entries are excluded by the caller via
-    // [availableEntries]; System entries are built here, hence this knob.
     excludeIds: Set<String> = emptySet(),
-    // Localized display label for the injected System provider section.
-    // Resolved by the Composable caller via stringResource (this extension is
-    // not @Composable); mirrors iOS String(localized: "System").
     systemProviderLabel: String = "System",
-    /**
-     * [T-picker-search-debounce] The search result from
-     * [rememberModelEntryPickerSections]. Pass it: this function runs in the
-     * LazyColumn content block, which re-runs on every keystroke because it
-     * reads [searchQuery] for the field, so searching HERE would redo the whole
-     * ranking per character. Null computes it inline (undebounced).
-     */
     sections: ModelSearch.Result<ProviderInstance>? = null,
 ) {
     val result = sections ?: modelEntryPickerSearch(
@@ -155,37 +108,89 @@ fun LazyListScope.modelEntryPickerItems(
     )
     val isSearching = searchQuery.value.isNotBlank()
     val instanceWithEntries = result.sections.map { it.key to it.entries }
-
-    // Force expand everything while searching so the user actually
-    // sees results — collapsed sections during search would hide hits.
     val effectiveCollapsed = if (isSearching) emptySet() else collapsedInstanceIds.value
 
     item("__search__") {
-        OutlinedTextField(
+        val searchInteraction = remember { MutableInteractionSource() }
+        val searchFocused by searchInteraction.collectIsFocusedAsState()
+        BasicTextField(
             value = searchQuery.value,
             onValueChange = { searchQuery.value = it },
-            placeholder = { Text(stringResource(searchPlaceholderRes)) },
-            singleLine = true,
-            shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            leadingIcon = {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.value.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery.value = "" }) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = stringResource(clearContentDescriptionRes),
-                            modifier = Modifier.size(18.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .height(46.dp),
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            interactionSource = searchInteraction,
+            decorationBox = { innerTextField ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            CircleShape,
                         )
+                        .then(
+                            if (searchFocused) {
+                                Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            } else {
+                                Modifier.border(
+                                    0.75.dp,
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                                    CircleShape,
+                                )
+                            },
+                        )
+                        .padding(start = 15.dp, end = 10.dp),
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(19.dp),
+                        tint = if (searchFocused) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        if (searchQuery.value.isEmpty()) {
+                            Text(
+                                text = stringResource(searchPlaceholderRes),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        innerTextField()
+                    }
+                    if (searchQuery.value.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                                .clip(CircleShape)
+                                .clickable { searchQuery.value = "" },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(clearContentDescriptionRes),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(15.dp),
+                            )
+                        }
                     }
                 }
             },
@@ -197,213 +202,236 @@ fun LazyListScope.modelEntryPickerItems(
         val dotColor = providerDotColor(instance.providerType)
 
         item(key = "header_${instance.id}") {
+            val chevronRotation by animateFloatAsState(
+                targetValue = if (isCollapsed) 0f else 180f,
+                label = "entryPickerChevron",
+            )
+            val headerShape = RoundedCornerShape(
+                topStart = ExpressiveTokens.OuterGroupRadius,
+                topEnd = ExpressiveTokens.OuterGroupRadius,
+                bottomStart = ExpressiveTokens.InnerGroupRadius,
+                bottomEnd = ExpressiveTokens.InnerGroupRadius,
+            )
             Row(
                 modifier = Modifier
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 10.dp,
+                        bottom = ExpressiveTokens.GroupItemGap,
+                    )
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, headerShape)
+                    .clip(headerShape)
+                    .clickable {
+                        collapsedInstanceIds.value = if (isCollapsed) {
+                            collapsedInstanceIds.value - instance.id
+                        } else {
+                            collapsedInstanceIds.value + instance.id
+                        }
+                    }
+                    .padding(start = 14.dp, end = 12.dp, top = 11.dp, bottom = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    instance.label.ifEmpty { instance.providerType.displayName },
-                    // [T-android-model-picker-polish] Section headers outrank
-                    // their rows. titleSmall is 14sp Medium while model names
-                    // are bodyMedium SemiBold — same size, heavier weight — so
-                    // the header read as the weaker of the two. Matches the
-                    // chat model picker.
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
                 Box(
                     modifier = Modifier
-                        // Neutral disclosure control, 24dp — a tinted or
-                        // oversized circle competes with the provider name.
-                        .size(24.dp)
+                        .size(32.dp)
                         .background(
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
-                            CircleShape,
-                        )
-                        .clip(CircleShape)
-                        .clickable {
-                            collapsedInstanceIds.value = if (isCollapsed) {
-                                collapsedInstanceIds.value - instance.id
-                            } else {
-                                collapsedInstanceIds.value + instance.id
-                            }
-                        },
+                            dotColor.copy(alpha = if (ChatColors.isDark) 0.22f else 0.14f),
+                            RoundedCornerShape(10.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(dotColor, CircleShape),
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    instance.label.ifEmpty { instance.providerType.displayName },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "${entries.size}",
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                        Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .graphicsLayer { rotationZ = chevronRotation },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-            // [T-android-model-picker-polish] Hairline under the provider name.
-            // The rows below are models, not more provider chrome; without a
-            // rule the header read as the first list item. Matches the chat
-            // model picker.
-            HorizontalDivider(
-                modifier = Modifier.padding(start = 20.dp, end = 16.dp),
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-            )
         }
 
         if (isCollapsed) {
-            // Collapsed preview: first row + "N models" hint to remind the
-            // user how many are inside the section without expanding.
             item(key = "collapsed_${instance.id}") {
                 val firstEntry = entries.firstOrNull() ?: return@item
                 val isSelected = firstEntry.id in selectedIds
+                val bottomShape = RoundedCornerShape(
+                    topStart = ExpressiveTokens.InnerGroupRadius,
+                    topEnd = ExpressiveTokens.InnerGroupRadius,
+                    bottomStart = ExpressiveTokens.OuterGroupRadius,
+                    bottomEnd = ExpressiveTokens.OuterGroupRadius,
+                )
                 Row(
                     modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, bottom = 4.dp)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
                         .background(
-                            MaterialTheme.colorScheme.surfaceContainer,
-                            RoundedCornerShape(12.dp),
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = if (ChatColors.isDark) 0.42f else 0.56f,
+                                )
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            },
+                            bottomShape,
                         )
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(bottomShape)
                         .clickable { onToggleSelection(firstEntry.id) }
-                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SelectionDot(isSelected)
-                    Spacer(Modifier.width(10.dp))
-                    Box(modifier = Modifier.size(6.dp).background(dotColor, CircleShape))
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(12.dp))
                     Text(
                         firstEntry.model.displayName,
                         style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        // Was the hardcoded English "N models" — the one raw
-                        // string in a picker whose every other label is a
-                        // resource, so Chinese users saw "413 models".
-                        androidx.compose.ui.res.pluralStringResource(
+                        pluralStringResource(
                             R.plurals.model_picker_models_count,
                             entries.size,
                             entries.size,
                         ),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     )
                 }
             }
         } else {
-            // [T-picker-search-cap] One lazy item per row, so a provider with
-            // thousands of models composes only what is on screen. Each row
-            // paints its own slice of the card: rounded top on the first,
-            // rounded bottom on the last.
             itemsIndexed(entries, key = { _, e -> "entry_${instance.id}_${e.id}" }) { index, entry ->
-                val cardShape = when {
-                    entries.size == 1 -> RoundedCornerShape(12.dp)
-                    index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                    index == entries.size - 1 -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                    else -> RoundedCornerShape(0.dp)
+                val isLast = index == entries.size - 1
+                val isSelected = entry.id in selectedIds
+                val rowShape = if (isLast) {
+                    RoundedCornerShape(
+                        topStart = ExpressiveTokens.InnerGroupRadius,
+                        topEnd = ExpressiveTokens.InnerGroupRadius,
+                        bottomStart = ExpressiveTokens.OuterGroupRadius,
+                        bottomEnd = ExpressiveTokens.OuterGroupRadius,
+                    )
+                } else {
+                    RoundedCornerShape(ExpressiveTokens.InnerGroupRadius)
                 }
-                Column(
+                Row(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainer, cardShape),
-                ) {
-                        val isSelected = entry.id in selectedIds
-                        val rowShape = when {
-                            entries.size == 1 -> RoundedCornerShape(12.dp)
-                            index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                            index == entries.size - 1 -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                            else -> RoundedCornerShape(0.dp)
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(rowShape)
-                                .clickable { onToggleSelection(entry.id) }
-                                .padding(horizontal = 16.dp, vertical = 13.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            SelectionDot(isSelected)
-                            Spacer(Modifier.width(10.dp))
-                            Box(modifier = Modifier.size(6.dp).background(dotColor, CircleShape))
-                            Spacer(Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    entry.model.displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = if (isLast) 4.dp else ExpressiveTokens.GroupItemGap,
+                        )
+                        .fillMaxWidth()
+                        .background(
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = if (ChatColors.isDark) 0.42f else 0.56f,
                                 )
-                                // [T-android-provider-voice] Modality chips
-                                // (iOS entryRow modalityBadges: img / audio /
-                                // video / pdf and the -out variants).
-                                //
-                                // [T-android-modality-chip] FlowRow, NOT Row: this
-                                // was the one call site 0e7b742cc missed when it
-                                // fixed the same defect in the three picker sheets.
-                                // In a plain Row an overflowing chip is squeezed
-                                // until Compose wraps it character-by-character —
-                                // "img-out" drew as a vertical letter column, and
-                                // because the Row is CenterVertically that column
-                                // inflated the row height until the model name
-                                // floated above the selection dot. The shared
-                                // ModalityBadge (maxLines=1 + softWrap=false) stops
-                                // a chip breaking internally; FlowRow is what gives
-                                // it somewhere to go, wrapping whole chips instead.
-                                // Overflow here is about total chip width, not any
-                                // single label: a long model id plus 4 chips
-                                // overflows the weight(1f) column just as surely.
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    itemVerticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        entry.model.id,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                    )
-                                    modalityBadges(entry.model).forEach { badge ->
-                                        ModalityBadge(badge)
-                                    }
-                                }
-                            }
-                            // System virtual entries have no cloud endpoint to
-                            // smoke-test — no bolt on those rows.
-                            if (onQuickTest != null && !SystemVoiceEntries.isSystemEntryId(entry.id)) {
-                                IconButton(
-                                    onClick = { onQuickTest(entry) },
-                                    modifier = Modifier.size(32.dp),
-                                ) {
-                                    Icon(
-                                        Icons.Outlined.Bolt,
-                                        contentDescription = stringResource(R.string.quicktest_button),
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                }
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            },
+                            rowShape,
+                        )
+                        .clip(rowShape)
+                        .clickable { onToggleSelection(entry.id) }
+                        .padding(horizontal = 16.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SelectionDot(isSelected)
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            entry.model.displayName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                            itemVerticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                entry.model.id,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                            )
+                            modalityBadges(entry.model).forEach { badge ->
+                                ModalityBadge(badge)
                             }
                         }
-                        if (index < entries.size - 1) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(start = 52.dp, end = 16.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    }
+                    if (onQuickTest != null && !SystemVoiceEntries.isSystemEntryId(entry.id)) {
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                    RoundedCornerShape(10.dp),
+                                )
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onQuickTest(entry) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Outlined.Bolt,
+                                contentDescription = stringResource(R.string.quicktest_button),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(16.dp),
                             )
                         }
+                    }
                 }
             }
         }
     }
 
-    // [T-picker-search-cap] Say when a search was truncated.
     if (isSearching && result.truncated) {
         item("__search_cap_footer__") {
             Text(
                 stringResource(R.string.model_picker_search_capped, result.shown, result.totalMatches),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 12.dp),
@@ -417,7 +445,10 @@ fun LazyListScope.modelEntryPickerItems(
                 stringResource(if (isSearching) emptySearchTextRes else emptyTextRes),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(28.dp),
             )
         }
     }
@@ -429,16 +460,11 @@ private fun SelectionDot(isSelected: Boolean) {
         if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
         contentDescription = null,
         tint = if (isSelected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.32f),
         modifier = Modifier.size(20.dp),
     )
 }
 
-/**
- * [T-android-provider-voice] Non-text modality chips for a model row —
- * mirrors iOS UnifiedModelPicker.modalityBadges (same labels, same order:
- * inputs first, then outputs; text never badged).
- */
 fun modalityBadges(model: LLMModel): List<String> {
     val ins = model.inputModalities.normalizeModalities() ?: emptyList()
     val outs = model.outputModalities.normalizeModalities() ?: emptyList()
@@ -453,62 +479,42 @@ fun modalityBadges(model: LLMModel): List<String> {
     return badges
 }
 
-/**
- * [T-android-modality-chip] One modality chip, iOS entryRow badge recipe
- * (UnifiedModelPicker.swift:1109): 9pt medium, tertiarySystemFill rounded-3
- * background. Two Android-specific constraints baked in:
- *  - fill is onSurface@8% rather than surfaceContainerHighest — the chips sit
- *    ON surfaceContainerHigh cards, where the container tone is the same
- *    color and the "gray capsule" disappeared entirely;
- *  - maxLines=1 + softWrap=false so a chip can NEVER break internally.
- *    Compose Text in an overflowing Row wraps character-by-character
- *    ("audio-out" rendered as a vertical letter column); hosts must place
- *    chips in a FlowRow so overflow wraps whole chips to the next line.
- */
 @Composable
 fun ModalityBadge(badge: String) {
     Text(
         badge,
-        fontSize = 9.sp,
-        lineHeight = 11.sp,
-        fontWeight = FontWeight.Medium,
+        fontSize = 10.sp,
+        lineHeight = 12.sp,
+        fontWeight = FontWeight.SemiBold,
         maxLines = 1,
         softWrap = false,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
         modifier = Modifier
             .background(
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-                RoundedCornerShape(3.dp),
+                MaterialTheme.colorScheme.secondaryContainer.copy(
+                    alpha = if (ChatColors.isDark) 0.55f else 0.72f,
+                ),
+                RoundedCornerShape(6.dp),
             )
-            .padding(horizontal = 4.dp, vertical = 1.dp),
+            .padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }
 
-/** Provider color dot — same RGB across ChatScreen, AddModelsToGroup, and
- *  the agent-loop sheets so the visual cue stays consistent everywhere. */
 fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
     ProviderType.anthropic -> Color(0xFFAB47BC)
     ProviderType.gemini -> Color(0xFF42A5F5)
     ProviderType.openAI -> Color(0xFF4CAF50)
     ProviderType.openRouter -> Color(0xFF00BCD4)
     ProviderType.xAI -> Color(0xFFFF7043)
-    ProviderType.kimiCode -> Color(0xFF5C6BC0) // indigo — Kimi accent
-    ProviderType.githubCopilot -> Color(0xFF6E5494) // purple — GitHub accent
-    // [T-android-provider-type-parity] Responses API instances are
-    // OpenAI under the hood — same green dot. Undrivable types share
-    // the neutral gray used for "no provider".
+    ProviderType.kimiCode -> Color(0xFF5C6BC0)
+    ProviderType.githubCopilot -> Color(0xFF6E5494)
     ProviderType.openAIResponses -> Color(0xFF4CAF50)
     ProviderType.antigravity,
     ProviderType.unsupported -> Color(0xFF79747E)
     null -> Color(0xFF79747E)
 }
 
-/**
- * [T-picker-search-debounce] The [modelEntryPickerItems] search, debounced and
- * remembered, for the composable that hosts the LazyColumn: typing re-runs
- * the ranking only when the debounced query (or the inputs) change.
- */
-@androidx.compose.runtime.Composable
+@Composable
 fun rememberModelEntryPickerSections(
     instances: List<ProviderInstance>,
     availableEntries: List<ModelEntry>,
@@ -518,17 +524,11 @@ fun rememberModelEntryPickerSections(
     systemProviderLabel: String = "System",
 ): ModelSearch.Result<ProviderInstance> {
     val query = rememberDebouncedQuery(searchQuery)
-    return androidx.compose.runtime.remember(instances, availableEntries, query, modalityFilter, excludeIds, systemProviderLabel) {
+    return remember(instances, availableEntries, query, modalityFilter, excludeIds, systemProviderLabel) {
         modelEntryPickerSearch(instances, availableEntries, query, modalityFilter, excludeIds, systemProviderLabel)
     }
 }
 
-/**
- * Sections for [modelEntryPickerItems]: the System section (modality filter
- * active) first, then each enabled provider's entries newest-first, searched
- * with [ModelSearch.search] (ranked, provider-name hits whole, capped).
- * [query] must be normalized.
- */
 internal fun modelEntryPickerSearch(
     instances: List<ProviderInstance>,
     availableEntries: List<ModelEntry>,
@@ -537,36 +537,20 @@ internal fun modelEntryPickerSearch(
     excludeIds: Set<String>,
     systemProviderLabel: String,
 ): ModelSearch.Result<ProviderInstance> {
-    // System section leads when a modality filter is active (iOS: the System
-    // synthetic instance is first in entriesByInstance).
     val systemPair: Pair<ProviderInstance, List<ModelEntry>>? = modalityFilter
         ?.systemEntries()
         ?.filter { it.id !in excludeIds }
         ?.takeIf { it.isNotEmpty() }
         ?.let { SystemVoiceEntries.syntheticInstance(systemProviderLabel) to it }
 
-    // One pass grouping entries by provider (was one full scan per provider).
     val byInstance = availableEntries
         .filter { modalityFilter == null || modalityFilter.matches(it.model) }
         .groupBy { it.providerInstanceId }
     val base = listOfNotNull(systemPair) + instances
         .filter { it.isEnabled && !SystemVoiceEntries.isSystemEntryId(it.id) }
         .mapNotNull { instance ->
-            // [T-model-release-ranking] Newest first within each provider
-            // section. Callers hand us a list filtered straight off the config
-            // snapshot, which carries raw insertion order — not the release
-            // ranking ProviderRepository's accessors apply. Sorting here fixes
-            // every caller of this shared picker at once.
-            //
-            // The System-voice section above is deliberately NOT sorted: it is
-            // built in its own meaningful order, and being synthetic it has no
-            // catalog entry to rank by. Provider-hosted voices (Azure ~39,
-            // MiMo 9) DO pass through here and are also undated; they degrade
-            // to the comparator's final key, display name, which is a stable
-            // and readable order for a voice list — not a regression.
             val entries = byInstance[instance.id] ?: return@mapNotNull null
-            instance to com.openminis.app.data.repository.ModelEntryRanking.sortedByReleaseRank(entries)
+            instance to ModelEntryRanking.sortedByReleaseRank(entries)
         }
-    // Ties in relevance keep this newest-first order (ModelSearch.rank is stable).
     return ModelSearch.search(base, { it.label.ifEmpty { it.providerType.displayName } }, query)
 }

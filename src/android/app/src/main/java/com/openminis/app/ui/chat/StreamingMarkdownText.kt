@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.clickable
@@ -2370,66 +2371,78 @@ private fun RenderBlock(block: MdBlock) {
                     copied = false
                 }
             }
+            val codeShape = RoundedCornerShape(16.dp)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(colors.codeBg),
+                    .padding(top = 4.dp, bottom = 10.dp)
+                    .background(colors.codeBg, codeShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), codeShape)
+                    .clip(codeShape),
             ) {
-                // Header row: language label + copy button
+                // M3 Expressive code card header bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp, end = 8.dp, top = 6.dp),
+                        .background(Color.White.copy(alpha = 0.045f))
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = block.language.ifEmpty { "code" },
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
+                        lineHeight = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.Monospace,
                         color = MdCodeLangColor,
                         modifier = Modifier.weight(1f),
                     )
-                    Icon(
-                        imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
-                        contentDescription = if (copied) "Copied" else "Copy code",
-                        tint = if (copied) Color(0xFF10B981) else Color.White.copy(alpha = 0.4f),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier
-                            .size(16.dp)
+                            .background(Color.White.copy(alpha = 0.08f), CircleShape)
+                            .clip(CircleShape)
                             .clickable {
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(block.code))
                                 copied = true
-                            },
-                    )
+                            }
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    ) {
+                        Icon(
+                            imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
+                            contentDescription = if (copied) "Copied" else "Copy code",
+                            tint = if (copied) Color(0xFF10B981) else Color.White.copy(alpha = 0.72f),
+                            modifier = Modifier.size(13.dp),
+                        )
+                        Text(
+                            text = if (copied) "Copied" else "Copy",
+                            fontSize = 10.5.sp,
+                            lineHeight = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (copied) Color(0xFF10B981) else Color.White.copy(alpha = 0.72f),
+                        )
+                    }
                 }
-                // iOS parity (SelectableMarkdownView.swift L971): cap visual
-                // code-block height at ~400 pt and let an internal scroll
-                // view handle overflow vertically, so a 200-line dump
-                // doesn't push the rest of the message off the bottom of
-                // the chat. Nest scrolls: inner Row owns horizontal scroll
-                // (long lines), outer Box owns vertical scroll + height
-                // cap (long blocks). Compose disallows two scroll modifiers
-                // on the same node, hence the nesting.
                 val vScroll = rememberScrollState()
                 val hScroll = rememberScrollState()
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(max = 400.dp)
-                        .verticalScroll(vScroll)
-                        .padding(bottom = 8.dp),
+                        .verticalScroll(vScroll),
                 ) {
                     Box(
                         modifier = Modifier
                             .horizontalScroll(hScroll)
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                     ) {
                         Text(
                             text = block.code,
                             fontSize = BaseFontSize * 0.85f,
                             fontFamily = FontFamily.Monospace,
                             color = colors.codeText,
-                            lineHeight = BaseLineHeight * 0.9f,
+                            lineHeight = BaseLineHeight * 0.92f,
                         )
                     }
                 }
@@ -2437,24 +2450,34 @@ private fun RenderBlock(block: MdBlock) {
         }
 
         is MdBlock.BlockQuote -> {
-            // T307: previous IntrinsicSize.Min approach crashes when inner
-            // blocks contain SubcomposeLayout (tables, images, etc.) — Compose
-            // refuses intrinsic measurement on those. Draw the orange rule
-            // directly behind a single Column so layout never queries
-            // intrinsics.
-            val barColor = Color(0xFFD97706)
+            // T307: keep drawBehind on a single Column (zero IntrinsicSize.Min)
+            // so inner SubcomposeLayout blocks (tables, images) never crash.
+            val barColor = ChatColors.blockquoteBar
+            val quoteBg = MaterialTheme.colorScheme.surfaceContainerLow.copy(
+                alpha = if (ChatColors.isDark) 0.55f else 0.72f,
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
+                    .padding(top = 2.dp, bottom = 8.dp)
                     .drawBehind {
-                        drawRect(
-                            color = barColor,
+                        val bgRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx())
+                        drawRoundRect(
+                            color = quoteBg,
                             topLeft = Offset.Zero,
-                            size = Size(3.dp.toPx(), size.height),
+                            size = size,
+                            cornerRadius = bgRadius,
+                        )
+                        val barWidth = 3.5.dp.toPx()
+                        val barInset = 6.dp.toPx()
+                        drawRoundRect(
+                            color = barColor,
+                            topLeft = Offset(6.dp.toPx(), barInset),
+                            size = Size(barWidth, (size.height - barInset * 2f).coerceAtLeast(4f)),
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2f),
                         )
                     }
-                    .padding(start = 15.dp),
+                    .padding(start = 18.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
             ) {
                 block.innerBlocks.forEach { inner -> RenderBlock(inner) }
             }
@@ -3426,8 +3449,8 @@ private fun RenderTable(block: MdBlock.Table) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .border(1.dp, colors.tableBorder, RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(14.dp))
+                .border(1.dp, colors.tableBorder, RoundedCornerShape(14.dp))
                 // Record this draw pass into the GraphicsLayer so Copy Table
                 // Image can materialise the styled table (cells, borders, header
                 // shading, inline code) via toImageBitmap() — drawLayer also

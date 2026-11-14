@@ -519,8 +519,7 @@ private fun BentoControlTile(
                 Box(
                     modifier = Modifier
                         .size(42.dp)
-                        .clip(badgeShape)
-                        .background(badgeColor),
+                        .background(badgeColor, badgeShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(

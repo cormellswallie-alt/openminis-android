@@ -584,6 +584,8 @@ internal fun FolderBrowser(vm: RcloneDestinationsViewModel, onSaved: (String) ->
 
     if (showNewFolder) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showNewFolder = false; newFolderName = "" },
             title = { Text(stringResource(R.string.backup_dest_new_folder_title)) },
             text = {

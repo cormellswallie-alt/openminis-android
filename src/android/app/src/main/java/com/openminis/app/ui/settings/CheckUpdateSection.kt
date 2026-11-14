@@ -252,6 +252,8 @@ private fun UpdateDialog(
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = {
             Column {

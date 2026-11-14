@@ -142,6 +142,8 @@ fun MemoryManagementScreen(
     // Delete confirmation
     if (deleteFileName != null) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { deleteFileName = null },
             title = { Text(stringResource(R.string.memory_delete_confirm_title, deleteFileName ?: "")) },
             text = { Text(stringResource(R.string.memory_delete_confirm_text)) },

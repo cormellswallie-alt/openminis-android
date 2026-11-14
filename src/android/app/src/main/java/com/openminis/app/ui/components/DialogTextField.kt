@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,17 +21,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 /**
- * Outlined text input for use inside a Dialog / ModalBottomSheet /
- * full-screen editor. Sister composable of [SectionTextField] — same
- * BasicTextField + OutlinedTextFieldDefaults.DecorationBox pattern so we
- * can override contentPadding, but keeps Material3's outlined border +
- * container visible (dialog backgrounds use surfaceContainerHigh /
- * surfaceContainerHighest, where SectionTextField's transparent chrome
- * would leave the input invisible).
- *
- * Layout contract: caller renders the label outside the field
- * (`Text(label) + Spacer(6dp) + DialogTextField(...)`) — the inner
- * BasicTextField does NOT use a floating label slot.
+ * M3 Expressive tonal/outlined text input for use inside a Dialog,
+ * ModalBottomSheet, or full-screen editor. Uses a soft 16dp squircle
+ * container with subtle tonal fill and crisp focus ring so dialog and
+ * sheet inputs never fall back to legacy 4dp rectangular boxes.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -52,22 +46,22 @@ fun DialogTextField(
     fieldModifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val colors = OutlinedTextFieldDefaults.colors()
-    // Tighten Material's default 16dp/16dp contentPadding so the min-height
-    // comfortably fits a single line of text + cursor.
-    // [T-android-search-height] 8.dp of vertical padding plus the text's own
-    // line box exceeded the 42.dp target on its own, so the field would have
-    // ignored heightIn and stayed tall. 6.dp leaves the single-line case
-    // comfortably inside 42 while keeping the text off the border.
-    val contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+    val shape = RoundedCornerShape(16.dp)
+    val colors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.40f),
+        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.25f),
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
+    )
+    val contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     val mergedTextStyle = LocalTextStyle.current.merge(textStyle)
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            // [T-android-search-height] Unified search/input height.
-            .heightIn(min = 42.dp)
+            .heightIn(min = 44.dp)
             .then(fieldModifier),
         enabled = enabled,
         readOnly = readOnly,
@@ -84,7 +78,14 @@ fun DialogTextField(
                 value = value,
                 visualTransformation = visualTransformation,
                 innerTextField = innerTextField,
-                placeholder = placeholder?.let { { Text(it) } },
+                placeholder = placeholder?.let {
+                    {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
+                },
                 label = null,
                 trailingIcon = trailingIcon,
                 singleLine = singleLine,
@@ -93,6 +94,15 @@ fun DialogTextField(
                 interactionSource = interactionSource,
                 colors = colors,
                 contentPadding = contentPadding,
+                container = {
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = enabled,
+                        isError = isError,
+                        interactionSource = interactionSource,
+                        colors = colors,
+                        shape = shape,
+                    )
+                },
             )
         },
     )

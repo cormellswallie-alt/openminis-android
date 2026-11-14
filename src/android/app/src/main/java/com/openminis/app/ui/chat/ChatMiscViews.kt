@@ -378,8 +378,8 @@ private fun BorderedMarkdownTable(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, borderColor, RoundedCornerShape(6.dp))
-                .clip(RoundedCornerShape(6.dp))
+                .border(1.dp, borderColor, RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(14.dp))
                 // Capture rendered pixels into a GraphicsLayer so the
                 // Copy Table Image action can materialise the exact
                 // styled table the user sees (cells, borders, header

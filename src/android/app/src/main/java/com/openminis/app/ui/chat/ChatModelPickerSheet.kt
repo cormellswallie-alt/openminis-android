@@ -1,285 +1,100 @@
 package com.openminis.app.ui.chat
 
-// [T-android-split-chat] ModelPickerSheet (+ its private helpers fuzzyMatch /
-// providerDotColor) extracted verbatim from ChatScreen.kt. Full import block
-// copied from ChatScreen.kt (unused imports are warnings, not errors);
-// ModelPickerSheet flipped private->internal so ChatScreen can call it.
-
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.provider.OpenableColumns
-import java.io.File
-import androidx.core.content.ContextCompat
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.gestures.verticalDrag
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.AudioFile
-import androidx.compose.material.icons.filled.FolderZip
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.VideoFile
-import androidx.compose.material.icons.automirrored.filled.Article
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AppShortcut
-import androidx.compose.material.icons.filled.ArrowCircleUp
-import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.AccountTree
+import androidx.compose.material.icons.filled.ArrowCircleDown
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DataUsage
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.CloseFullscreen
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.StopCircle
-import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RadioButtonChecked
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import com.openminis.app.BuildConfig
-import com.openminis.app.R
-import com.openminis.app.data.FileMentionIndex
-import com.openminis.app.logging.AppLogger
-import com.openminis.app.ui.components.MinisAlertDialog
-import com.openminis.app.ui.components.MinisMenu
-import com.openminis.app.ui.components.MinisMenuDivider
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Surface
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.openminis.app.ui.components.rememberSheetScrollGuard
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.outlined.Public
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.automirrored.filled.NoteAdd
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.ArrowCircleDown
-import androidx.compose.material.icons.filled.AccountTree
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.openminis.app.offload.OffloadPermissionManager
-import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownTypography
-import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.ast.getTextInNode
-import com.openminis.app.data.model.LLMModel
+import com.openminis.app.R
 import com.openminis.app.data.model.ModelEntry
 import com.openminis.app.data.model.ModelGroup
 import com.openminis.app.data.model.ProviderConfig
 import com.openminis.app.data.model.ProviderType
 import com.openminis.app.data.model.RoutingStrategy
-import com.openminis.app.data.model.ThinkingLevel
-import com.openminis.app.data.repository.ChatRepository
-import com.openminis.app.data.repository.MemoryRepository
+import com.openminis.app.data.model.SystemVoiceEntries
 import com.openminis.app.data.repository.ProviderRepository
-import com.openminis.app.ui.browser.BrowserSheet
+import com.openminis.app.logging.AppLogger
+import com.openminis.app.ui.components.ModalityBadge
+import com.openminis.app.ui.components.ModelSearch
+import com.openminis.app.ui.components.QuickTestSheet
+import com.openminis.app.ui.components.modalityBadges
+import com.openminis.app.ui.components.rememberDebouncedQuery
+import com.openminis.app.ui.components.rememberSheetScrollGuard
 import com.openminis.app.ui.theme.ChatColors
-import com.openminis.app.ui.components.MinisTextButton
+import com.openminis.app.ui.theme.ExpressiveTokens
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.articulatedItemShape
+import com.openminis.app.ui.theme.toShape
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun ModelPickerSheet(
     groups: List<ModelGroup>,
@@ -292,12 +107,7 @@ internal fun ModelPickerSheet(
     onSelectGroupEntry: (String, String) -> Unit,
     onSelectEntry: (String) -> Unit,
     onDismiss: () -> Unit,
-    /** [T-android-modelpicker-group-edit] "Edit" affordance on the Model Groups
-     *  section header — dismisses the sheet and navigates to the Model Groups
-     *  management screen. Null hides the button (callers without a route). */
     onEditGroups: (() -> Unit)? = null,
-    /** [T-android-picker-provider-edit] Edit button on each provider section
-     *  header — opens that provider instance's settings. Null hides it. */
     onEditProvider: ((instanceId: String) -> Unit)? = null,
 ) {
     val openTime = remember { System.nanoTime() }
@@ -312,9 +122,6 @@ internal fun ModelPickerSheet(
 
     var searchText by remember { mutableStateOf("") }
     var expandedGroupIds by remember { mutableStateOf(setOf<String>()) }
-    // Note: the non-text-output "may not work as an Agent" confirmation lives
-    // in ChatScreen's callback wrappers (ee828dba), NOT here — the sheet stays
-    // a dumb list and the caller owns selection policy.
     val allInstanceIds = remember(config) {
         config.instances.filter { it.isEnabled }.map { it.id }.toSet()
     }
@@ -322,31 +129,15 @@ internal fun ModelPickerSheet(
         mutableStateOf(allInstanceIds)
     }
 
-    /**
-     * [T-android-model-picker-polish] Model whose Quick Test sheet is open.
-     *
-     * Reuses the same [com.openminis.app.ui.components.QuickTestSheet] the
-     * provider settings screens already use, as iOS reuses ModelQuickTestSheet
-     * from its picker — a model that behaves one way when tested from Settings
-     * and another from the picker would be worse than no button at all.
-     */
     var quickTestEntry by remember { mutableStateOf<ModelEntry?>(null) }
 
-    // [T-picker-search-debounce] Filter on the DEBOUNCED, normalized query,
-    // not on every keystroke (iOS GH#271). `searchText` still drives the field
-    // and the empty-state icon; only the search itself trails it.
-    val query = com.openminis.app.ui.components.rememberDebouncedQuery(searchText)
+    val query = rememberDebouncedQuery(searchText)
 
-    // Filtered groups — cheap (a handful of groups), stays in composition.
     val filteredGroups = remember(groups, query) {
         if (query.isEmpty()) groups
-        else groups.filter { com.openminis.app.ui.components.ModelSearch.score(it.name, query) > 0 }
+        else groups.filter { ModelSearch.score(it.name, query) > 0 }
     }
 
-    // [T-picker-search-cap] Provider sections built ONCE per config: one pass
-    // grouping entries by instance. This used to re-filter the whole entry
-    // list once per provider on every keystroke, in composition, and log a
-    // line per provider each time.
     val baseSections = remember(config) {
         val byInstance = config.modelEntries.asSequence()
             .filter { !it.isHidden }
@@ -359,12 +150,8 @@ internal fun ModelPickerSheet(
     fun sectionLabel(instance: com.openminis.app.data.model.ProviderInstance) =
         instance.label.ifEmpty { instance.providerType.displayName }
 
-    // [T-picker-search-relevance] Rank + cap off the main thread: with 7,000+
-    // models a search is thousands of string scans. The last result stays on
-    // screen until the new one lands, so a keystroke never flashes the
-    // unfiltered list.
     var searchResult by remember {
-        mutableStateOf<com.openminis.app.ui.components.ModelSearch.Result<com.openminis.app.data.model.ProviderInstance>?>(null)
+        mutableStateOf<ModelSearch.Result<com.openminis.app.data.model.ProviderInstance>?>(null)
     }
     LaunchedEffect(baseSections, query) {
         if (query.isEmpty()) {
@@ -373,7 +160,7 @@ internal fun ModelPickerSheet(
         }
         val t0 = System.nanoTime()
         val r = withContext(Dispatchers.Default) {
-            com.openminis.app.ui.components.ModelSearch.search(baseSections, ::sectionLabel, query)
+            ModelSearch.search(baseSections, ::sectionLabel, query)
         }
         searchResult = r
         AppLogger.info(
@@ -390,13 +177,16 @@ internal fun ModelPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        shape = RoundedCornerShape(
+            topStart = ExpressiveTokens.SheetTopRadius,
+            topEnd = ExpressiveTokens.SheetTopRadius,
+        ),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         dragHandle = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp, bottom = 4.dp),
+                    .padding(top = 12.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Box(
@@ -415,113 +205,142 @@ internal fun ModelPickerSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight(0.9f)
-                // [T-android-model-picker-polish] navigationBarsPadding ALONE.
-                //
-                // This also carried a fixed `padding(bottom = 32.dp)`, so the
-                // gesture bar was accounted for twice: 32dp on top of the
-                // system inset the modifier already reserves (~24-48dp
-                // depending on device). The result was a dead band under the
-                // sheet far deeper than the chat composer's, which uses the
-                // inset on its own — the mismatch that reads as "the picker
-                // floats too high off the home indicator".
                 .navigationBarsPadding(),
         ) {
-            // ── Title bar (iOS: "Choose Model" + Done) ──
+            // ── M3 Expressive Sheet Header ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            MaterialShapes.SoftBurst.toShape(),
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Layers,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
                 Text(
-                    stringResource(R.string.model_picker_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    text = stringResource(R.string.model_picker_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
                 )
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                    MinisTextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.model_picker_done))
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.model_picker_done),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
             }
 
-            // ── Search bar (iOS: capsule rounded) ──
-            //
-            // [T-android-search-height] BasicTextField + DecorationBox rather
-            // than a plain OutlinedTextField, so contentPadding is ours to set.
-            //
-            // The plain component cannot be made 42dp tall: its intrinsic
-            // height is 56dp, so `heightIn(min=42)` never binds, and forcing
-            // `height(42)` squeezes the frame while its own 16dp vertical
-            // contentPadding stays put — which clipped the placeholder to its
-            // top half on device. Owning contentPadding is the only way to
-            // shrink the field without cutting the text; same pattern
-            // SectionTextField already uses for this reason.
+            // ── M3 Expressive Tonal Pill Search Bar ──
             val searchInteraction = remember { MutableInteractionSource() }
+            val searchFocused by searchInteraction.collectIsFocusedAsState()
             BasicTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .height(42.dp),
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .height(46.dp),
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 interactionSource = searchInteraction,
                 decorationBox = { innerTextField ->
-                    OutlinedTextFieldDefaults.DecorationBox(
-                        value = searchText,
-                        visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
-                        innerTextField = innerTextField,
-                        placeholder = { Text(stringResource(R.string.model_picker_search_placeholder)) },
-                        label = null,
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                CircleShape,
                             )
-                        },
-                        trailingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                IconButton(onClick = { searchText = "" }) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.model_picker_search_clear),
-                                        modifier = Modifier.size(18.dp),
+                            .then(
+                                if (searchFocused) {
+                                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                } else {
+                                    Modifier.border(
+                                        0.75.dp,
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                                        CircleShape,
                                     )
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        enabled = true,
-                        isError = false,
-                        interactionSource = searchInteraction,
-                        colors = OutlinedTextFieldDefaults.colors(),
-                        // Zero vertical: the 42dp frame plus the icons already
-                        // give the text room; any inset here re-clips it.
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
-                        container = {
-                            OutlinedTextFieldDefaults.Container(
-                                enabled = true,
-                                isError = false,
-                                interactionSource = searchInteraction,
-                                colors = OutlinedTextFieldDefaults.colors(),
-                                shape = RoundedCornerShape(50),
+                                },
                             )
-                        },
-                    )
+                            .padding(start = 15.dp, end = 10.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(19.dp),
+                            tint = if (searchFocused) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            if (searchText.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.model_picker_search_placeholder),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            innerTextField()
+                        }
+                        if (searchText.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                                    .clip(CircleShape)
+                                    .clickable { searchText = "" },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.model_picker_search_clear),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(15.dp),
+                                )
+                            }
+                        }
+                    }
                 },
             )
 
-            // [T-android-picker-scroll-guard] Swallow fling momentum at the top
-            // of the list so it cannot dismiss the sheet, while leaving a
-            // deliberate finger drag free to close it.
             val pickerScrollGuard = rememberSheetScrollGuard()
 
             LazyColumn(
@@ -529,59 +348,59 @@ internal fun ModelPickerSheet(
                     .fillMaxWidth()
                     .weight(1f, fill = false)
                     .nestedScroll(pickerScrollGuard),
+                contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp),
             ) {
-                // ── Model Groups (grouped section card with embedded header) ──
+                // ── Model Groups (M3 Expressive Articulated Bento Stack) ──
                 if (filteredGroups.isNotEmpty()) {
-                    // Section card: header + rows live in the same surface so
-                    // the visual unit is unambiguous. Header uses the
-                    // titleSmall + onSurfaceVariant pair so it reads as a
-                    // section label rather than another row.
-                    item {
-                        Column(
+                    item(key = "__groups_header__") {
+                        Row(
                             modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    RoundedCornerShape(24.dp),
-                                ),
+                                .fillMaxWidth()
+                                .padding(start = 22.dp, end = 16.dp, top = 8.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            // [T-android-modelpicker-group-edit] Section header
-                            // row: label on the left, an "Edit" button on the
-                            // right that jumps to the Model Groups management
-                            // screen (mirrors the iOS picker's group-section edit
-                            // affordance). Button hidden when no route is wired.
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    stringResource(R.string.model_picker_groups_section),
-                                    // [T-android-model-picker-polish] Section
-                                    // headers outrank the rows beneath them.
-                                    // titleSmall is 14sp Medium while the group
-                                    // and model names are bodyMedium SemiBold —
-                                    // same size, HEAVIER weight — so the header
-                                    // read as the weaker of the two and the
-                                    // hierarchy inverted. titleMedium (16sp) +
-                                    // SemiBold puts it a step above.
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Text(
+                                text = stringResource(R.string.model_picker_groups_section),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (onEditGroups != null) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .padding(start = 16.dp, top = 14.dp, bottom = 6.dp),
-                                )
-                                if (onEditGroups != null) {
-                                    // Text button (not a pencil icon) matching the
-                                    // sheet's other text actions like "Done".
-                                    MinisTextButton(
-                                        onClick = onEditGroups,
-                                        modifier = Modifier.padding(end = 8.dp),
-                                    ) {
-                                        Text(stringResource(R.string.model_picker_groups_edit))
-                                    }
+                                        .background(
+                                            MaterialTheme.colorScheme.secondaryContainer,
+                                            CircleShape,
+                                        )
+                                        .clip(CircleShape)
+                                        .clickable(onClick = onEditGroups)
+                                        .padding(horizontal = 11.dp, vertical = 5.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Tune,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(13.dp),
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.model_picker_groups_edit),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
                                 }
                             }
+                        }
+                    }
+
+                    item(key = "__groups_stack__") {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(ExpressiveTokens.GroupItemGap),
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        ) {
                             filteredGroups.forEachIndexed { index, group ->
                                 val isSelected = group.id == selectedGroupId
                                 val isDefault = group.id == defaultPrimaryGroupId
@@ -590,685 +409,687 @@ internal fun ModelPickerSheet(
                                     RoutingStrategy.fallback -> "FB"
                                     RoutingStrategy.loadBalance -> "LB"
                                 }
-                                // Resolve entry: try memberEntryIds first, fallback to activeEntryId ONLY if this group is selected
-                                // SystemVoiceEntries fallback: voice groups are
-                                // seeded with "__builtin_system_speech__/…"
-                                // members that are synthesized on demand and
-                                // never stored in config.modelEntries, so
-                                // matching modelEntries alone counts them as 0.
                                 val resolvedEntry = group.memberEntryIds.firstNotNullOfOrNull { entryId ->
                                     config.modelEntries.find { it.id == entryId }
-                                        ?: com.openminis.app.data.model.SystemVoiceEntries.resolve(entryId)
-                                } ?: if (isSelected && activeEntryId != null) config.modelEntries.find { it.id == activeEntryId } else null
-                                // Count of resolved members for display
+                                        ?: SystemVoiceEntries.resolve(entryId)
+                                } ?: if (isSelected && activeEntryId != null) {
+                                    config.modelEntries.find { it.id == activeEntryId }
+                                } else null
+
                                 val resolvedCount = group.memberEntryIds.count { entryId ->
                                     config.modelEntries.any { it.id == entryId } ||
-                                        com.openminis.app.data.model.SystemVoiceEntries.resolve(entryId) != null
+                                        SystemVoiceEntries.resolve(entryId) != null
                                 }
 
-                                // Header sits above the first row, so the
-                                // first-row corners are no longer rounded
-                                // (only the bottom row of the last group is).
-                                val groupShape = when {
-                                    index == filteredGroups.size - 1 -> RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-                                    else -> RoundedCornerShape(0.dp)
+                                val groupShape = articulatedItemShape(index = index, count = filteredGroups.size)
+                                val groupBg = if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer.copy(
+                                        alpha = if (ChatColors.isDark) 0.42f else 0.56f,
+                                    )
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
                                 }
+                                val chevronAngle by animateFloatAsState(
+                                    targetValue = if (isExpanded) 180f else 0f,
+                                    label = "groupChevron",
+                                )
 
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(groupShape)
-                                        .clickable { onSelectGroup(group.id) }
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                        .background(groupBg, groupShape)
+                                        .then(
+                                            if (isSelected) {
+                                                Modifier.border(
+                                                    1.dp,
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.36f),
+                                                    groupShape,
+                                                )
+                                            } else Modifier,
+                                        )
+                                        .clip(groupShape),
                                 ) {
-                                    Icon(
-                                        if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                                        contentDescription = null,
-                                        tint = if (isSelected) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(22.dp),
-                                    )
-                                    Spacer(Modifier.width(10.dp))
-                                    // [T-android-model-picker-polish] Group
-                                    // glyph, matching iOS's blue "layers" mark
-                                    // (SessionModelPicker). Without it a group
-                                    // row and a provider row differ only by
-                                    // their subtitle, which is easy to miss
-                                    // when scrolling — and the two mean very
-                                    // different things (a group can fail over
-                                    // or load-balance; a model cannot).
-                                    Icon(
-                                        Icons.Default.Layers,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                    Spacer(Modifier.width(10.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                group.name,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onSelectGroup(group.id) }
+                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .background(
+                                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                                    else MaterialTheme.colorScheme.secondaryContainer,
+                                                    RoundedCornerShape(12.dp),
+                                                ),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Layers,
+                                                contentDescription = null,
+                                                tint = if (isSelected) {
+                                                    MaterialTheme.colorScheme.onPrimary
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                                },
+                                                modifier = Modifier.size(19.dp),
                                             )
-                                            Spacer(Modifier.width(6.dp))
-                                            // iOS: ⊕ FB / ⊕ LB badge with icon
+                                        }
+                                        Spacer(Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .background(
-                                                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                                                        RoundedCornerShape(8.dp),
-                                                    )
-                                                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                             ) {
-                                                Icon(
-                                                    if (group.strategy == RoutingStrategy.fallback)
-                                                        Icons.Default.ArrowCircleDown
-                                                    else Icons.Default.AccountTree,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(9.dp),
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                )
-                                                Spacer(Modifier.width(2.dp))
                                                 Text(
-                                                    strategyLabel,
-                                                    fontSize = 9.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                                    text = group.name,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        fontSize = 15.sp,
+                                                        lineHeight = 20.sp,
+                                                    ),
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f, fill = false),
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier
+                                                        .background(
+                                                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                            CircleShape,
+                                                        )
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                                ) {
+                                                    Icon(
+                                                        if (group.strategy == RoutingStrategy.fallback)
+                                                            Icons.Default.ArrowCircleDown
+                                                        else Icons.Default.AccountTree,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(10.dp),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                    Spacer(Modifier.width(3.dp))
+                                                    Text(
+                                                        strategyLabel,
+                                                        fontSize = 9.5.sp,
+                                                        lineHeight = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                }
+                                                if (isDefault) {
+                                                    Text(
+                                                        text = stringResource(R.string.model_picker_default_badge),
+                                                        fontSize = 9.5.sp,
+                                                        lineHeight = 12.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier
+                                                            .background(
+                                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                                                CircleShape,
+                                                            )
+                                                            .padding(horizontal = 7.dp, vertical = 2.dp),
+                                                    )
+                                                }
+                                            }
+                                            Spacer(Modifier.height(2.dp))
+                                            if (resolvedEntry != null) {
+                                                Text(
+                                                    text = "→ ${resolvedEntry.model.displayName}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            } else if (resolvedCount > 0) {
+                                                Text(
+                                                    text = pluralStringResource(
+                                                        R.plurals.model_picker_models_count,
+                                                        resolvedCount,
+                                                        resolvedCount,
+                                                    ),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                                )
+                                            } else {
+                                                Text(
+                                                    text = stringResource(
+                                                        R.string.model_picker_models_count_unlinked,
+                                                        group.memberEntryIds.size,
+                                                    ),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                                 )
                                             }
                                         }
-                                        // iOS: "→ ModelName" resolved entry
-                                        if (resolvedEntry != null) {
-                                            Text(
-                                                "→ ${resolvedEntry.model.displayName}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                            )
-                                        } else if (resolvedCount > 0) {
-                                            Text(
-                                                pluralStringResource(R.plurals.model_picker_models_count, resolvedCount, resolvedCount),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                            )
-                                        } else {
-                                            Text(
-                                                stringResource(R.string.model_picker_models_count_unlinked, group.memberEntryIds.size),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                            )
-                                        }
-                                    }
-
-                                    // [T-android-model-picker-polish] "Default"
-                                    // badge, matched to iOS
-                                    // (UnifiedModelPicker.swift:669-674):
-                                    // caption2 medium on a 10%-blue capsule with
-                                    // 5/1 padding. Android was running 6/2 —
-                                    // double the vertical inset — which made the
-                                    // capsule noticeably taller than the group
-                                    // name beside it and pulled the eye away from
-                                    // the group's own label. Font drops 10sp -> 9sp
-                                    // to match caption2's optical weight at this
-                                    // density, and lineHeight is pinned so Compose
-                                    // does not re-add the font's ascent/descent
-                                    // slack on top of the 1.dp padding.
-                                    if (isDefault) {
-                                        Text(
-                                            stringResource(R.string.model_picker_default_badge),
-                                            fontSize = 9.sp,
-                                            lineHeight = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier
-                                                .background(
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                                    RoundedCornerShape(50),
-                                                )
-                                                .padding(horizontal = 5.dp, vertical = 1.dp),
+                                        Spacer(Modifier.width(8.dp))
+                                        Icon(
+                                            imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                            contentDescription = null,
+                                            tint = if (isSelected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.32f)
+                                            },
+                                            modifier = Modifier.size(21.dp),
                                         )
                                         Spacer(Modifier.width(8.dp))
-                                    }
-
-                                    // [T-android-model-picker-polish]
-                                    // Expand/collapse chevron, matched to iOS
-                                    // (UnifiedModelPicker.swift:688-691): a
-                                    // NEUTRAL tertiarySystemFill circle with a
-                                    // .secondary glyph.
-                                    //
-                                    // T295 had pushed this to secondaryContainer
-                                    // to escape surfaceContainerHigh, which on
-                                    // the light theme is #F7F7FA and vanished
-                                    // against the white card. That fixed the
-                                    // visibility but overshot: a tinted
-                                    // container reads as an accented ACTION,
-                                    // competing with the group name beside it,
-                                    // where this is only a disclosure control.
-                                    // onSurface at low alpha separates from the
-                                    // card without claiming that emphasis.
-                                    //
-                                    // 28dp -> 24dp: at 28 the circle stood
-                                    // taller than the row's own text and drew
-                                    // the eye first.
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .background(
-                                                MaterialTheme.colorScheme.surfaceContainerHighest,
-                                                RoundedCornerShape(9.dp),
+                                        Box(
+                                            modifier = Modifier
+                                                .size(30.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                    CircleShape,
+                                                )
+                                                .clip(CircleShape)
+                                                .clickable {
+                                                    expandedGroupIds = if (isExpanded) {
+                                                        expandedGroupIds - group.id
+                                                    } else {
+                                                        expandedGroupIds + group.id
+                                                    }
+                                                },
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardArrowDown,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(17.dp)
+                                                    .graphicsLayer { rotationZ = chevronAngle },
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
-                                            .clip(RoundedCornerShape(9.dp))
-                                            .clickable {
-                                                expandedGroupIds = if (isExpanded) {
-                                                    expandedGroupIds - group.id
-                                                } else {
-                                                    expandedGroupIds + group.id
-                                                }
-                                            },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                                        }
                                     }
-                                }
 
-                                // Expanded group member entries
-                                if (isExpanded) {
-                                    // Resolve actual entries from memberEntryIds
-                                    val resolvedMembers = group.memberEntryIds.mapNotNull { entryId ->
-                                        config.modelEntries.find { it.id == entryId }
-                                            ?: com.openminis.app.data.model.SystemVoiceEntries.resolve(entryId)
-                                    }
-                                    // Fallback: show active entry ONLY if this group is selected
-                                    val displayMembers = resolvedMembers.ifEmpty {
-                                        if (isSelected && activeEntryId != null)
-                                            listOfNotNull(config.modelEntries.find { it.id == activeEntryId })
-                                        else emptyList()
-                                    }
-                                    if (displayMembers.isEmpty()) {
-                                        Text(
-                                            stringResource(R.string.model_picker_no_linked_models),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                            modifier = Modifier.padding(start = 48.dp, top = 4.dp, bottom = 8.dp),
-                                        )
-                                    }
-                                    displayMembers.forEachIndexed { memberIndex, entry ->
-                                            // [T-android-model-picker-polish]
-                                            // Hairline between members. The group
-                                            // CARDS had one and the provider rows
-                                            // had one, but the members inside an
-                                            // expanded group did not — so a group
-                                            // with several models read as one
-                                            // undifferentiated block, which is
-                                            // exactly where separation matters
-                                            // most (these rows are indented and
-                                            // visually similar). Drawn BEFORE each
-                                            // row except the first, so it never
-                                            // collides with the divider that
-                                            // follows the group card itself.
-                                            if (memberIndex > 0) {
-                                                HorizontalDivider(
-                                                    modifier = Modifier.padding(start = 72.dp, end = 16.dp),
-                                                    thickness = 1.dp,
-                                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                                    // Expanded group members in a recessed inner container
+                                    if (isExpanded) {
+                                        val resolvedMembers = group.memberEntryIds.mapNotNull { entryId ->
+                                            config.modelEntries.find { it.id == entryId }
+                                                ?: SystemVoiceEntries.resolve(entryId)
+                                        }
+                                        val displayMembers = resolvedMembers.ifEmpty {
+                                            if (isSelected && activeEntryId != null) {
+                                                listOfNotNull(config.modelEntries.find { it.id == activeEntryId })
+                                            } else emptyList()
+                                        }
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.surfaceContainerLow,
+                                                    RoundedCornerShape(16.dp),
+                                                )
+                                                .border(
+                                                    0.75.dp,
+                                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.38f),
+                                                    RoundedCornerShape(16.dp),
+                                                )
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .padding(6.dp),
+                                        ) {
+                                            if (displayMembers.isEmpty()) {
+                                                Text(
+                                                    text = stringResource(R.string.model_picker_no_linked_models),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                                 )
                                             }
-                                            val isActive = activeEntryId == entry.id
-                                            val instance = config.instances.find { it.id == entry.providerInstanceId }
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .clickable { onSelectGroupEntry(group.id, entry.id) }
-                                                    .padding(start = 48.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Icon(
-                                                    if (isActive) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                                                    contentDescription = null,
-                                                    tint = if (isActive) MaterialTheme.colorScheme.primary
-                                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
-                                                    modifier = Modifier.size(17.dp),
-                                                )
-                                                Spacer(Modifier.width(10.dp))
-                                                Box(
+                                            displayMembers.forEach { entry ->
+                                                val isActive = activeEntryId == entry.id
+                                                val instance = config.instances.find { it.id == entry.providerInstanceId }
+                                                val memberShape = RoundedCornerShape(11.dp)
+                                                Row(
                                                     modifier = Modifier
-                                                        .size(6.dp)
-                                                        .background(providerDotColor(instance?.providerType), CircleShape),
-                                                )
-                                                Spacer(Modifier.width(8.dp))
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    ModelNameWithActiveBadge(entry.model.displayName, showActiveBadge = isActive)
-                                                    Row {
-                                                        if (instance != null) {
+                                                        .fillMaxWidth()
+                                                        .background(
+                                                            if (isActive) {
+                                                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f)
+                                                            } else {
+                                                                Color.Transparent
+                                                            },
+                                                            memberShape,
+                                                        )
+                                                        .clip(memberShape)
+                                                        .clickable { onSelectGroupEntry(group.id, entry.id) }
+                                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                ) {
+                                                    Icon(
+                                                        if (isActive) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                                        contentDescription = null,
+                                                        tint = if (isActive) {
+                                                            MaterialTheme.colorScheme.primary
+                                                        } else {
+                                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                                        },
+                                                        modifier = Modifier.size(18.dp),
+                                                    )
+                                                    Spacer(Modifier.width(9.dp))
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(7.dp)
+                                                            .background(providerDotColor(instance?.providerType), CircleShape),
+                                                    )
+                                                    Spacer(Modifier.width(9.dp))
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        ModelNameWithActiveBadge(
+                                                            entry.model.displayName,
+                                                            showActiveBadge = isActive,
+                                                        )
+                                                        Row {
+                                                            if (instance != null) {
+                                                                Text(
+                                                                    instance.label.ifEmpty { instance.providerType.displayName },
+                                                                    style = MaterialTheme.typography.labelSmall,
+                                                                    fontWeight = FontWeight.Medium,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f),
+                                                                    maxLines = 1,
+                                                                )
+                                                                Text(
+                                                                    " · ",
+                                                                    style = MaterialTheme.typography.labelSmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                                                                )
+                                                            }
                                                             Text(
-                                                                instance.label.ifEmpty { instance.providerType.displayName },
+                                                                entry.model.id,
                                                                 style = MaterialTheme.typography.labelSmall,
-                                                                fontWeight = FontWeight.Medium,
-                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                            )
-                                                            Text(
-                                                                " · ",
-                                                                style = MaterialTheme.typography.labelSmall,
-                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
                                                             )
                                                         }
-                                                        Text(
-                                                            entry.model.id,
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                                        )
                                                     }
+                                                    Spacer(Modifier.width(6.dp))
+                                                    QuickTestButton(onClick = { quickTestEntry = entry })
                                                 }
-                                                QuickTestButton(onClick = { quickTestEntry = entry })
                                             }
+                                        }
                                     }
-                                }
-
-                                // Inset hairline between groups, matches MinisMenuDivider rhythm.
-                                if (index < filteredGroups.size - 1) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(start = 48.dp, end = 16.dp),
-                                        thickness = 1.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                    )
                                 }
                             }
                         }
                     }
 
                     if (searchText.isEmpty()) {
-                        item {
+                        item(key = "__groups_footer__") {
                             Text(
-                                stringResource(R.string.model_picker_groups_footer),
+                                text = stringResource(R.string.model_picker_groups_footer),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                // T236: hint sits between Model Groups card and
-                                // first Provider card — top 8 hugs the group
-                                // card, bottom 12 separates from the next card.
-                                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                                modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 8.dp, bottom = 10.dp),
                             )
                         }
                     }
                 }
 
-                // ── Individual Models by Provider (one section card per provider) ──
-                // Each provider becomes a single grouped card containing: an
-                // embedded header row with the collapse chevron, then either
-                // the collapsed summary row or the expanded entry list. Cards
-                // are visually separated from each other by a 12dp gap, and
-                // sit on a higher tonal surface so the boundary between
-                // providers is unmistakable even on the dark sheet background.
+                // ── Individual Models by Provider (M3 Expressive Articulated Cards + Lazy Rows) ──
                 if (allInstancesWithEntries.isNotEmpty()) {
                     allInstancesWithEntries.forEach { (instance, entries) ->
                         val isCollapsed = collapsedInstanceIds.contains(instance.id)
-                        // [T-picker-search-cap] An EXPANDED provider's rows are
-                        // their own lazy items (below), so a 7,000-model
-                        // aggregator composes only what is on screen. This
-                        // item is the card's top: header, hairline and — when
-                        // collapsed — the summary rows, closing the card.
+                        val dotColor = providerDotColor(instance.providerType)
+                        val providerName = instance.label.ifEmpty { instance.providerType.displayName }
+
                         item(key = "section_${instance.id}") {
+                            val headerShape = if (isCollapsed) {
+                                RoundedCornerShape(ExpressiveTokens.OuterGroupRadius)
+                            } else {
+                                RoundedCornerShape(
+                                    topStart = ExpressiveTokens.OuterGroupRadius,
+                                    topEnd = ExpressiveTokens.OuterGroupRadius,
+                                    bottomStart = ExpressiveTokens.InnerGroupRadius,
+                                    bottomEnd = ExpressiveTokens.InnerGroupRadius,
+                                )
+                            }
                             Column(
                                 modifier = Modifier
-                                    .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = if (isCollapsed) 6.dp else 0.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        if (isCollapsed) RoundedCornerShape(24.dp)
-                                        else RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                                    ),
+                                    .padding(
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        top = 8.dp,
+                                        bottom = if (isCollapsed) 4.dp else ExpressiveTokens.GroupItemGap,
+                                    )
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, headerShape)
+                                    .clip(headerShape),
                             ) {
-                                // Header row, embedded in the card.
                                 Row(
-                                    // T236: tightened provider header padding
-                                    // (top=10/bottom=8) so the gap to the first
-                                    // model row reads as ~8dp rather than the
-                                    // earlier 12dp+row-padding stack.
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 8.dp),
+                                        .clickable {
+                                            collapsedInstanceIds = if (isCollapsed) {
+                                                collapsedInstanceIds - instance.id
+                                            } else {
+                                                collapsedInstanceIds + instance.id
+                                            }
+                                        }
+                                        .padding(start = 14.dp, end = 12.dp, top = 11.dp, bottom = 11.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    val providerName = instance.label.ifEmpty { instance.providerType.displayName }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .background(
+                                                dotColor.copy(alpha = if (ChatColors.isDark) 0.22f else 0.14f),
+                                                RoundedCornerShape(11.dp),
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(9.dp)
+                                                .background(dotColor, CircleShape),
+                                        )
+                                    }
+                                    Spacer(Modifier.width(11.dp))
                                     Text(
-                                        providerName,
-                                        // Same rank as the "Model Groups"
-                                        // header above — see that comment.
+                                        text = providerName,
                                         style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        // [T-android-picker-provider-edit] One
-                                        // line, so a long name cannot push the
-                                        // two buttons off the row.
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    // [T-android-picker-provider-edit] Edit
-                                    // button left of the chevron, as on iOS
-                                    // (698cc65c6): its own tap target, so it
-                                    // never folds the section, same 24dp
-                                    // circle as the chevron but tinted so it
-                                    // reads as an action.
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "${entries.size}",
+                                        fontSize = 11.sp,
+                                        lineHeight = 14.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .background(
+                                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                CircleShape,
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                                    )
                                     if (onEditProvider != null) {
-                                        // [T-android-picker-provider-edit-text] A text "Edit" link,
-                                        // styled like the Model Groups "Edit" (iOS a0acb1c0f replaced its
-                                        // icon button with this). Compact rather than a MinisTextButton so
-                                        // the header row keeps its height; still its own tap target, so it
-                                        // never folds the section.
+                                        Spacer(Modifier.width(6.dp))
                                         val editLabel = stringResource(R.string.model_picker_edit_provider, providerName)
                                         Text(
-                                            stringResource(R.string.model_picker_groups_edit),
-                                            style = MaterialTheme.typography.labelLarge,
+                                            text = stringResource(R.string.model_picker_groups_edit),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.primary,
                                             maxLines = 1,
                                             softWrap = false,
                                             modifier = Modifier
-                                                .padding(end = 4.dp)
-                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                                    CircleShape,
+                                                )
+                                                .clip(CircleShape)
                                                 .clickable { onEditProvider(instance.id) }
                                                 .semantics { contentDescription = editLabel }
-                                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                                .padding(horizontal = 10.dp, vertical = 4.dp),
                                         )
                                     }
-                                    // [T-android-model-picker-polish] Same
-                                    // neutral treatment as the group chevron
-                                    // above — see that comment for why the
-                                    // tinted container was dropped.
+                                    Spacer(Modifier.width(6.dp))
+                                    val providerChevronAngle by animateFloatAsState(
+                                        targetValue = if (isCollapsed) 0f else 180f,
+                                        label = "providerChevron",
+                                    )
                                     Box(
                                         modifier = Modifier
-                                            .size(28.dp)
+                                            .size(30.dp)
                                             .background(
                                                 MaterialTheme.colorScheme.surfaceContainerHighest,
-                                                RoundedCornerShape(9.dp),
-                                            )
-                                            .clip(RoundedCornerShape(9.dp))
-                                            .clickable {
-                                                collapsedInstanceIds = if (isCollapsed) {
-                                                    collapsedInstanceIds - instance.id
-                                                } else {
-                                                    collapsedInstanceIds + instance.id
-                                                }
-                                            },
+                                                CircleShape,
+                                            ),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
-                                            if (isCollapsed) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                                            imageVector = Icons.Default.KeyboardArrowDown,
                                             contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
+                                            modifier = Modifier
+                                                .size(17.dp)
+                                                .graphicsLayer { rotationZ = providerChevronAngle },
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     }
                                 }
 
-                                // [T-android-model-picker-polish] Hairline under
-                                // the provider name. The rows below it are
-                                // models, not more provider chrome, and without
-                                // a rule the header read as the first list item
-                                // — the same separation the group card gets
-                                // between its own header and its members.
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                    thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                )
-
                                 if (isCollapsed) {
-                                    // Collapsed summary — show selected or first entry + model count.
                                     val selectedEntry = entries.firstOrNull { it.id == activeEntryId && selectedGroupId == null }
                                     val displayEntry = selectedEntry ?: entries.firstOrNull()
                                     if (displayEntry != null) {
-                                        val dotColor = providerDotColor(instance.providerType)
-                                        Row(
-                                            // T236: collapsed summary row —
-                                            // vertical 14→8 + heightIn(min=48dp)
-                                            // so tap target stays comfortable.
+                                        Box(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .heightIn(min = 48.dp)
-                                                .clip(
-                                                    if (entries.size > 1) RoundedCornerShape(0.dp)
-                                                    else RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                                                .height(ExpressiveTokens.GroupItemGap)
+                                                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                                        )
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 50.dp)
+                                                .background(
+                                                    if (selectedEntry != null) {
+                                                        MaterialTheme.colorScheme.primaryContainer.copy(
+                                                            alpha = if (ChatColors.isDark) 0.36f else 0.48f,
+                                                        )
+                                                    } else Color.Transparent,
                                                 )
                                                 .clickable { onSelectEntry(displayEntry.id) }
-                                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                                .padding(horizontal = 16.dp, vertical = 9.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             Icon(
                                                 if (selectedEntry != null) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                 contentDescription = null,
-                                                tint = if (selectedEntry != null) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                                tint = if (selectedEntry != null) {
+                                                    MaterialTheme.colorScheme.primary
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.32f)
+                                                },
                                                 modifier = Modifier.size(20.dp),
                                             )
-                                            Spacer(Modifier.width(10.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .background(dotColor, CircleShape),
-                                            )
-                                            Spacer(Modifier.width(10.dp))
-                                            // [T-android-provider-voice] Modality chips
-                                            // (iOS entryRow badges) — without them a
-                                            // voice seed serving as the collapsed
-                                            // representative is indistinguishable from
-                                            // a chat model. FlowRow so overflow wraps
-                                            // whole chips instead of shattering them.
+                                            Spacer(Modifier.width(12.dp))
                                             FlowRow(
                                                 modifier = Modifier.weight(1f),
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                                verticalArrangement = Arrangement.spacedBy(3.dp),
                                                 itemVerticalAlignment = Alignment.CenterVertically,
                                             ) {
                                                 Text(
                                                     displayEntry.model.displayName,
                                                     style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = if (selectedEntry != null) FontWeight.Bold else FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.onSurface,
                                                 )
-                                                com.openminis.app.ui.components.modalityBadges(displayEntry.model).forEach { badge ->
-                                                    com.openminis.app.ui.components.ModalityBadge(badge)
+                                                modalityBadges(displayEntry.model).forEach { badge ->
+                                                    ModalityBadge(badge)
                                                 }
                                             }
-                                            // [T-android-model-picker-polish]
-                                            // Quick Test, not a model count. The
-                                            // count is already stated by the
-                                            // "Show N models" row directly below,
-                                            // so repeating it here spent the row's
-                                            // trailing slot on a duplicate —
-                                            // where every OTHER model row in this
-                                            // sheet carries a bolt. iOS puts the
-                                            // bolt here for the same reason.
+                                            Spacer(Modifier.width(8.dp))
                                             QuickTestButton(onClick = { quickTestEntry = displayEntry })
                                         }
-                                        // Only when there is something to show:
-                                        // a single-model provider's collapsed
-                                        // preview IS its entire list, so
-                                        // "Show 1 model" would expand to the
-                                        // exact row already on screen.
                                         if (entries.size > 1) {
-                                        // Hairline before the expand row: it is a
-                                        // control, not another model, and butting
-                                        // it against the summary row above made
-                                        // the two read as one two-line entry.
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                            thickness = 1.dp,
-                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                        )
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(min = 40.dp)
-                                                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-                                                .clickable { collapsedInstanceIds = collapsedInstanceIds - instance.id }
-                                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Icon(
-                                                Icons.Default.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(16.dp),
-                                                tint = MaterialTheme.colorScheme.primary,
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(ExpressiveTokens.GroupItemGap)
+                                                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
                                             )
-                                            Spacer(Modifier.width(4.dp))
-                                            Text(
-                                                pluralStringResource(
-                                                    R.plurals.model_picker_show_models,
-                                                    entries.size,
-                                                    entries.size,
-                                                ),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = MaterialTheme.colorScheme.primary,
-                                            )
-                                        }
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(min = 40.dp)
+                                                    .clickable { collapsedInstanceIds = collapsedInstanceIds - instance.id }
+                                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center,
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.KeyboardArrowDown,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                )
+                                                Spacer(Modifier.width(4.dp))
+                                                Text(
+                                                    pluralStringResource(
+                                                        R.plurals.model_picker_show_models,
+                                                        entries.size,
+                                                        entries.size,
+                                                    ),
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
+
                         if (!isCollapsed) {
                             itemsIndexed(entries, key = { _, e -> "entry_${instance.id}_${e.id}" }) { index, entry ->
                                 val isLastRow = index == entries.size - 1
-                                Column(
+                                val isSelected = activeEntryId == entry.id && selectedGroupId == null
+                                val rowShape = if (isLastRow) {
+                                    RoundedCornerShape(
+                                        topStart = ExpressiveTokens.InnerGroupRadius,
+                                        topEnd = ExpressiveTokens.InnerGroupRadius,
+                                        bottomStart = ExpressiveTokens.OuterGroupRadius,
+                                        bottomEnd = ExpressiveTokens.OuterGroupRadius,
+                                    )
+                                } else {
+                                    RoundedCornerShape(ExpressiveTokens.InnerGroupRadius)
+                                }
+                                val rowBg = if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer.copy(
+                                        alpha = if (ChatColors.isDark) 0.42f else 0.56f,
+                                    )
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                }
+                                Row(
                                     modifier = Modifier
-                                        .padding(start = 16.dp, end = 16.dp, bottom = if (isLastRow) 6.dp else 0.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            if (isLastRow) RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-                                            else androidx.compose.ui.graphics.RectangleShape,
-                                        ),
+                                        .padding(
+                                            start = 16.dp,
+                                            end = 16.dp,
+                                            bottom = if (isLastRow) 6.dp else ExpressiveTokens.GroupItemGap,
+                                        )
+                                        .fillMaxWidth()
+                                        .heightIn(min = 52.dp)
+                                        .background(rowBg, rowShape)
+                                        .clip(rowShape)
+                                        .clickable { onSelectEntry(entry.id) }
+                                        .padding(horizontal = 16.dp, vertical = 9.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                        val isSelected = activeEntryId == entry.id && selectedGroupId == null
-                                        val dotColor = providerDotColor(instance.providerType)
-                                        // Last row clips its own bottom so the
-                                        // ripple respects the card corners.
-                                        val rowShape = if (index == entries.size - 1) {
-                                            RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                                    Icon(
+                                        if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                        contentDescription = null,
+                                        tint = if (isSelected) {
+                                            MaterialTheme.colorScheme.primary
                                         } else {
-                                            RoundedCornerShape(0.dp)
-                                        }
-                                        Row(
-                                            // T236: expanded entry row —
-                                            // vertical 14→8 + heightIn(min=48dp)
-                                            // for accessible tap target.
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(min = 48.dp)
-                                                .clip(rowShape)
-                                                .clickable { onSelectEntry(entry.id) }
-                                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.32f)
+                                        },
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        ModelNameWithActiveBadge(
+                                            entry.model.displayName,
+                                            showActiveBadge = selectedGroupId != null && activeEntryId == entry.id,
+                                            isSelected = isSelected,
+                                        )
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                                            itemVerticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            Icon(
-                                                if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-                                                contentDescription = null,
-                                                tint = if (isSelected) MaterialTheme.colorScheme.primary
-                                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                                                modifier = Modifier.size(20.dp),
+                                            Text(
+                                                entry.model.id,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
                                             )
-                                            Spacer(Modifier.width(10.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .background(dotColor, CircleShape),
-                                            )
-                                            Spacer(Modifier.width(10.dp))
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                ModelNameWithActiveBadge(
-                                                    entry.model.displayName,
-                                                    showActiveBadge = selectedGroupId != null && activeEntryId == entry.id,
-                                                )
-                                                // [T-android-provider-voice] Modality
-                                                // chips (iOS entryRow badges). FlowRow so
-                                                // an overflow wraps whole chips to the
-                                                // next line instead of squeezing each
-                                                // Text into a vertical letter column.
-                                                FlowRow(
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    itemVerticalAlignment = Alignment.CenterVertically,
-                                                ) {
-                                                    Text(
-                                                        entry.model.id,
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                                    )
-                                                    com.openminis.app.ui.components.modalityBadges(entry.model).forEach { badge ->
-                                                        com.openminis.app.ui.components.ModalityBadge(badge)
-                                                    }
-                                                }
+                                            modalityBadges(entry.model).forEach { badge ->
+                                                ModalityBadge(badge)
                                             }
-                                            QuickTestButton(onClick = { quickTestEntry = entry })
                                         }
-                                        // Inset hairline between entries.
-                                        if (index < entries.size - 1) {
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(start = 52.dp, end = 16.dp),
-                                                thickness = 1.dp,
-                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-                                            )
-                                        }
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                    QuickTestButton(onClick = { quickTestEntry = entry })
                                 }
                             }
                         }
                     }
                 }
 
-                // [T-picker-search-cap] Say when a search was truncated, so the
-                // capped list never silently reads as "that's all".
                 truncatedSearch?.let { r ->
                     item(key = "__search_cap_footer__") {
                         Text(
                             stringResource(R.string.model_picker_search_capped, r.shown, r.totalMatches),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                .padding(horizontal = 24.dp, vertical = 10.dp),
                         )
                     }
                 }
 
                 // ── Empty / No Results ──
                 if (filteredGroups.isEmpty() && allInstancesWithEntries.isEmpty()) {
-                    item {
+                    item(key = "__empty_state__") {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(32.dp),
+                                .padding(36.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Icon(
-                                if (searchText.isNotEmpty()) Icons.Default.Search else Icons.Default.Memory,
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                stringResource(if (searchText.isNotEmpty()) R.string.model_picker_no_results else R.string.model_picker_no_models),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            if (searchText.isEmpty()) {
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    stringResource(R.string.model_picker_configure_hint),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                    textAlign = TextAlign.Center,
-                                )
-                            } else {
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    stringResource(R.string.model_picker_try_different_search),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        MaterialShapes.Cookie9Sided.toShape(),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    if (searchText.isNotEmpty()) Icons.Default.Search else Icons.Default.Memory,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(26.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                stringResource(
+                                    if (searchText.isNotEmpty()) R.string.model_picker_no_results
+                                    else R.string.model_picker_no_models,
+                                ),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                stringResource(
+                                    if (searchText.isEmpty()) R.string.model_picker_configure_hint
+                                    else R.string.model_picker_try_different_search,
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center,
+                            )
                         }
                     }
                 }
@@ -1276,13 +1097,9 @@ internal fun ModelPickerSheet(
         }
     }
 
-    // [T-android-model-picker-polish] Quick Test host. Keyed on the entry id so
-    // switching models rebuilds the sheet's state rather than reusing a run
-    // from the previously tested model — the same identity trap iOS documents
-    // at UnifiedModelPicker.swift:524.
     quickTestEntry?.let { entry ->
         key(entry.id) {
-            com.openminis.app.ui.components.QuickTestSheet(
+            QuickTestSheet(
                 entry = entry,
                 providerRepository = providerRepository,
                 onDismiss = { quickTestEntry = null },
@@ -1291,33 +1108,26 @@ internal fun ModelPickerSheet(
     }
 }
 
-/**
- * A picker row's model name, with the green "Active" badge right after it.
- *
- * The badge used to sit at the row's trailing edge, beside the quick-test
- * button. There it took width from the whole text column, so the second line
- * (provider label + model id) wrapped early: long ids such as
- * `claude-opus-4-6-thinking` broke onto a third line. Inline after the name,
- * it only competes with the name, which is short, and the id line gets the
- * full column width.
- *
- * `weight(1f, fill = false)` lets a long name shrink and wrap while keeping
- * the badge visible, instead of pushing the badge out of the row.
- */
 @Composable
-private fun ModelNameWithActiveBadge(name: String, showActiveBadge: Boolean) {
+private fun ModelNameWithActiveBadge(
+    name: String,
+    showActiveBadge: Boolean,
+    isSelected: Boolean = false,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             name,
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected || showActiveBadge) FontWeight.Bold else FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f, fill = false),
         )
         if (showActiveBadge) {
             Spacer(Modifier.width(6.dp))
             Text(
                 stringResource(R.string.model_picker_active_badge),
-                fontSize = 9.sp,
-                lineHeight = 11.sp,
+                fontSize = 9.5.sp,
+                lineHeight = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier
@@ -1325,7 +1135,7 @@ private fun ModelNameWithActiveBadge(name: String, showActiveBadge: Boolean) {
                         MaterialTheme.colorScheme.tertiaryContainer,
                         CircleShape,
                     )
-                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                    .padding(horizontal = 7.dp, vertical = 2.dp),
             )
         }
     }
@@ -1336,8 +1146,8 @@ private fun QuickTestButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(32.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

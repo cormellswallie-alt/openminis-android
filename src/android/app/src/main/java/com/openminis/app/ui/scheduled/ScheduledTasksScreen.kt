@@ -260,13 +260,13 @@ private fun ScheduledTaskRow(
                 Box(
                     modifier = Modifier
                         .size(46.dp)
-                        .clip(badgeShape)
                         .background(
-                            if (task.enabled) {
+                            color = if (task.enabled) {
                                 MaterialTheme.colorScheme.primaryContainer
                             } else {
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                             },
+                            shape = badgeShape,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {

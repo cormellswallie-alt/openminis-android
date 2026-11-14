@@ -335,6 +335,8 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
 
             if (showClearCorrectionConfirm) {
                 AlertDialog(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
                     onDismissRequest = { showClearCorrectionConfirm = false },
                     title = { Text(stringResource(R.string.voice_correction_clear_title)) },
                     confirmButton = {

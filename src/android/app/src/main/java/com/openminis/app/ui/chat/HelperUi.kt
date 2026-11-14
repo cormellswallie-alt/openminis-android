@@ -549,8 +549,7 @@ internal fun HelperToolBlock(
         Box(
             modifier = Modifier
                 .size(38.dp)
-                .clip(badgeShape)
-                .background(accent.copy(alpha = 0.18f)),
+                .background(accent.copy(alpha = 0.18f), badgeShape),
             contentAlignment = Alignment.Center,
         ) {
             val f = info.finished
@@ -1297,8 +1296,7 @@ internal fun AgentCallbackCard(callback: AgentCallback, onTap: () -> Unit, modif
         Box(
             modifier = Modifier
                 .size(34.dp)
-                .clip(badgeShape)
-                .background(accent.copy(alpha = 0.16f)),
+                .background(accent.copy(alpha = 0.16f), badgeShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))

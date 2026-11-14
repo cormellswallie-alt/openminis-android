@@ -1,6 +1,9 @@
 package com.openminis.app.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -186,6 +189,8 @@ fun MCPIntegrationsScreen(
     if (deleteId != null) {
         val id = deleteId!!
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { deleteId = null },
             title = { Text(stringResource(R.string.mcp_delete_title, id)) },
             text = { Text(stringResource(R.string.mcp_delete_message)) },
@@ -225,11 +230,12 @@ private fun MCPAddSheet(
     var selectedTab by remember { mutableIntStateOf(0) }
     val isEdit = editServer != null
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        // [T-android-mcp-sheet-ime-occlusion] GH#44: verticalScroll + imePadding
-        // keep every field reachable while the keyboard is up — imePadding sits
-        // after verticalScroll so the inset becomes scrollable bottom space the
-        // content can scroll past, instead of the IME clipping the column.
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -242,16 +248,50 @@ private fun MCPAddSheet(
         ) {
             Text(
                 stringResource(if (isEdit) R.string.mcp_edit else R.string.mcp_add),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
             )
 
             if (!isEdit) {
-                TabRow(selectedTabIndex = selectedTab) {
-                    Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
-                        Text(stringResource(R.string.mcp_tab_form), modifier = Modifier.padding(12.dp))
-                    }
-                    Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
-                        Text(stringResource(R.string.mcp_tab_import), modifier = Modifier.padding(12.dp))
+                val tabs = listOf(
+                    stringResource(R.string.mcp_tab_form),
+                    stringResource(R.string.mcp_tab_import),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            androidx.compose.foundation.shape.CircleShape,
+                        )
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    tabs.forEachIndexed { idx, label ->
+                        val active = selectedTab == idx
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (active) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
+                                    androidx.compose.foundation.shape.CircleShape,
+                                )
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .clickable { selectedTab = idx }
+                                .padding(vertical = 9.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                                color = if (active) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -795,6 +835,8 @@ private fun MCPFormTab(
     // env field. Only reachable when env was non-blank at tap time.
     if (showClearEnvConfirm) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showClearEnvConfirm = false },
             title = { Text(stringResource(R.string.mcp_form_env_clear_confirm_title)) },
             text = { Text(stringResource(R.string.mcp_form_env_clear_confirm_message)) },
@@ -825,7 +867,11 @@ private fun MCPEnvVarPickerSheet(
     onPick: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

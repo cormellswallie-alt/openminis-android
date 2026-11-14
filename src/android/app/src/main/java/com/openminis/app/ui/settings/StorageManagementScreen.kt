@@ -316,6 +316,8 @@ internal fun StorageManagementScreen(
 
     if (showClearLogsDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showClearLogsDialog = false },
             title = { Text(stringResource(R.string.storage_clear_logs_caches_confirm_title)) },
             text = { Text(stringResource(R.string.storage_clear_logs_caches_confirm_message)) },
@@ -622,6 +624,8 @@ fun SessionStorageDetailScreen(
 
     if (showClearDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showClearDialog = false },
             title = { Text(stringResource(R.string.storage_clear_confirm_title)) },
             text = {

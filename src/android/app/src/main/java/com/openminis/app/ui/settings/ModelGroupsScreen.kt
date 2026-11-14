@@ -374,6 +374,8 @@ fun ModelGroupsScreen(
 
     if (showNewGroupDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = {
                 showNewGroupDialog = false
                 newGroupName = ""
@@ -431,6 +433,8 @@ fun ModelGroupsScreen(
     // Group button — the swipe is a shortcut to that flow, not a second one.
     groupToDelete?.let { target ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { groupToDelete = null },
             title = { Text(stringResource(R.string.model_group_detail_delete_group)) },
             text = {

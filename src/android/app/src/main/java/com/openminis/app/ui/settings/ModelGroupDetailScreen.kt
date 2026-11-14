@@ -612,6 +612,8 @@ fun ModelGroupDetailScreen(
         val removingId = entryToRemove!!
         val removingEntry = config.modelEntries.find { it.id == removingId }
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { entryToRemove = null },
             title = { Text(stringResource(R.string.model_group_detail_remove_model)) },
             text = {
@@ -640,6 +642,8 @@ fun ModelGroupDetailScreen(
     // Confirm delete group
     if (showDeleteDialog) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showDeleteDialog = false },
             title = { Text(stringResource(R.string.model_group_detail_delete_group)) },
             text = { Text(stringResource(R.string.model_group_detail_delete_named_group_confirm, group.name)) },

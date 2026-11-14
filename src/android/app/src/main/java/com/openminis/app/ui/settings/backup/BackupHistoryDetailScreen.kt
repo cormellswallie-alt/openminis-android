@@ -220,6 +220,8 @@ fun BackupHistoryDetailScreen(
 
     if (confirmRemove) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { confirmRemove = false },
             title = { Text(stringResource(R.string.backup_history_remove_title)) },
             // Spell out the difference. Removing a record looks like it could
@@ -269,6 +271,8 @@ fun BackupHistoryDetailScreen(
     if (confirmDeleteFiles) {
         val destCount = record.destinations.count { it.succeeded }
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { confirmDeleteFiles = false },
             title = { Text(stringResource(R.string.backup_delete_files_confirm_title)) },
             text = {
@@ -350,6 +354,8 @@ fun BackupHistoryDetailScreen(
     // Failure, with the per-destination reason. Never silent.
     deleteFailure?.let { failures ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { deleteFailure = null },
             title = { Text(stringResource(R.string.backup_delete_files_failed_title)) },
             text = {

@@ -187,6 +187,8 @@ fun RestoreBrowseScreen(
     // especially on a metered connection.
     confirming?.let { e ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { confirming = null },
             title = { Text(stringResource(R.string.restore_download_title)) },
             text = {
@@ -219,6 +221,8 @@ fun RestoreBrowseScreen(
     // the cheapest way to notice the one about to go is the big one.
     pendingDelete?.let { e ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { pendingDelete = null },
             title = { Text(stringResource(R.string.backup_dest_delete_title)) },
             text = { Text(stringResource(R.string.restore_browse_delete_note, e.name, humanBytes(e.size))) },
@@ -403,6 +407,8 @@ private fun ProgressSheet(
     ModalBottomSheet(
         onDismissRequest = {},
         sheetState = sheetState,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         dragHandle = null,
     ) {
         Column(

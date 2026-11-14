@@ -90,6 +90,10 @@ internal fun CompactProgressIndicator(
         modifier = Modifier.padding(vertical = 6.dp),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -141,9 +145,13 @@ internal fun TypingIndicator() {
     val soulName = soulMeta.name.trim().ifEmpty { "Minis" }
 
     Surface(
-        modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+        modifier = Modifier.padding(top = 6.dp, bottom = 10.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        ),
     ) {
         Row(
             modifier = Modifier.padding(start = 10.dp, end = 16.dp, top = 7.dp, bottom = 7.dp),

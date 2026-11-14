@@ -1560,6 +1560,8 @@ fun SessionListScreen(
     // Bulk delete confirmation
     multiExportProgress?.let { (done, total) ->
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = {},
             title = { Text(stringResource(R.string.sessionlist_export)) },
             text = {
@@ -1641,6 +1643,8 @@ fun SessionListScreen(
         // Widening it for a single caller would push layout complexity into
         // every other dialog in the app.
         androidx.compose.material3.AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { folderToRename = null },
             title = { Text(stringResource(R.string.group_rename)) },
             text = {
@@ -3472,6 +3476,8 @@ private fun SessionExportSummaryDialog(
         )
     }
     AlertDialog(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.export_progress_done)) },
         text = {

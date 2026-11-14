@@ -74,6 +74,8 @@ private fun ConfigConfirmDialog(change: PendingConfigChange) {
     val approvedCount = workingItems.count { it.isApproved }
 
     AlertDialog(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = { /* force explicit Apply / Cancel */ },
         properties = DialogProperties(
             dismissOnBackPress = false,

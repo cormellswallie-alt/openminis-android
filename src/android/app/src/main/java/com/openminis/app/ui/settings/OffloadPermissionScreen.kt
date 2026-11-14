@@ -221,6 +221,8 @@ fun OffloadPermissionScreen(
 
     if (showResetConfirm) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showResetConfirm = false },
             title = { Text(stringResource(R.string.perm_reset_confirm_title)) },
             text = { Text(stringResource(R.string.perm_reset_confirm_text)) },

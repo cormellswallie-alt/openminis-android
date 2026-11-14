@@ -180,6 +180,8 @@ fun LogManagementScreen(
 
     if (showDeleteAllConfirm) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { showDeleteAllConfirm = false },
             title = { Text(stringResource(R.string.log_delete_confirm_title)) },
             text = {

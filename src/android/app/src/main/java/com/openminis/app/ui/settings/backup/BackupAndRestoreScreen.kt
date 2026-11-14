@@ -1716,6 +1716,8 @@ private fun ServerPackagePicker(
     val status by vm.statusText.collectAsState()
 
     AlertDialog(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
         onDismissRequest = onDismiss,
         title = { Text(remote.name) },
         text = {
@@ -2039,6 +2041,8 @@ private fun RestoreProgressSection(
 
     if (confirmStop) {
         AlertDialog(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(androidx.compose.ui.unit.Dp(28f)),
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
             onDismissRequest = { confirmStop = false },
             title = { Text(stringResource(R.string.restore_stop_title)) },
             text = { Text(stringResource(R.string.restore_stop_message)) },
