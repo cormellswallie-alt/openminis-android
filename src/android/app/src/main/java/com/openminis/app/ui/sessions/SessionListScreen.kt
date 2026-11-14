@@ -204,11 +204,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Dns
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.toShape
 import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 
 private data class CategoryStyle(val icon: ImageVector, val color: Color)
 
@@ -234,7 +233,6 @@ private fun categoryStyle(category: String?): CategoryStyle {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun categoryPolygonShape(category: String?): Shape {
     val polygon = when (category?.lowercase()) {
@@ -534,7 +532,6 @@ private fun relativeDate(context: Context, timestamp: Long): String {
 
 @OptIn(
     ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class,
     ExperimentalFoundationApi::class,
 )
 @Composable
@@ -642,7 +639,7 @@ fun SessionListScreen(
         if (isInitialLoadComplete) {
             initialLoadSettled = true
         } else {
-            kotlinx.coroutines.delay(1200L)
+            kotlinx.coroutines.delay(650L)
             initialLoadSettled = true
         }
     }
@@ -653,7 +650,7 @@ fun SessionListScreen(
         if (configLoaded) {
             configLoadSettled = true
         } else {
-            kotlinx.coroutines.withTimeoutOrNull(1000L) {
+            kotlinx.coroutines.withTimeoutOrNull(650L) {
                 providerRepository.awaitConfigLoaded()
             }
             configLoadSettled = true
@@ -1258,10 +1255,13 @@ fun SessionListScreen(
                             rows: List<ChatSessionEntity>,
                             inFolder: Boolean = false,
                         ) {
-                            items(rows, key = { it.id }) { session ->
+                            val safeRows = rows.distinctBy { it.id }
+                            if (safeRows.isEmpty()) return
+                            val lastRowId = safeRows.lastOrNull()?.id
+                            items(safeRows, key = { it.id }) { session ->
                                 val activeQuery =
                                     if (isSearchActive && searchQuery.isNotBlank()) searchQuery else ""
-                                val isLast = session.id == rows.last().id
+                                val isLast = session.id == lastRowId
                                 val memberShape = if (isLast) {
                                     RoundedCornerShape(
                                         topStart = ExpressiveTokens.InnerGroupRadius,
@@ -1754,7 +1754,7 @@ fun SessionListScreen(
 
 // ─── Material 3 Expressive Floating Workspace Dock ──────────────────────────
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExpressiveWorkspaceDock(
     scheduledTaskCount: Int,
@@ -1769,7 +1769,10 @@ private fun ExpressiveWorkspaceDock(
 ) {
     var fabMenuExpanded by remember { mutableStateOf(false) }
     val topGroups = remember(modelGroups) { modelGroups.take(8) }
-    val fabShape = MaterialShapes.Cookie9Sided.toShape()
+    // Convex squircle container so OEM HWUI shadow tessellation uses fast native
+    // Outline.Rounded rather than non-convex Outline.Generic star paths.
+    val fabShape = RoundedCornerShape(20.dp)
+    val innerBadgeShape = MaterialShapes.Sunny.toShape()
 
     Box(
         modifier = modifier
@@ -1854,11 +1857,21 @@ private fun ExpressiveWorkspaceDock(
                             ),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = stringResource(R.string.new_chat),
-                                modifier = Modifier.size(26.dp),
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f),
+                                        innerBadgeShape,
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = stringResource(R.string.new_chat),
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         }
                     }
                     MinisMenu(
@@ -1896,11 +1909,21 @@ private fun ExpressiveWorkspaceDock(
                     modifier = Modifier.size(58.dp),
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
                 ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = stringResource(R.string.new_chat),
-                        modifier = Modifier.size(26.dp),
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f),
+                                innerBadgeShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.new_chat),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
         }
@@ -2364,7 +2387,6 @@ private fun groupGlyphPath(side: Float): Path = Path().apply {
     line(768.0f)
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FolderComposedIcon(category: String?, diameter: Dp = 46.dp) {
     val tint = categoryStyle(category).color
@@ -2381,7 +2403,7 @@ private fun FolderComposedIcon(category: String?, diameter: Dp = 46.dp) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FolderCard(
     block: FolderGroupBlock,
@@ -2642,7 +2664,7 @@ private fun FolderCard(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SessionRow(
     session: ChatSessionEntity,
@@ -2976,7 +2998,6 @@ private fun SessionBadgeOverlay(
 
 // ─── Material 3 Expressive Bento Onboarding Showcase ───────────────────────
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun OnboardingLanding(
     hasProviders: Boolean,
@@ -3109,7 +3130,6 @@ private fun OnboardingLanding(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SetupStepCard(
     number: Int,
@@ -3227,7 +3247,7 @@ private val allCategories = listOf(
     "Design", "Productivity", "Support", "Other",
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SessionEditSheet(
     session: ChatSessionEntity,

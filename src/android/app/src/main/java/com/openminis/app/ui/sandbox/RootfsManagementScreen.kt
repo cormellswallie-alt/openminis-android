@@ -24,15 +24,14 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,7 +55,7 @@ import com.openminis.app.ui.components.SettingsSection
 import com.openminis.app.ui.settings.SettingsRow
 import com.openminis.app.ui.settings.SettingsScaffold
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootfsManagementScreen(
     onBack: () -> Unit,
@@ -282,7 +281,6 @@ fun RootfsManagementScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SandboxHeroBentoCard(
     isInstalled: Boolean,
@@ -328,13 +326,13 @@ private fun SandboxHeroBentoCard(
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(MaterialShapes.Pentagon.toShape())
                             .background(
-                                if (isInstalled) {
+                                color = if (isInstalled) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.surfaceContainerHighest
                                 },
+                                shape = MaterialShapes.Pentagon.toShape(),
                             ),
                         contentAlignment = Alignment.Center,
                     ) {

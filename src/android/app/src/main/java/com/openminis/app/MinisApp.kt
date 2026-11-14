@@ -608,8 +608,7 @@ class MinisApp : Application(), ImageLoaderFactory {
         // gets a correct (merely slower) answer, and one that arrives during the
         // build simply waits for it. Failure is non-fatal — an unbuilt index
         // means models fall back to their unranked order, never a crash.
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            kotlinx.coroutines.delay(2500L)
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
             runCatching { com.openminis.app.provider.ModelReleaseIndex.warmUp() }
                 .onFailure {
                     com.openminis.app.logging.AppLogger.warning(

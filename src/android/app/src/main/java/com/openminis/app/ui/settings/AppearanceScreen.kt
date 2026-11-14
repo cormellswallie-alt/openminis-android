@@ -45,16 +45,14 @@ import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.ScreenLockPortrait
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TonalToggleButton
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.ExpressiveTokens
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -160,7 +158,6 @@ fun fontScaleForLevel(level: Int): Float {
     return fontScaleMultipliers[idx]
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceScreen(
     onBack: () -> Unit,
@@ -210,40 +207,68 @@ fun AppearanceScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                horizontalArrangement = Arrangement.spacedBy(ExpressiveTokens.GroupItemGap),
             ) {
                 themeOptions.forEachIndexed { idx, opt ->
                     val checked = themeMode == idx
-                    val shapes = when (idx) {
-                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                        themeOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                    val segShape = when {
+                        checked -> RoundedCornerShape(24.dp)
+                        idx == 0 -> RoundedCornerShape(
+                            topStart = 24.dp,
+                            bottomStart = 24.dp,
+                            topEnd = 8.dp,
+                            bottomEnd = 8.dp,
+                        )
+                        idx == themeOptions.lastIndex -> RoundedCornerShape(
+                            topStart = 8.dp,
+                            bottomStart = 8.dp,
+                            topEnd = 24.dp,
+                            bottomEnd = 24.dp,
+                        )
+                        else -> RoundedCornerShape(8.dp)
                     }
-                    TonalToggleButton(
-                        checked = checked,
-                        onCheckedChange = {
-                            themeMode = idx
-                            prefs.edit().putInt(KEY_THEME_MODE, idx).apply()
-                            onThemeChanged(idx)
+                    Surface(
+                        shape = segShape,
+                        color = if (checked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                        contentColor = if (checked) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shapes = shapes,
-                        contentPadding = PaddingValues(horizontal = 8.dp),
+                            .height(48.dp)
+                            .clip(segShape)
+                            .clickable {
+                                themeMode = idx
+                                prefs.edit().putInt(KEY_THEME_MODE, idx).apply()
+                                onThemeChanged(idx)
+                            },
                     ) {
-                        Icon(
-                            imageVector = if (checked) Icons.Filled.Check else opt.icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = opt.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                imageVector = if (checked) Icons.Filled.Check else opt.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(17.dp),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = opt.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
@@ -365,39 +390,66 @@ fun AppearanceScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+                horizontalArrangement = Arrangement.spacedBy(ExpressiveTokens.GroupItemGap),
             ) {
                 returnOptions.forEachIndexed { idx, opt ->
                     val checked = returnKeyBehavior == opt.value
-                    val shapes = if (idx == 0) {
-                        ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    } else {
-                        ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    val segShape = when {
+                        checked -> RoundedCornerShape(24.dp)
+                        idx == 0 -> RoundedCornerShape(
+                            topStart = 24.dp,
+                            bottomStart = 24.dp,
+                            topEnd = 8.dp,
+                            bottomEnd = 8.dp,
+                        )
+                        else -> RoundedCornerShape(
+                            topStart = 8.dp,
+                            bottomStart = 8.dp,
+                            topEnd = 24.dp,
+                            bottomEnd = 24.dp,
+                        )
                     }
-                    TonalToggleButton(
-                        checked = checked,
-                        onCheckedChange = {
-                            returnKeyBehavior = opt.value
-                            prefs.edit().putInt(KEY_RETURN_KEY_BEHAVIOR, opt.value).apply()
+                    Surface(
+                        shape = segShape,
+                        color = if (checked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                        contentColor = if (checked) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shapes = shapes,
-                        contentPadding = PaddingValues(horizontal = 10.dp),
+                            .height(48.dp)
+                            .clip(segShape)
+                            .clickable {
+                                returnKeyBehavior = opt.value
+                                prefs.edit().putInt(KEY_RETURN_KEY_BEHAVIOR, opt.value).apply()
+                            },
                     ) {
-                        Icon(
-                            imageVector = if (checked) Icons.Filled.Check else opt.icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = opt.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                imageVector = if (checked) Icons.Filled.Check else opt.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = opt.label,
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }
@@ -738,8 +790,7 @@ fun AppearanceScreen(
                                         .align(Alignment.TopEnd)
                                         .padding(6.dp)
                                         .size(26.dp)
-                                        .clip(MaterialShapes.Sunny.toShape())
-                                        .background(MaterialTheme.colorScheme.primary),
+                                        .background(MaterialTheme.colorScheme.primary, MaterialShapes.Sunny.toShape()),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(

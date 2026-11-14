@@ -166,12 +166,11 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -511,7 +510,7 @@ private data class ScrollFollowKey(
     val blockSig: Long,
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, kotlinx.coroutines.FlowPreview::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, kotlinx.coroutines.FlowPreview::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     sessionId: String,
@@ -7263,8 +7262,7 @@ fun ChatScreen(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .clip(MaterialShapes.Cookie9Sided.toShape())
-                                    .background(MaterialTheme.colorScheme.error)
+                                    .background(MaterialTheme.colorScheme.error, MaterialShapes.Cookie9Sided.toShape())
                                     .clickable { viewModel.cancelStream() },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -7959,7 +7957,6 @@ private fun ThinkingLevelSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EmptyChatExpressiveHero(
     modifier: Modifier = Modifier,
@@ -7976,15 +7973,13 @@ private fun EmptyChatExpressiveHero(
             Box(
                 modifier = Modifier
                     .size(88.dp)
-                    .clip(MaterialShapes.Cookie12Sided.toShape())
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), MaterialShapes.Cookie12Sided.toShape()),
             )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(MaterialShapes.Sunny.toShape())
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(MaterialTheme.colorScheme.primary, MaterialShapes.Sunny.toShape()),
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,

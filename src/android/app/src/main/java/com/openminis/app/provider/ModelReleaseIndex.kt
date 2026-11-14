@@ -58,9 +58,13 @@ object ModelReleaseIndex {
 
     private class Entry(val day: Int, val outputCost: Double?, val context: Int?)
 
+    @Volatile
     private var byFullId: Map<String, Entry> = emptyMap()
+    @Volatile
     private var byTail: Map<String, Entry> = emptyMap()
+    @Volatile
     private var built = false
+    private val asyncWarmUpStarted = java.util.concurrent.atomic.AtomicBoolean(false)
 
     @Synchronized
     private fun ensureIndex() {
@@ -83,6 +87,7 @@ object ModelReleaseIndex {
         byFullId = full
         byTail = tail
         built = true
+        asyncWarmUpStarted.set(false)
         AppLogger.info(TAG, "release index built: full=${full.size} tail=${tail.size}")
     }
 
@@ -107,11 +112,33 @@ object ModelReleaseIndex {
         built = false
         byFullId = emptyMap()
         byTail = emptyMap()
+        asyncWarmUpStarted.set(false)
     }
 
     /** Ranking key for a model. Unknown ids get `releaseDay = null` (sink). */
     fun rank(modelId: String, displayName: String, contextWindow: Int?): Rank {
-        ensureIndex()
+        if (!built) {
+            // Never block the main UI thread on parsing the 4.5 MB models.dev JSON
+            // or waiting on the @Synchronized monitor while warmUp() is building it.
+            val isMainThread = runCatching {
+                android.os.Looper.myLooper() == android.os.Looper.getMainLooper()
+            }.getOrDefault(false)
+            if (isMainThread) {
+                if (asyncWarmUpStarted.compareAndSet(false, true)) {
+                    Thread({
+                        runCatching { ensureIndex() }
+                            .onFailure { asyncWarmUpStarted.set(false) }
+                    }, "model-release-index").apply { isDaemon = true }.start()
+                }
+                return Rank(
+                    releaseDay = null,
+                    outputCostPerMTok = 0.0,
+                    contextWindow = contextWindow ?: 0,
+                    displayName = displayName,
+                )
+            }
+            ensureIndex()
+        }
         val hit = resolve(modelId)
         return Rank(
             releaseDay = hit?.day,

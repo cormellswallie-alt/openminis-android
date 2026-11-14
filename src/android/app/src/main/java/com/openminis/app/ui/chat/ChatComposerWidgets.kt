@@ -148,7 +148,6 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ModalBottomSheet
 import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -1010,7 +1009,7 @@ private fun ToolPreviewThumbnail(
 
 // [T-android-tool-pager-longpress] ExperimentalFoundationApi is for
 // combinedClickable on the pager chevrons.
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun FloatingToolStatusBar(
     toolBlocks: List<AssistantBlock>,

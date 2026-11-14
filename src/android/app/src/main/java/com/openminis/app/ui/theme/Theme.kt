@@ -2,13 +2,10 @@ package com.openminis.app.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -16,7 +13,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -28,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -180,9 +177,8 @@ fun articulatedItemShape(
 
 /**
  * Returns a distinctive Material 3 Expressive polygon [Shape] for category badges,
- * avatars, and hero accents using `MaterialShapes`.
+ * avatars, and hero accents using [MaterialShapes].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun expressivePolygonShape(seed: Int): Shape {
     val polygon = when (seed.mod(8)) {
@@ -201,56 +197,59 @@ fun expressivePolygonShape(seed: Int): Shape {
 /**
  * Material 3 Expressive loading indicator powered by [rememberDecorativeTick].
  *
- * Uses GPU-layer transforms (`graphicsLayer`) on the shared ~30 fps
- * [com.openminis.app.ui.components.DecorativeClock] rather than alpha
- * `LoadingIndicator`'s per-frame `Morph` path allocations and `SuspendAnimation`
- * spring loops — guaranteeing zero per-frame recomposition, zero re-layout, and
- * immunity to main-thread hangs when system `ANIMATOR_DURATION_SCALE == 0f`.
+ * Renders both the breathingSunny badge and rotating arc inside a single isolated
+ * GPU layer (`graphicsLayer()`) without `Outline.Generic` RenderNode clipping or
+ * `SuspendAnimation` spring loops — zero per-frame recomposition, zero re-layout,
+ * and complete immunity to OEM RenderThread / `ANIMATOR_DURATION_SCALE == 0f` hangs.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExpressiveLoadingIndicator(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.primary,
 ) {
     val tick = rememberDecorativeTick()
-    val badgeShape = MaterialShapes.Sunny.toShape()
     val containerTint = remember(color) { color.copy(alpha = 0.20f) }
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
+    var cachedSide = remember { floatArrayOf(-1f) }
+    var cachedPath = remember { arrayOf<androidx.compose.ui.graphics.Path?>(null) }
+    Canvas(
+        modifier = modifier.graphicsLayer(),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(0.94f)
-                .graphicsLayer {
-                    val phase = decorativePhase(tick.value, 2400)
-                    val pulse = 0.88f + 0.12f * decorativePingPong(phase * 2f)
-                    rotationZ = phase * 360f
-                    scaleX = pulse
-                    scaleY = pulse
+        val nanos = tick.value
+        val side = size.minDimension * 0.94f
+        if (side > 1f) {
+            if (cachedPath[0] == null || cachedSide[0] != side) {
+                cachedSide[0] = side
+                cachedPath[0] = MaterialShapes.Sunny.buildScaledComposePath(side, side)
+            }
+            val badgePath = cachedPath[0]
+            if (badgePath != null && !badgePath.isEmpty) {
+                val badgePhase = decorativePhase(nanos, 2400)
+                val pulse = 0.88f + 0.12f * decorativePingPong(badgePhase * 2f)
+                val dx = (size.width - side) * 0.5f
+                val dy = (size.height - side) * 0.5f
+                withTransform({
+                    translate(left = dx, top = dy)
+                    scale(pulse, pulse, pivot = Offset(side * 0.5f, side * 0.5f))
+                    rotate(badgePhase * 360f, pivot = Offset(side * 0.5f, side * 0.5f))
+                }) {
+                    drawPath(path = badgePath, color = containerTint)
                 }
-                .background(containerTint, badgeShape),
-        )
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize(0.66f)
-                .graphicsLayer {
-                    rotationZ = decorativePhase(tick.value, 900) * 360f
-                },
-        ) {
-            val strokePx = (size.minDimension * 0.15f).coerceIn(1.75.dp.toPx(), 3.5.dp.toPx())
-            val inset = strokePx / 2f
+            }
+        }
+        val arcSide = size.minDimension * 0.64f
+        if (arcSide > 2f) {
+            val strokePx = (size.minDimension * 0.14f).coerceIn(1.75.dp.toPx(), 3.5.dp.toPx())
+            val arcDiameter = (arcSide - strokePx).coerceAtLeast(1f)
+            val left = (size.width - arcDiameter) * 0.5f
+            val top = (size.height - arcDiameter) * 0.5f
+            val spinAngle = decorativePhase(nanos, 900) * 360f
             drawArc(
                 color = color,
-                startAngle = 0f,
+                startAngle = spinAngle,
                 sweepAngle = 255f,
                 useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(
-                    (size.width - strokePx).coerceAtLeast(1f),
-                    (size.height - strokePx).coerceAtLeast(1f),
-                ),
+                topLeft = Offset(left, top),
+                size = Size(arcDiameter, arcDiameter),
                 style = Stroke(width = strokePx, cap = StrokeCap.Round),
             )
         }

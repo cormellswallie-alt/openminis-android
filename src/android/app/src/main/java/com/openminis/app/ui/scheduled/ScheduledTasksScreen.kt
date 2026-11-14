@@ -28,19 +28,18 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,7 +67,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduledTasksScreen(
     onBack: () -> Unit,
@@ -185,7 +184,6 @@ fun ScheduledTasksScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EmptyState(
     padding: PaddingValues,
@@ -203,14 +201,12 @@ private fun EmptyState(
                 Box(
                     modifier = Modifier
                         .size(104.dp)
-                        .clip(MaterialShapes.Cookie12Sided.toShape())
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)),
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f), MaterialShapes.Cookie12Sided.toShape()),
                 )
                 Box(
                     modifier = Modifier
                         .size(66.dp)
-                        .clip(MaterialShapes.Sunny.toShape())
-                        .background(MaterialTheme.colorScheme.primary),
+                        .background(MaterialTheme.colorScheme.primary, MaterialShapes.Sunny.toShape()),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -238,7 +234,7 @@ private fun EmptyState(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ScheduledTaskRow(
     task: ScheduledTask,

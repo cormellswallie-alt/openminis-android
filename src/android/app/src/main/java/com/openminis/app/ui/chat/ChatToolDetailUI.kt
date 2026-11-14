@@ -277,12 +277,11 @@ import com.openminis.app.ui.theme.ExpressiveTokens
 import com.openminis.app.ui.DisplayBitmapLimits
 import com.openminis.app.ui.components.MinisTextButton
 import com.openminis.app.ui.components.MinisTonalButton
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ToolDetailSheet(
     toolBlocks: List<AssistantBlock>,
@@ -367,8 +366,7 @@ internal fun ToolDetailSheet(
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .clip(MaterialShapes.Sunny.toShape())
-                            .background(toolAccent.copy(alpha = 0.16f)),
+                            .background(toolAccent.copy(alpha = 0.16f), MaterialShapes.Sunny.toShape()),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
@@ -1086,8 +1084,7 @@ internal fun ToolDetailSheet(
                                     Box(
                                         modifier = Modifier
                                             .size(64.dp)
-                                            .clip(MaterialShapes.SoftBurst.toShape())
-                                            .background(toolAccent.copy(alpha = 0.14f)),
+                                            .background(toolAccent.copy(alpha = 0.14f), MaterialShapes.SoftBurst.toShape()),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         if (isLive) {
@@ -1524,7 +1521,6 @@ private fun LazyRevealToolText(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditorCard(
     title: String,

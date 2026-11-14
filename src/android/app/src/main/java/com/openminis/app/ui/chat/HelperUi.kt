@@ -49,19 +49,18 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.StopCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -512,7 +511,6 @@ private fun HelperSpinner(size: Int, stroke: Float = 2f) {
  * deliberately shows no result summary; the deliverable lives in the detail
  * sheet, so the block never grows and jolts the list when a run ends.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HelperToolBlock(
     block: AssistantBlock,
@@ -1251,7 +1249,6 @@ internal fun AgentCallback.syntheticBlock(): AssistantBlock {
 
 /** Compact, left-aligned card for an <agent_callback> message that has no
  *  delegate block in the transcript (a scheduled child-of-current run). */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun AgentCallbackCard(callback: AgentCallback, onTap: () -> Unit, modifier: Modifier = Modifier) {
     val helperAccent = helperAccent()

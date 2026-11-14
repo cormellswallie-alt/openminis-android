@@ -152,12 +152,11 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -288,7 +287,6 @@ import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.components.decorativePhase
 import androidx.compose.ui.draw.drawWithCache
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun AssistantHeader() {
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
@@ -304,8 +302,7 @@ internal fun AssistantHeader() {
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .clip(MaterialShapes.Sunny.toShape())
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer, MaterialShapes.Sunny.toShape()),
             contentAlignment = Alignment.Center,
         ) {
             com.openminis.app.ui.settings.SoulIconGlyph(
@@ -735,7 +732,7 @@ internal fun formatToolDetailsForClipboard(block: AssistantBlock): String {
 private const val SHIMMER_PERIOD_MS = 2800
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ToolCallPill(
     block: AssistantBlock,
@@ -987,7 +984,6 @@ internal fun shouldAutoCollapseThinking(isStreaming: Boolean, userIntent: Boolea
     return userIntent != false
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: Boolean = true) {
     val context = LocalContext.current
@@ -1051,11 +1047,11 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
             Box(
                 modifier = Modifier
                     .size(28.dp)
-                    .clip(
-                        if (activeStreaming) MaterialShapes.Sunny.toShape()
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = if (activeStreaming) MaterialShapes.Sunny.toShape()
                         else MaterialShapes.SoftBurst.toShape(),
-                    )
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 if (activeStreaming) {
@@ -1244,7 +1240,6 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
  * (inside a scroller) — it lays out very large strings far more cheaply than
  * Compose `Text`, and stays selectable.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ThinkingFullContentDialog(content: String, onDismiss: () -> Unit) {
     val textColor = MaterialTheme.colorScheme.onSurface
@@ -1267,8 +1262,7 @@ private fun ThinkingFullContentDialog(content: String, onDismiss: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
-                            .clip(MaterialShapes.SoftBurst.toShape())
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                            .background(MaterialTheme.colorScheme.secondaryContainer, MaterialShapes.SoftBurst.toShape()),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(

@@ -284,11 +284,11 @@ dependencies {
 
     val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
     implementation(composeBom)
-    // Material 3 Expressive (1.5.0-alpha11 ships MaterialExpressiveTheme, MotionScheme,
-    // MaterialShapes, HorizontalFloatingToolbar, FloatingActionButtonMenu, ButtonGroup,
-    // LoadingIndicator, LargeFlexibleTopAppBar, etc. while staying compatible with
-    // compileSdk 36 / AGP 8.7.3 / Kotlin 2.1.0).
-    implementation("androidx.compose.material3:material3:1.5.0-alpha11")
+    // Keep Material 3 aligned with compose-bom:2025.09.00 (1.3.2) so lifecycle (2.8.7),
+    // savedstate (1.2.1), activity-compose (1.9.3), and navigation-compose (2.8.5)
+    // share one binary-compatible owner & SavedState graph; Material 3 Expressive
+    // polygons come from standalone graphics-shapes:1.0.1 via ExpressivePolygons.kt.
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.graphics:graphics-shapes:1.0.1")
     implementation("androidx.compose.material:material-icons-extended")
 

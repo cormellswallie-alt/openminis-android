@@ -36,12 +36,11 @@ import androidx.compose.material.icons.filled.KeyboardHide
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.PauseCircle
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
+import com.openminis.app.ui.theme.MaterialShapes
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -254,7 +253,6 @@ private fun <T> kotlinx.coroutines.flow.StateFlow<T>.collectAsStateEffect(): and
     return state
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TerminalTopBar(
     boundSession: Boolean,
@@ -286,8 +284,7 @@ private fun TerminalTopBar(
                 Box(
                     modifier = Modifier
                         .size(10.dp)
-                        .clip(MaterialShapes.Pentagon.toShape())
-                        .background(TerminalEmerald),
+                        .background(TerminalEmerald, MaterialShapes.Pentagon.toShape()),
                 )
                 Text(
                     stringResource(R.string.terminal_title),
