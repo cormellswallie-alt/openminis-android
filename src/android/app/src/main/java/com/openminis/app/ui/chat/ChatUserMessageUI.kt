@@ -449,21 +449,20 @@ internal fun UserMessageBubble(
                             }
                         }
                         if (isQueued && onWithdraw != null) {
-                            // T52: bring the withdraw target up to Material's
-                            // 44dp recommended minimum so it can be hit
-                            // reliably from the soft-IME-keyboard region;
-                            // 28dp was below the spec and frustrating on
-                            // Pixel-class displays. Icon nudged to 24dp to
-                            // stay visually centred in the larger ring.
                             IconButton(
                                 onClick = onWithdraw,
-                                modifier = Modifier.size(44.dp),
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.errorContainer,
+                                        RoundedCornerShape(14.dp),
+                                    ),
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Cancel,
                                     contentDescription = "Withdraw queued message",
-                                    tint = Color(0xFFFF3B30),
-                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }

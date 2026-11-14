@@ -184,17 +184,17 @@ object WebPreviewShortcut {
     }
 
     private val MONOGRAM_PALETTE: IntArray = intArrayOf(
-        0xFF1F8FFF.toInt(), // blue
-        0xFF34C759.toInt(), // green
-        0xFFFF9F0A.toInt(), // amber
-        0xFFFF453A.toInt(), // red
-        0xFFAF52DE.toInt(), // purple
-        0xFFFF2D55.toInt(), // pink
-        0xFF5AC8FA.toInt(), // light blue
-        0xFFFFCC00.toInt(), // yellow
-        0xFF00B894.toInt(), // teal
-        0xFFFF6B6B.toInt(), // coral
-        0xFF6C5CE7.toInt(), // indigo
+        0xFF2563EB.toInt(), // cobalt
+        0xFF10B981.toInt(), // emerald
+        0xFFD97706.toInt(), // amber
+        0xFFEF4444.toInt(), // crimson
+        0xFF8B5CF6.toInt(), // violet
+        0xFFEC4899.toInt(), // rose
+        0xFF06B6D4.toInt(), // cyan
+        0xFFEAB308.toInt(), // gold
+        0xFF0D9488.toInt(), // teal
+        0xFFF97316.toInt(), // coral
+        0xFF4F46E5.toInt(), // indigo
         0xFFE17055.toInt(), // terracotta
     )
 }

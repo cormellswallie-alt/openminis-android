@@ -19,8 +19,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarDefaults
+import com.openminis.app.ui.components.ExpressiveArticulatedSeam
+import com.openminis.app.ui.components.MinisAlertDialog
+import com.openminis.app.ui.components.MinisButton
+import com.openminis.app.ui.components.MinisMenuDivider
+import com.openminis.app.ui.settings.ExpressiveEmptyStateCard
+import com.openminis.app.ui.settings.ExpressiveNavIconButton
+import com.openminis.app.ui.settings.ExpressiveTopBarActionButton
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
@@ -99,18 +118,23 @@ fun FileBrowserScreen(
     BackHandler(enabled = true, onBack = handleBack)
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.filebrowser_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.filebrowser_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = handleBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = handleBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
-                    // T-hidden-files a3e7f1d0: trailing toolbar collapsed
-                    // to a single ⋯ menu (was a Sort-only IconButton). All
-                    // functional actions now live under one entry point.
                     MoreMenu(
                         sortKey = state.sortKey,
                         ascending = state.sortAscending,
@@ -122,6 +146,9 @@ fun FileBrowserScreen(
                         onToggleShowHidden = { viewModel.setShowHidden(!state.showHidden) },
                     )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
             )
         },
     ) { padding ->
@@ -136,8 +163,6 @@ fun FileBrowserScreen(
                 onNavigate = { index -> viewModel.navigateToPathComponent(index) },
             )
 
-            HorizontalDivider()
-
             // Content
             when {
                 state.isLoading -> {
@@ -145,37 +170,28 @@ fun FileBrowserScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator()
+                        ExpressiveLoadingIndicator(modifier = Modifier.size(38.dp))
                     }
                 }
 
                 state.isEmpty -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.Folder,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                stringResource(R.string.filebrowser_empty_folder),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
+                    ExpressiveEmptyStateCard(
+                        icon = Icons.Filled.Folder,
+                        title = stringResource(R.string.filebrowser_empty_folder),
+                        badgeShape = MaterialShapes.Cookie9Sided.toShape(),
+                    )
                 }
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow),
                         contentPadding = PaddingValues(vertical = 4.dp),
                     ) {
-                        items(state.items, key = { it.file.absolutePath }) { item ->
+                        itemsIndexed(state.items, key = { _, it -> it.file.absolutePath }) { index, item ->
                             FileItemRow(
                                 item = item,
                                 currentLinuxPath = state.currentLinuxPath,
@@ -189,7 +205,9 @@ fun FileBrowserScreen(
                                 onDelete = { deleteTarget = item },
                                 onAddToHome = { source -> webAppSheetSource = source },
                             )
-                            HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                            if (index < state.items.size - 1) {
+                                ExpressiveArticulatedSeam()
+                            }
                         }
                     }
                 }
@@ -199,29 +217,19 @@ fun FileBrowserScreen(
 
     // Delete confirmation
     deleteTarget?.let { item ->
-        AlertDialog(
+        MinisAlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text(stringResource(R.string.filebrowser_delete_title, item.name)) },
-            text = { Text(stringResource(R.string.filebrowser_delete_message)) },
-            confirmButton = {
-                MinisTextButton(onClick = {
-                    viewModel.deleteItem(item)
-                    deleteTarget = null
-                }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                MinisTextButton(onClick = { deleteTarget = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
+            title = stringResource(R.string.filebrowser_delete_title, item.name),
+            text = stringResource(R.string.filebrowser_delete_message),
+            confirmText = stringResource(R.string.delete),
+            isDestructive = true,
+            onConfirm = {
+                viewModel.deleteItem(item)
+                deleteTarget = null
             },
         )
     }
 
-    // T-pwa-3: Add-to-Home-Screen sheet, hosted at screen scope so it
-    // outlives the row that triggered it (rows scroll out of composition
-    // and the menu dismisses before the sheet animates in).
     webAppSheetSource?.let { src ->
         com.openminis.app.webapp.AddToHomeSheet(
             source = src,
@@ -231,16 +239,37 @@ fun FileBrowserScreen(
 
     // Error dialog
     state.errorMessage?.let { msg ->
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissError() },
-            title = { Text(stringResource(R.string.filebrowser_error_title)) },
-            text = { Text(msg) },
-            confirmButton = {
-                MinisTextButton(onClick = { viewModel.dismissError() }) {
-                    Text("OK")  // OK is locale-neutral
+        androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.dismissError() }) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.filebrowser_error_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        msg,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        MinisButton(onClick = { viewModel.dismissError() }) {
+                            Text("OK", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
-            },
-        )
+            }
+        }
     }
 }
 
@@ -256,20 +285,34 @@ private fun BreadcrumbBar(
             .horizontalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         pathComponents.forEachIndexed { index, component ->
-            Text(
-                text = component,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { onNavigate(index) },
-            )
-            if (index < pathComponents.lastIndex) {
+            val isLast = index == pathComponents.lastIndex
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (isLast) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    )
+                    .clickable { onNavigate(index) }
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+            ) {
+                Text(
+                    text = component,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = if (isLast) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isLast) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (!isLast) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 )
             }
         }
@@ -314,18 +357,29 @@ private fun FileItemRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Icon
-        Icon(
-            imageVector = fileIcon(item),
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = if (item.isDirectory)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // Tonal squircle icon badge
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(
+                    if (item.isDirectory) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    RoundedCornerShape(12.dp),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = fileIcon(item),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = if (item.isDirectory)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(14.dp))
 
         // Name and size
         Column(modifier = Modifier.weight(1f)) {
@@ -333,21 +387,23 @@ private fun FileItemRow(
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (item.isSymlink) {
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "link",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape)
+                            .padding(horizontal = 6.dp, vertical = 1.dp),
                     )
                 }
             }
-            // mtime + size on a single row, mirroring iOS: "size · mtime"
-            // (size omitted for directories, mtime omitted when stat = 0).
             val mtime = item.formattedDate
             if (!item.isDirectory || mtime.isNotEmpty()) {
                 val parts = buildList {
@@ -364,12 +420,20 @@ private fun FileItemRow(
 
         // Delete button for non-directory items
         if (!item.isDirectory) {
-            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(11.dp)),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
                 Icon(
                     Icons.Filled.Delete,
                     contentDescription = stringResource(R.string.delete),
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
@@ -463,13 +527,17 @@ private fun MoreMenu(
     onToggleShowHidden: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.filebrowser_more_action))
-        }
-        com.openminis.app.ui.components.MinisMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            // Display options — sort key choices first so the most
-            // frequent toggle (sort) is the closest tap.
+    Box(modifier = Modifier.padding(end = 4.dp)) {
+        ExpressiveTopBarActionButton(
+            onClick = { expanded = true },
+            icon = Icons.Filled.MoreVert,
+            contentDescription = stringResource(R.string.filebrowser_more_action),
+        )
+        com.openminis.app.ui.components.MinisMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            alignEnd = true,
+        ) {
             for (key in FileSortKey.entries) {
                 DropdownMenuItem(
                     text = { Text(stringResource(when (key) {
@@ -491,7 +559,7 @@ private fun MoreMenu(
                     },
                 )
             }
-            HorizontalDivider()
+            MinisMenuDivider()
             DropdownMenuItem(
                 text = { Text(stringResource(if (ascending) R.string.filebrowser_sort_ascending else R.string.filebrowser_sort_descending)) },
                 leadingIcon = {

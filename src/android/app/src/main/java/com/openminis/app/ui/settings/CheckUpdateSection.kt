@@ -331,9 +331,9 @@ private fun UpdateDialog(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(14.dp),
-                                strokeWidth = 1.5.dp,
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
                             )
                             Text(stringResource(R.string.check_update_downloading, (downloadProgress * 100).toInt()))
                         }

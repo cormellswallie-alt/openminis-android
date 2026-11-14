@@ -55,6 +55,143 @@ import androidx.compose.ui.unit.sp
 import com.openminis.app.ui.components.ExpressiveArticulatedSeam
 import com.openminis.app.ui.theme.ChatColors
 import com.openminis.app.ui.theme.ExpressiveTokens
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
+import androidx.compose.ui.graphics.Shape
+
+/**
+ * Reusable Material 3 Expressive 40dp tonal squircle navigation button for TopAppBars.
+ */
+@Composable
+fun ExpressiveNavIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.AutoMirrored.Filled.ArrowBack,
+    contentDescription: String? = "Back",
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+            .padding(start = 6.dp)
+            .size(40.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerHigh,
+                RoundedCornerShape(14.dp),
+            ),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+/**
+ * Reusable Material 3 Expressive 40dp tonal squircle action button for TopAppBar trailing slots.
+ */
+@Composable
+fun ExpressiveTopBarActionButton(
+    onClick: () -> Unit,
+    icon: ImageVector,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    highlighted: Boolean = false,
+) {
+    val bg = when {
+        !enabled -> MaterialTheme.colorScheme.surfaceContainerLow
+        highlighted -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+    val fg = when {
+        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+        highlighted -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .padding(horizontal = 3.dp)
+            .size(40.dp)
+            .background(bg, RoundedCornerShape(14.dp)),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = fg,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = fg,
+        ),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+/**
+ * Material 3 Expressive empty-state card with an organic polygon badge.
+ */
+@Composable
+fun ExpressiveEmptyStateCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    modifier: Modifier = Modifier,
+    badgeShape: Shape = MaterialShapes.SoftBurst.toShape(),
+    action: (@Composable () -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp, start = 16.dp, end = 16.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceContainerLow,
+                RoundedCornerShape(ExpressiveTokens.OuterGroupRadius),
+            )
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(MaterialTheme.colorScheme.secondaryContainer, badgeShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(26.dp),
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (!subtitle.isNullOrBlank()) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 18.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        }
+        if (action != null) {
+            action()
+        }
+    }
+}
 
 /**
  * Material 3 Expressive Settings & Control Center Primitives.
@@ -96,22 +233,7 @@ fun SettingsScaffold(
             val navigationSlot: @Composable () -> Unit = {
                 when {
                     navigation != null -> navigation()
-                    onBack != null -> IconButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .size(40.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                    onBack != null -> ExpressiveNavIconButton(onClick = onBack)
                 }
             }
             when {

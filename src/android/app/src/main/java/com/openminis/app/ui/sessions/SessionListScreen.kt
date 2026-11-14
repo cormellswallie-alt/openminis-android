@@ -2187,9 +2187,8 @@ private fun SessionItemContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
+                        com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                            modifier = Modifier.size(18.dp),
                         )
                         Text(
                             stringResource(R.string.sessionlist_regenerating_title),
@@ -2965,9 +2964,8 @@ private fun SessionBadgeOverlay(
                     .offset(x = 2.dp, y = 2.dp)
                     .size(14.dp)
                     .background(
-                        // Solid system-orange. Picked over yellow so the
-                        // alert reads as "attention" rather than "info".
-                        color = Color(0xFFFF9500),
+                        // Warm amber badge so the alert reads as "attention" rather than "info".
+                        color = Color(0xFFD97706),
                         shape = CircleShape,
                     )
                     .border(

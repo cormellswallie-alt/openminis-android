@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,8 +21,10 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +49,8 @@ import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.openminis.app.ui.components.MinisTextButton
+import com.openminis.app.ui.components.ExpressiveArticulatedSeam
+import com.openminis.app.ui.components.MinisSmallButton
 
 /**
  * Bottom sheet showing memory state for the current session.
@@ -116,17 +120,27 @@ fun SessionMemorySheet(
         onDismiss = onDismiss,
         leadingAction = if (mode != MemorySheetMode.List) {
             {
-                IconButton(onClick = {
-                    if (isEditing) {
-                        // Cancel edit, stay on detail.
-                        isEditing = false
-                    } else {
-                        mode = MemorySheetMode.List
-                    }
-                }) {
+                IconButton(
+                    onClick = {
+                        if (isEditing) {
+                            // Cancel edit, stay on detail.
+                            isEditing = false
+                        } else {
+                            mode = MemorySheetMode.List
+                        }
+                    },
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.memory_action_back),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -266,29 +280,48 @@ private fun DetailToolbar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.End,
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showEdit) {
-            IconButton(onClick = onEdit) {
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+            ) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = stringResource(R.string.memory_action_edit),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
         if (showSave) {
-            MinisTextButton(onClick = onSave) {
-                Text(stringResource(R.string.memory_action_save))
+            MinisSmallButton(onClick = onSave) {
+                Text(stringResource(R.string.memory_action_save), fontWeight = FontWeight.SemiBold)
             }
         }
         if (showRevoke) {
-            IconButton(onClick = onRevoke) {
+            IconButton(
+                onClick = onRevoke,
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp)),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                ),
+            ) {
                 Icon(
                     Icons.AutoMirrored.Filled.Undo,
                     contentDescription = stringResource(R.string.memory_action_revoke),
-                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -381,17 +414,17 @@ private fun MemoryToolRow(
                 Box(
                     modifier = Modifier
                         .background(
-                            color = opColor.copy(alpha = 0.15f),
-                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = CircleShape,
                         )
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 ) {
                     Text(
                         opLabel,
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Monospace,
-                        color = opColor,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
                 if (record.preview.isNotEmpty()) {
@@ -408,13 +441,7 @@ private fun MemoryToolRow(
         }
 
         if (showDivider) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 14.dp, end = 14.dp)
-                    .height(0.5.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-            )
+            ExpressiveArticulatedSeam()
         }
     }
 }

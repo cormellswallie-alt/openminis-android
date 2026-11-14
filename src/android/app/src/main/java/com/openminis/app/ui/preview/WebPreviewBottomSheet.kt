@@ -357,6 +357,7 @@ internal fun WebPreviewToolbar(
             com.openminis.app.ui.components.MinisMenu(
                 expanded = menuOpen,
                 onDismissRequest = { menuOpen = false },
+                alignEnd = true,
             ) {
                 androidx.compose.material3.DropdownMenuItem(
                     text = { Text(stringResource(R.string.webpreview_open_external)) },
@@ -434,8 +435,10 @@ private fun ToolbarIcon(
 ) {
     Box(
         modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
+            .padding(horizontal = 3.dp)
+            .size(38.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(13.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -443,7 +446,7 @@ private fun ToolbarIcon(
             imageVector = icon,
             contentDescription = description,
             tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(20.dp),
         )
     }
 }

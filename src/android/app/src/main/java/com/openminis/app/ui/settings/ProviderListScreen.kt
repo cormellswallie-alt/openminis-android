@@ -54,11 +54,16 @@ import com.openminis.app.data.model.ProviderInstance
 import com.openminis.app.data.repository.ProviderRepository
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
+import com.openminis.app.ui.components.ExpressiveArticulatedSeam
 import com.openminis.app.ui.components.MinisAlertDialog
 import com.openminis.app.ui.components.SwipeRowAction
 import com.openminis.app.ui.components.SwipeRowActions
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import com.openminis.app.logging.AppLogger
 import com.openminis.app.R
+
+private val ProviderActiveEmerald = Color(0xFF10B981)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,40 +131,22 @@ fun ProviderListScreen(
         title = stringResource(R.string.provider_list_providers),
         onBack = onBack,
         actions = {
-            IconButton(onClick = { showMenu = true }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.provider_list_add_provider))
-            }
+            ExpressiveTopBarActionButton(
+                onClick = { showMenu = true },
+                icon = Icons.Default.Add,
+                contentDescription = stringResource(R.string.provider_list_add_provider),
+                highlighted = true,
+            )
+            Spacer(Modifier.width(4.dp))
         },
     ) {
         if (instances.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp)
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .padding(vertical = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.VpnKey,
-                    contentDescription = null,
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                )
-                Text(
-                    text = stringResource(R.string.provider_list_no_providers_configured),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(R.string.provider_list_add_a_provider_to_get_started),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                )
-            }
+            ExpressiveEmptyStateCard(
+                icon = Icons.Outlined.VpnKey,
+                title = stringResource(R.string.provider_list_no_providers_configured),
+                subtitle = stringResource(R.string.provider_list_add_a_provider_to_get_started),
+                badgeShape = MaterialShapes.Sunny.toShape(),
+            )
         } else {
             groupedInstances.forEach { (providerType, typeInstances) ->
                 SettingsSection(header = providerType.displayName) {
@@ -271,14 +258,7 @@ fun ProviderListScreen(
                                 }
                             }
                             if (index < localOrder.size - 1) {
-                                val divider = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 38.dp, end = 14.dp)
-                                        .height(1.dp)
-                                        .background(divider),
-                                )
+                                ExpressiveArticulatedSeam()
                             }
                         }
                     }
@@ -306,14 +286,7 @@ fun ProviderListScreen(
                         onClick = { onVoiceServiceClick(shadow.instanceId) },
                     )
                     if (index < shadows.size - 1) {
-                        val divider = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 38.dp, end = 14.dp)
-                                .height(1.dp)
-                                .background(divider),
-                        )
+                        ExpressiveArticulatedSeam()
                     }
                 }
             }
@@ -325,8 +298,17 @@ fun ProviderListScreen(
         ModalBottomSheet(
             onDismissRequest = { showMenu = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Column(modifier = Modifier.padding(bottom = 32.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainer),
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -334,14 +316,30 @@ fun ProviderListScreen(
                             showMenu = false
                             onAddProvider()
                         }
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Text(stringResource(R.string.provider_list_add_provider), style = MaterialTheme.typography.bodyLarge)
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Text(
+                        stringResource(R.string.provider_list_add_provider),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+                ExpressiveArticulatedSeam()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -355,12 +353,28 @@ fun ProviderListScreen(
                                 ),
                             )
                         }
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Text(stringResource(R.string.provider_list_import_provider), style = MaterialTheme.typography.bodyLarge)
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Default.FileDownload,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Text(
+                        stringResource(R.string.provider_list_import_provider),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
             }
         }
@@ -414,7 +428,7 @@ private fun ProviderInstanceRow(
                 .size(8.dp)
                 .background(
                     color = if (needsReauth) MaterialTheme.colorScheme.error
-                        else if (isActive) Color(0xFF34C759)
+                        else if (isActive) ProviderActiveEmerald
                         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                     shape = CircleShape,
                 ),

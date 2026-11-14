@@ -160,14 +160,12 @@ fun MountedFoldersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_mount_external_folders)) },
+                title = { Text(stringResource(R.string.settings_mount_external_folders), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
+                    ExpressiveNavIconButton(onClick = onBack)
                 },
                 actions = {
-                    IconButton(
+                    ExpressiveTopBarActionButton(
                         onClick = {
                             // On Android 10, a folder can readdir but still EACCES on
                             // write unless WRITE_EXTERNAL_STORAGE is granted at runtime
@@ -189,10 +187,12 @@ fun MountedFoldersScreen(
                                 showPickerIntro = true
                             }
                         },
+                        icon = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.settings_mount_external_folders),
                         enabled = !isAtCapacity,
-                    ) {
-                        Icon(Icons.Filled.Add, contentDescription = null)
-                    }
+                        highlighted = !isAtCapacity,
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
                 },
             )
         },
@@ -289,7 +289,7 @@ fun MountedFoldersScreen(
                         item {
                             Text(
                                 text = stringResource(R.string.mount_folders_limit_reached),
-                                color = Color(0xFFFF9500),
+                                color = Color(0xFFD97706),
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                             )
@@ -525,7 +525,7 @@ private fun ListHeader(count: Int, atCapacity: Boolean) {
         Text(
             text = "$count / ${MountedFoldersStore.MAX_MOUNTS}",
             style = MaterialTheme.typography.labelSmall,
-            color = if (atCapacity) Color(0xFFFF9500) else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (atCapacity) Color(0xFFD97706) else MaterialTheme.colorScheme.onSurfaceVariant,
             fontFamily = FontFamily.Monospace,
         )
     }
@@ -594,9 +594,9 @@ private fun MountRow(
 @Composable
 private fun AccessBadge(entry: MountedFoldersStore.Entry) {
     val (text, color) = when {
-        !entry.isWritable -> stringResource(R.string.mount_badge_readonly) to Color(0xFFFF9500)
-        !entry.userAllowWrite -> stringResource(R.string.mount_badge_locked) to Color(0xFFAF52DE)
-        else -> stringResource(R.string.mount_badge_rw) to Color(0xFF34C759)
+        !entry.isWritable -> stringResource(R.string.mount_badge_readonly) to Color(0xFFD97706)
+        !entry.userAllowWrite -> stringResource(R.string.mount_badge_locked) to Color(0xFF8B5CF6)
+        else -> stringResource(R.string.mount_badge_rw) to Color(0xFF10B981)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

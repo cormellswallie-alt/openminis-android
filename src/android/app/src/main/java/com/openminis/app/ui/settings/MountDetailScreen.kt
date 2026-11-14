@@ -94,15 +94,14 @@ fun MountDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.mount_detail_title)) },
+                title = { Text(stringResource(R.string.mount_detail_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
+                    ExpressiveNavIconButton(onClick = onBack)
                 },
                 actions = {
-                    MinisTextButton(
+                    com.openminis.app.ui.components.MinisSmallButton(
                         enabled = canSave,
+                        modifier = Modifier.padding(end = 8.dp),
                         onClick = {
                             scope.launch {
                                 if (nameChanged) store.rename(entry.id, nameTrimmed)
@@ -250,8 +249,8 @@ private fun HeaderCard(entry: MountedFoldersStore.Entry) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFFF9500)),
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFD97706)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

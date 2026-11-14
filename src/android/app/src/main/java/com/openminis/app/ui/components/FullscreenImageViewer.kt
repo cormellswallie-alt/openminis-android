@@ -275,7 +275,7 @@ fun FullscreenImageViewer(
                     modifier = Modifier
                         .navigationBarsPadding()
                         .padding(bottom = 24.dp)
-                        .background(color = Color(0xFF3A3A3C), shape = pillShape)
+                        .background(color = Color(0xFF272C3A), shape = pillShape)
                         .border(
                             width = 1.dp,
                             color = Color.White.copy(alpha = 0.15f),

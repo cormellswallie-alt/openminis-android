@@ -110,11 +110,12 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.system_permissions_title)) },
+                title = { Text(stringResource(R.string.system_permissions_title), fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.back),
+                    )
                 },
             )
         },
@@ -131,7 +132,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
             ) {
                 SettingsRow(
                     icon = Icons.Outlined.Accessibility,
-                    iconColor = Color(0xFF34C759),
+                    iconColor = Color(0xFF10B981),
                     title = stringResource(R.string.system_permissions_a11y_row),
                     subtitle = if (a11yEnabled)
                         stringResource(R.string.system_permissions_a11y_enabled)
@@ -163,7 +164,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
                     if (shizukuReady) {
                         SettingsRow(
                             icon = Icons.Outlined.LockOpen,
-                            iconColor = Color(0xFF34C759),
+                            iconColor = Color(0xFF10B981),
                             title = stringResource(R.string.system_permissions_a11y_restricted_shizuku),
                             subtitle = when {
                                 unrestricting ->
@@ -189,7 +190,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
                     }
                     SettingsRow(
                         icon = Icons.Outlined.Info,
-                        iconColor = Color(0xFFFF9500),
+                        iconColor = Color(0xFFD97706),
                         title = stringResource(R.string.system_permissions_a11y_restricted_manual),
                         subtitle = stringResource(R.string.system_permissions_a11y_restricted_manual_sub),
                         // Lands on Minis' own App info page, where the
@@ -221,7 +222,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
                 ) {
                     SettingsRow(
                         icon = Icons.Outlined.Build,
-                        iconColor = Color(0xFFFF3B30),
+                        iconColor = Color(0xFFDC2626),
                         title = stringResource(
                             if (shizukuReady) R.string.a11y_repair_row_shizuku
                             else R.string.a11y_repair_row_manual
@@ -270,7 +271,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
                 ) {
                     SettingsRow(
                         icon = Icons.Outlined.RestartAlt,
-                        iconColor = Color(0xFFFF9500),
+                        iconColor = Color(0xFFD97706),
                         title = stringResource(R.string.system_permissions_a11y_oem_autostart),
                         subtitle = stringResource(R.string.system_permissions_a11y_oem_autostart_sub),
                         onClick = {
@@ -281,7 +282,7 @@ fun SystemPermissionsScreen(onBack: () -> Unit) {
                     )
                     SettingsRow(
                         icon = Icons.Outlined.BatteryAlert,
-                        iconColor = Color(0xFFFF9500),
+                        iconColor = Color(0xFFD97706),
                         title = stringResource(R.string.system_permissions_a11y_oem_battery),
                         subtitle = stringResource(R.string.system_permissions_a11y_oem_battery_sub),
                         onClick = {

@@ -102,12 +102,14 @@ fun MinisSkillsBrowserScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.skills_browser_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = handleBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = handleBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
-                    MinisTextButton(
+                    com.openminis.app.ui.components.MinisSmallButton(
+                        modifier = Modifier.padding(end = 8.dp),
                         onClick = {
                             scope.launch {
                                 importSkillFromCurrentUrl(
@@ -123,7 +125,7 @@ fun MinisSkillsBrowserScreen(
                         },
                         enabled = hudState != HudState.IMPORTING,
                     ) {
-                        Text(stringResource(R.string.skills_browser_import_button), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.skills_browser_import_button))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -221,10 +223,9 @@ fun MinisSkillsBrowserScreen(
                 ) {
                     when (hudState) {
                         HudState.IMPORTING -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                                modifier = Modifier.size(18.dp),
                                 color = Color.White,
-                                strokeWidth = 2.dp,
                             )
                             Spacer(Modifier.width(10.dp))
                             Text(stringResource(R.string.skills_browser_hud_importing), color = Color.White, style = MaterialTheme.typography.labelLarge)

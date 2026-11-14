@@ -235,7 +235,7 @@ internal fun StorageManagementScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (state.isClearingLogs) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(
                                 stringResource(R.string.storage_clearing_status),
@@ -263,7 +263,7 @@ internal fun StorageManagementScreen(
                                 .padding(16.dp),
                             horizontalArrangement = Arrangement.Center,
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(22.dp))
                         }
                         state.rows.isEmpty() -> Text(
                             stringResource(R.string.storage_no_sessions),
@@ -463,7 +463,7 @@ private fun StorageSelectionBar(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
                     Text(stringResource(R.string.storage_clearing_status))
                 }
@@ -591,7 +591,7 @@ fun SessionStorageDetailScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isClearing) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
                     Text(
                         stringResource(R.string.storage_clearing_status),

@@ -56,11 +56,13 @@ fun CopilotDisclaimerDialog(
 ) {
     AlertDialog(
         onDismissRequest = onCancel,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         icon = {
             Icon(
                 Icons.Default.Warning,
                 contentDescription = null,
-                tint = Color(0xFFFF9500),
+                tint = Color(0xFFD97706),
                 modifier = Modifier.size(36.dp),
             )
         },
@@ -76,7 +78,7 @@ fun CopilotDisclaimerDialog(
             }
         },
         confirmButton = {
-            MinisTextButton(onClick = onAccept) {
+            com.openminis.app.ui.components.MinisSmallButton(onClick = onAccept) {
                 Text(stringResource(R.string.copilot_disclaimer_accept))
             }
         },

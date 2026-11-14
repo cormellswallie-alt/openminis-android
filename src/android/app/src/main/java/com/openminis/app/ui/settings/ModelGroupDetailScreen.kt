@@ -144,9 +144,10 @@ fun ModelGroupDetailScreen(
             TopAppBar(
                 title = { Text(group.name, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.model_group_detail_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.model_group_detail_back),
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -427,7 +428,7 @@ fun ModelGroupDetailScreen(
                             )
                         },
                         icon = Icons.Default.Psychology,
-                        iconColor = Color(0xFFAF52DE),
+                        iconColor = Color(0xFF8B5CF6),
                         showDivider = reasoningEnabled,
                     )
                     if (reasoningEnabled) {
@@ -562,7 +563,7 @@ fun ModelGroupDetailScreen(
                             }
                         },
                         icon = Icons.Default.Memory,
-                        iconColor = Color(0xFF5856D6),
+                        iconColor = Color(0xFF4F46E5),
                         showDivider = contextEnabled,
                     )
                     if (contextEnabled) {

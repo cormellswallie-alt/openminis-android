@@ -308,28 +308,32 @@ fun MemoryFileEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(fileName) },
+                title = { Text(fileName, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
                     // [T-global-memory-save-always-visible] Always render Save —
                     // no hasChanges gate (see KDoc above).
-                    MinisTextButton(onClick = {
-                        try {
-                            memoryRepository.saveFile(fileName, content)
-                            saveError = null
-                            android.widget.Toast.makeText(
-                                context,
-                                savedToastText,
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
-                        } catch (e: Exception) {
-                            saveError = e.message
-                        }
-                    }) {
+                    com.openminis.app.ui.components.MinisSmallButton(
+                        modifier = Modifier.padding(end = 8.dp),
+                        onClick = {
+                            try {
+                                memoryRepository.saveFile(fileName, content)
+                                saveError = null
+                                android.widget.Toast.makeText(
+                                    context,
+                                    savedToastText,
+                                    android.widget.Toast.LENGTH_SHORT,
+                                ).show()
+                            } catch (e: Exception) {
+                                saveError = e.message
+                            }
+                        },
+                    ) {
                         Text("Save")
                     }
                 },

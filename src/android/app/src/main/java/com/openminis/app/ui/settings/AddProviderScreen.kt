@@ -807,7 +807,7 @@ private fun ColumnScope.OAuthConfigSection(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF34C759),
+                        tint = Color(0xFF10B981),
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -992,10 +992,9 @@ private fun ColumnScope.OAuthConfigSection(
                     enabled = !isAuthenticating,
                 ) {
                     if (isAuthenticating) {
-                        CircularProgressIndicator(
+                        com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
                             modifier = Modifier.size(18.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.add_provider_signing_in))

@@ -121,9 +121,9 @@ internal fun helperAccent(): Color = if (ChatColors.isDark) HelperAccentDark els
 /** Static mid-tone for non-composable call sites (tool colour map). */
 val HelperAccentStatic = Color(0xFF8B6CF6)
 
-internal val HelperStatusGreen = Color(0xFF34C759)
-internal val HelperStatusYellow = Color(0xFFFFCC00)
-internal val HelperStatusRed = Color(0xFFFF3B30)
+internal val HelperStatusGreen = Color(0xFF10B981)
+internal val HelperStatusYellow = Color(0xFFEAB308)
+internal val HelperStatusRed = Color(0xFFDC2626)
 
 /** What an agent block's content currently says, in structured form. */
 internal sealed class HelperPhase {
@@ -786,7 +786,7 @@ private fun HelperSecondLine(info: HelperBlockInfo) {
                 )
             }
             p.elapsedSeconds?.let { Text(helperElapsedLabel(it), fontSize = 11.sp, lineHeight = 12.sp, fontFamily = FontFamily.Monospace, color = ChatColors.tertiaryText, maxLines = 1) }
-            if (p.escalation) Icon(Icons.Default.PriorityHigh, contentDescription = null, tint = Color(0xFFFF9500), modifier = Modifier.size(11.dp))
+            if (p.escalation) Icon(Icons.Default.PriorityHigh, contentDescription = null, tint = Color(0xFFD97706), modifier = Modifier.size(11.dp))
         }
     }
 }
@@ -1386,18 +1386,10 @@ fun AgentTranscriptScreen(sessionId: String, onBack: () -> Unit) {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                 navigationIcon = {
-                    IconButton(
+                    com.openminis.app.ui.settings.ExpressiveNavIconButton(
                         onClick = onBack,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        ),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.helper_close),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+                        contentDescription = stringResource(R.string.helper_close),
+                    )
                 },
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

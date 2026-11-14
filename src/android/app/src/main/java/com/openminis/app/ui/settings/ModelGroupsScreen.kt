@@ -160,16 +160,21 @@ fun ModelGroupsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.model_groups_model_groups)) },
+                title = { Text(stringResource(R.string.model_groups_model_groups), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.model_group_detail_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.model_group_detail_back),
+                    )
                 },
                 actions = {
-                    IconButton(onClick = { showNewGroupDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.model_groups_new_group))
-                    }
+                    ExpressiveTopBarActionButton(
+                        onClick = { showNewGroupDialog = true },
+                        icon = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.model_groups_new_group),
+                        highlighted = true,
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
                 },
             )
         },

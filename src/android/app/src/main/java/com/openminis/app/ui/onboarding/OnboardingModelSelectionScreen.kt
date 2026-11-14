@@ -1,39 +1,36 @@
 package com.openminis.app.ui.onboarding
 
-import com.openminis.app.R
-import androidx.compose.ui.res.stringResource
-import com.openminis.app.ui.components.MinisButton
-import com.openminis.app.ui.components.MinisTextButton
-
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,31 +41,41 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.ui.text.style.TextAlign
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.openminis.app.R
 import com.openminis.app.data.model.ModelGroup
 import com.openminis.app.data.repository.ProviderRepository
+import com.openminis.app.ui.components.ExpressiveArticulatedSeam
+import com.openminis.app.ui.components.MinisButton
+import com.openminis.app.ui.components.MinisMenu
+import com.openminis.app.ui.components.MinisMenuDefaults
+import com.openminis.app.ui.components.MinisTextButton
+import com.openminis.app.ui.components.MinisTonalButton
+import com.openminis.app.ui.settings.ExpressiveNavIconButton
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
+import com.openminis.app.ui.theme.ExpressiveTokens
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Onboarding step 2: pick 1-3 models from configured providers
- * and create a "Default Models" group. Mirrors iOS OnboardingModelSelectionView.
+ * and create a "Default Models" group.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingModelSelectionScreen(
     providerRepository: ProviderRepository,
     onBack: () -> Unit,
-    /** [T-onboarding-model-fetch-fallback] Open Add Custom Model for this provider. */
     onAddCustomModel: (instanceId: String) -> Unit = {},
 ) {
     val config by providerRepository.config.collectAsState()
@@ -81,14 +88,8 @@ fun OnboardingModelSelectionScreen(
         it.providerInstanceId in enabledInstanceIds && !it.isHidden
     }
 
-    // [T-onboarding-model-fetch-fallback] State of the page's own bounded
-    // fetch, which runs only while the list is empty. Saveable so a trip to
-    // Add Custom Model and back keeps the failure section instead of
-    // restarting a 20 s spinner.
     var fetching by remember { mutableStateOf(false) }
     var fetchAttempted by rememberSaveable { mutableStateOf(false) }
-    // Non-null = the fetch finished and the page is still empty; the text is
-    // the provider's own error, or "" when there is nothing beyond the headline.
     var failureDetail by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val timeoutText = stringResource(
@@ -100,7 +101,7 @@ fun OnboardingModelSelectionScreen(
         providerRepository.config.value.modelEntries.count { it.providerInstanceId in instanceIds && !it.isHidden }
 
     fun runBoundedFetch() {
-        if (fetching) return // Retry while in flight is a no-op.
+        if (fetching) return
         val current = providerRepository.config.value
         val targets = current.instances.filter { inst ->
             inst.isEnabled && current.modelEntries.none { it.providerInstanceId == inst.id && !it.isHidden }
@@ -108,7 +109,6 @@ fun OnboardingModelSelectionScreen(
         fetchAttempted = true
         failureDetail = null
         if (targets.isEmpty()) {
-            // No enabled provider at all: nothing to wait for.
             if (visibleEntryCount(enabledInstanceIds) == 0) failureDetail = ""
             return
         }
@@ -122,8 +122,6 @@ fun OnboardingModelSelectionScreen(
                     }
                     vendorError
                 }
-                // Failure is a property of the EMPTY page, not of a provider: a
-                // partial result simply lists what arrived.
                 val ids = providerRepository.config.value.instances.filter { it.isEnabled }.map { it.id }.toSet()
                 if (visibleEntryCount(ids) == 0) {
                     failureDetail = if (result.timedOut) timeoutText else result.errors.distinct().joinToString("\n")
@@ -140,16 +138,11 @@ fun OnboardingModelSelectionScreen(
             runBoundedFetch()
             return@LaunchedEffect
         }
-        // Normal path: refresh model lists for every enabled instance when the
-        // screen appears, so the user sees the live provider catalog (not just
-        // the built-in placeholder list seeded by addInstance). Mirrors iOS
-        // fetchModelsWithFallback chain.
         for (instance in enabledInstances) {
-            // [T-provider-refresh-outlives-screen] (GH#265) Repository scope, so
-            // tapping Continue quickly does not cancel the fetch half-way.
             providerRepository.triggerAsyncModelReconcile(instance.id)
         }
     }
+
     val filteredEntries = if (searchText.isBlank()) allEntries else {
         val q = searchText.lowercase()
         allEntries.filter {
@@ -159,19 +152,29 @@ fun OnboardingModelSelectionScreen(
     val grouped = filteredEntries.groupBy { it.providerInstanceId }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.onboarding_select_models_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.onboarding_select_models_title),
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
                     MinisTextButton(onClick = onBack) {
                         Text(stringResource(R.string.common_skip))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
             )
         },
     ) { padding ->
@@ -179,25 +182,34 @@ fun OnboardingModelSelectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .navigationBarsPadding()
                 .padding(horizontal = 16.dp),
         ) {
             Text(
                 stringResource(R.string.onboarding_select_models_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
             )
             Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
-                label = { Text(stringResource(R.string.onboarding_filter_models)) },
+                placeholder = { Text(stringResource(R.string.onboarding_filter_models)) },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp))
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(50),
+                shape = CircleShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
 
             if (allEntries.isEmpty() && !fetching && failureDetail != null) {
                 ModelFetchFailure(
@@ -215,8 +227,8 @@ fun OnboardingModelSelectionScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(Modifier.height(8.dp))
+                        ExpressiveLoadingIndicator(modifier = Modifier.size(44.dp))
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             stringResource(R.string.onboarding_loading_models),
                             style = MaterialTheme.typography.bodySmall,
@@ -227,66 +239,94 @@ fun OnboardingModelSelectionScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    contentPadding = PaddingValues(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     for ((instanceId, entries) in grouped) {
                         val instance = config.instances.find { it.id == instanceId }
                         item(key = "header_$instanceId") {
-                            Text(
-                                instance?.label ?: instanceId,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(vertical = 8.dp),
-                            )
-                        }
-                        items(entries, key = { it.id }) { entry ->
-                            val isSelected = entry.id in selected
-                            val selectionIndex = selected.indexOf(entry.id)
-                            val canSelect = selected.size < 3 || isSelected
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(enabled = canSelect) {
-                                        if (isSelected) selected.remove(entry.id)
-                                        else if (selected.size < 3) selected.add(entry.id)
-                                    }
-                                    .padding(vertical = 10.dp, horizontal = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Box(
+                            Column {
+                                Text(
+                                    instance?.label ?: instanceId,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 8.dp, bottom = 8.dp),
+                                )
+                                Column(
                                     modifier = Modifier
-                                        .size(26.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isSelected) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.surfaceVariant
-                                        ),
-                                    contentAlignment = Alignment.Center,
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(ExpressiveTokens.OuterGroupRadius))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerLow),
                                 ) {
-                                    if (isSelected) {
-                                        Text(
-                                            "${selectionIndex + 1}",
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
+                                    entries.forEachIndexed { idx, entry ->
+                                        val isSelected = entry.id in selected
+                                        val selectionIndex = selected.indexOf(entry.id)
+                                        val canSelect = selected.size < 3 || isSelected
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(
+                                                    if (isSelected) {
+                                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f)
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surfaceContainerLow
+                                                    },
+                                                )
+                                                .clickable(enabled = canSelect) {
+                                                    if (isSelected) selected.remove(entry.id)
+                                                    else if (selected.size < 3) selected.add(entry.id)
+                                                }
+                                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .background(
+                                                        color = if (isSelected) {
+                                                            MaterialTheme.colorScheme.primary
+                                                        } else {
+                                                            MaterialTheme.colorScheme.surfaceContainerHighest
+                                                        },
+                                                        shape = if (isSelected) {
+                                                            MaterialShapes.SoftBurst.toShape()
+                                                        } else {
+                                                            CircleShape
+                                                        },
+                                                    ),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                if (isSelected) {
+                                                    Text(
+                                                        "${selectionIndex + 1}",
+                                                        color = MaterialTheme.colorScheme.onPrimary,
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
+                                                }
+                                            }
+                                            Spacer(Modifier.width(14.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    entry.model.displayName,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                                )
+                                                Text(
+                                                    entry.model.id,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            }
+                                        }
+                                        if (idx < entries.lastIndex) {
+                                            ExpressiveArticulatedSeam()
+                                        }
                                     }
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        entry.model.displayName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                    Text(
-                                        entry.model.id,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
                                 }
                             }
-                            HorizontalDivider()
                         }
                     }
                 }
@@ -311,20 +351,15 @@ fun OnboardingModelSelectionScreen(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
             ) {
-                Text(stringResource(R.string.onboarding_done_count, selected.size))
+                Text(
+                    stringResource(R.string.onboarding_done_count, selected.size),
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
 }
 
-/**
- * [T-onboarding-model-fetch-fallback] Shown when the bounded fetch finished
- * and the page is still empty: a headline, the provider's own error under it
- * (omitted when it would only repeat the headline), Retry, and Add Model
- * Manually. A custom model belongs to exactly one provider, so with several
- * enabled providers the button opens a menu to pick one; with none (every
- * provider disabled) it hides and Skip remains.
- */
 @Composable
 private fun ModelFetchFailure(
     detail: String,
@@ -337,12 +372,36 @@ private fun ModelFetchFailure(
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    RoundedCornerShape(ExpressiveTokens.OuterGroupRadius),
+                )
+                .padding(horizontal = 24.dp, vertical = 28.dp),
         ) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        MaterialTheme.colorScheme.errorContainer,
+                        MaterialShapes.SoftBurst.toShape(),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.ErrorOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            Spacer(Modifier.height(12.dp))
             val headline = stringResource(R.string.onboarding_models_fetch_failed)
             Text(
                 headline,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
             )
             if (detail.isNotBlank() && detail != headline) {
@@ -355,22 +414,23 @@ private fun ModelFetchFailure(
                     maxLines = 6,
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
             MinisButton(onClick = onRetry) {
                 Text(stringResource(R.string.onboarding_models_retry))
             }
             if (instances.isNotEmpty()) {
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(8.dp))
                 Box {
-                    MinisTextButton(onClick = {
+                    MinisTonalButton(onClick = {
                         if (instances.size == 1) onAddCustomModel(instances.first().first) else pickerOpen = true
                     }) {
                         Text(stringResource(R.string.onboarding_models_add_manually))
                     }
-                    DropdownMenu(expanded = pickerOpen, onDismissRequest = { pickerOpen = false }) {
+                    MinisMenu(expanded = pickerOpen, onDismissRequest = { pickerOpen = false }) {
                         for ((id, label) in instances) {
                             DropdownMenuItem(
                                 text = { Text(label.ifBlank { id }) },
+                                colors = MinisMenuDefaults.itemColors(),
                                 onClick = {
                                     pickerOpen = false
                                     onAddCustomModel(id)

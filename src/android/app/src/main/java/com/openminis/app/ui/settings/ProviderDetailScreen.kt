@@ -696,7 +696,7 @@ fun ProviderDetailScreen(
                     // inside the row's Box so it opens over the entry the user
                     // pressed. Delete stays custom-only, matching the previous
                     // long-press behaviour and the repo's constraint.
-                    DropdownMenu(
+                    com.openminis.app.ui.components.MinisMenu(
                         expanded = menuEntryId == entry.id,
                         onDismissRequest = { menuEntryId = null },
                     ) {
@@ -992,7 +992,7 @@ private fun OAuthCredentialBlock(
                     .padding(horizontal = 8.dp)
                     .size(8.dp)
                     .background(
-                        if (needsReauth) MaterialTheme.colorScheme.error else Color(0xFF34C759),
+                        if (needsReauth) MaterialTheme.colorScheme.error else Color(0xFF10B981),
                         CircleShape,
                     ),
             )
@@ -1076,9 +1076,8 @@ private fun OAuthProgressLine(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(top = 8.dp),
         ) {
-            androidx.compose.material3.CircularProgressIndicator(
-                modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
+            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -1294,7 +1293,7 @@ private fun ManualBearerTokenSection(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .size(8.dp)
-                    .background(Color(0xFF34C759), CircleShape),
+                    .background(Color(0xFF10B981), CircleShape),
             )
         }
         Row(modifier = Modifier.padding(top = 8.dp)) {

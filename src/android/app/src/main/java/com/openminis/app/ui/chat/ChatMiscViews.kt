@@ -445,7 +445,7 @@ private fun BorderedMarkdownTable(
                 }
             }
         }
-        DropdownMenu(
+        com.openminis.app.ui.components.MinisMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
         ) {
@@ -670,7 +670,7 @@ private fun CompactSummarySheet(
                 Icon(
                     imageVector = if (copied) Icons.Default.Check else Icons.Default.ContentCopy,
                     contentDescription = "Copy",
-                    tint = if (copied) Color(0xFF34C759) else ChatColors.secondaryText,
+                    tint = if (copied) Color(0xFF10B981) else ChatColors.secondaryText,
                 )
             }
         },

@@ -27,11 +27,11 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +39,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,6 +62,9 @@ import com.openminis.app.browser.BrowserTabPool
 import com.openminis.app.browser.UserAgentProfile
 import com.openminis.app.logging.AppLogger
 import kotlinx.coroutines.launch
+import com.openminis.app.ui.components.MinisAlertDialog
+import com.openminis.app.ui.components.MinisOutlinedButton
+import com.openminis.app.ui.components.MinisSmallButton
 import com.openminis.app.ui.components.MinisTextButton
 import com.openminis.app.ui.util.bringIntoViewOnFocus
 
@@ -119,316 +123,330 @@ fun BrowserSettingsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                // [T-android-browser-settings-keyboard-overlap] imePadding
-                // shrinks the sheet's content frame when the keyboard
-                // opens; verticalScroll lets the user (or the focused-
-                // field bring-into-view) scroll the now-shorter content
-                // so the focused TextField isn't behind the keyboard.
-                // Previously the Column was a fixed Column with no
-                // scroll, so Width/Height/idle-timeout fields below the
-                // viewport stayed glued and the keyboard ate them.
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
                 .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // Header
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     stringResource(R.string.browser_settings_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
-                MinisTextButton(onClick = onDismiss) { Text(stringResource(R.string.browser_settings_done)) }
+                MinisSmallButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.browser_settings_done), fontWeight = FontWeight.SemiBold)
+                }
             }
-
-            Spacer(Modifier.height(16.dp))
 
             // ── User Agent ──
-            Text(
-                stringResource(R.string.browser_settings_user_agent),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(8.dp))
-
-            val notSetPlaceholder = stringResource(R.string.browser_settings_ua_not_set)
-            for (profile in UserAgentProfile.entries) {
-                val label = stringResource(when (profile) {
-                    UserAgentProfile.MOBILE_CHROME -> R.string.browser_settings_ua_mobile_chrome
-                    UserAgentProfile.DESKTOP_CHROME -> R.string.browser_settings_ua_desktop_chrome
-                    UserAgentProfile.CUSTOM -> R.string.browser_settings_ua_custom
-                })
-                val uaSubtitle = displayUA(profile, customUA, notSetPlaceholder)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
-                        selected = selectedProfile == profile,
-                        onClick = {
-                            selectedProfile = profile
-                            prefs.edit()
-                                .putString("user_agent_profile", profile.name)
-                                .apply()
-                            tabPool.setUserAgentFromUI(profile, if (profile == UserAgentProfile.CUSTOM) customUA else null)
-                        },
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(label, style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            uaSubtitle,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-            }
-
-            if (selectedProfile == UserAgentProfile.CUSTOM) {
-                OutlinedTextField(
-                    value = customUA,
-                    onValueChange = {
-                        customUA = it
-                        prefs.edit().putString("custom_user_agent", it).apply()
-                    },
-                    label = { Text(stringResource(R.string.browser_settings_custom_ua_label)) },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    singleLine = false,
-                    textStyle = MaterialTheme.typography.bodySmall,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+            ) {
+                Text(
+                    stringResource(R.string.browser_settings_user_agent),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
                 )
-                MinisTextButton(onClick = {
-                    tabPool.setUserAgentFromUI(UserAgentProfile.CUSTOM, customUA)
-                }) {
-                    Text(stringResource(R.string.browser_settings_apply))
-                }
-            }
+                Spacer(Modifier.height(8.dp))
 
-            Spacer(Modifier.height(20.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-
-            // ── Web Viewport (mirrors iOS BrowserManagementView.viewportSection) ──
-            ViewportSection(
-                tabPool = tabPool,
-                selectedProfile = selectedProfile,
-                viewportMode = viewportMode,
-                isCustomActive = isCustomViewportActive,
-                widthText = viewportWidthText,
-                heightText = viewportHeightText,
-                showEditor = showCustomViewportEditor,
-                onWidthChange = { viewportWidthText = it.filter { ch -> ch.isDigit() }.take(5) },
-                onHeightChange = { viewportHeightText = it.filter { ch -> ch.isDigit() }.take(5) },
-                onSelectDefault = {
-                    viewportMode = ViewportMode.DEFAULT
-                    AppLogger.info("BrowserSettings", "viewportMode → DEFAULT")
-                    coroutineScope.launch {
-                        tabPool.setGlobalViewport(0, 0)
-                        AppLogger.info("BrowserSettings", "viewport set to UA default")
-                    }
-                    viewportWidthText = ""
-                    viewportHeightText = ""
-                    showCustomViewportEditor = false
-                },
-                onSelectCustom = {
-                    viewportMode = ViewportMode.CUSTOM
-                    AppLogger.info("BrowserSettings", "viewportMode → CUSTOM")
-                    showCustomViewportEditor = true
-                    val w = viewportWidthText.toIntOrNull()
-                    val h = viewportHeightText.toIntOrNull()
-                    if (w != null && h != null && w > 0 && h > 0) {
-                        coroutineScope.launch {
-                            tabPool.setGlobalViewport(w.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX), h.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX))
-                            AppLogger.info("BrowserSettings", "viewport set to ${w}x$h (custom)")
+                val notSetPlaceholder = stringResource(R.string.browser_settings_ua_not_set)
+                for (profile in UserAgentProfile.entries) {
+                    val label = stringResource(when (profile) {
+                        UserAgentProfile.MOBILE_CHROME -> R.string.browser_settings_ua_mobile_chrome
+                        UserAgentProfile.DESKTOP_CHROME -> R.string.browser_settings_ua_desktop_chrome
+                        UserAgentProfile.CUSTOM -> R.string.browser_settings_ua_custom
+                    })
+                    val uaSubtitle = displayUA(profile, customUA, notSetPlaceholder)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = selectedProfile == profile,
+                            onClick = {
+                                selectedProfile = profile
+                                prefs.edit()
+                                    .putString("user_agent_profile", profile.name)
+                                    .apply()
+                                tabPool.setUserAgentFromUI(profile, if (profile == UserAgentProfile.CUSTOM) customUA else null)
+                            },
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                            Text(
+                                uaSubtitle,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
-                },
-                onApply = {
-                    val w = viewportWidthText.toIntOrNull()
-                    val h = viewportHeightText.toIntOrNull()
-                    if (w != null && h != null && w > 0 && h > 0) {
-                        val cw = w.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX)
-                        val ch = h.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX)
-                        viewportWidthText = cw.toString()
-                        viewportHeightText = ch.toString()
+                }
+
+                if (selectedProfile == UserAgentProfile.CUSTOM) {
+                    OutlinedTextField(
+                        value = customUA,
+                        onValueChange = {
+                            customUA = it
+                            prefs.edit().putString("custom_user_agent", it).apply()
+                        },
+                        label = { Text(stringResource(R.string.browser_settings_custom_ua_label)) },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        singleLine = false,
+                        textStyle = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    MinisSmallButton(onClick = {
+                        tabPool.setUserAgentFromUI(UserAgentProfile.CUSTOM, customUA)
+                    }) {
+                        Text(stringResource(R.string.browser_settings_apply), fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
+            // ── Web Viewport ──
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+            ) {
+                ViewportSection(
+                    tabPool = tabPool,
+                    selectedProfile = selectedProfile,
+                    viewportMode = viewportMode,
+                    isCustomActive = isCustomViewportActive,
+                    widthText = viewportWidthText,
+                    heightText = viewportHeightText,
+                    showEditor = showCustomViewportEditor,
+                    onWidthChange = { viewportWidthText = it.filter { ch -> ch.isDigit() }.take(5) },
+                    onHeightChange = { viewportHeightText = it.filter { ch -> ch.isDigit() }.take(5) },
+                    onSelectDefault = {
+                        viewportMode = ViewportMode.DEFAULT
+                        AppLogger.info("BrowserSettings", "viewportMode → DEFAULT")
+                        coroutineScope.launch {
+                            tabPool.setGlobalViewport(0, 0)
+                            AppLogger.info("BrowserSettings", "viewport set to UA default")
+                        }
+                        viewportWidthText = ""
+                        viewportHeightText = ""
+                        showCustomViewportEditor = false
+                    },
+                    onSelectCustom = {
+                        viewportMode = ViewportMode.CUSTOM
+                        AppLogger.info("BrowserSettings", "viewportMode → CUSTOM")
+                        showCustomViewportEditor = true
+                        val w = viewportWidthText.toIntOrNull()
+                        val h = viewportHeightText.toIntOrNull()
+                        if (w != null && h != null && w > 0 && h > 0) {
+                            coroutineScope.launch {
+                                tabPool.setGlobalViewport(w.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX), h.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX))
+                                AppLogger.info("BrowserSettings", "viewport set to ${w}x$h (custom)")
+                            }
+                        }
+                    },
+                    onApply = {
+                        val w = viewportWidthText.toIntOrNull()
+                        val h = viewportHeightText.toIntOrNull()
+                        if (w != null && h != null && w > 0 && h > 0) {
+                            val cw = w.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX)
+                            val ch = h.coerceIn(VIEWPORT_MIN, VIEWPORT_MAX)
+                            viewportWidthText = cw.toString()
+                            viewportHeightText = ch.toString()
+                            viewportMode = ViewportMode.CUSTOM
+                            coroutineScope.launch {
+                                tabPool.setGlobalViewport(cw, ch)
+                                AppLogger.info("BrowserSettings", "viewport applied ${cw}x$ch")
+                            }
+                        }
+                    },
+                    onPreset = { w, h ->
+                        viewportWidthText = w.toString()
+                        viewportHeightText = h.toString()
                         viewportMode = ViewportMode.CUSTOM
                         coroutineScope.launch {
-                            tabPool.setGlobalViewport(cw, ch)
-                            AppLogger.info("BrowserSettings", "viewport applied ${cw}x$ch")
+                            tabPool.setGlobalViewport(w, h)
+                            AppLogger.info("BrowserSettings", "viewport preset ${w}x$h")
                         }
-                    }
-                },
-                onPreset = { w, h ->
-                    viewportWidthText = w.toString()
-                    viewportHeightText = h.toString()
-                    viewportMode = ViewportMode.CUSTOM
-                    coroutineScope.launch {
-                        tabPool.setGlobalViewport(w, h)
-                        AppLogger.info("BrowserSettings", "viewport preset ${w}x$h")
-                    }
-                },
-            )
-
-            Spacer(Modifier.height(20.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
+                    },
+                )
+            }
 
             // ── Idle Tab Eviction ──
-            Text(
-                stringResource(R.string.browser_settings_idle_timeout),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                stringResource(R.string.browser_settings_idle_timeout_desc) + " " +
-                    "(default ${BrowserTabPool.DEFAULT_IDLE_TIMEOUT_MINUTES}, range " +
-                    "${BrowserTabPool.MIN_IDLE_TIMEOUT_MINUTES}–${BrowserTabPool.MAX_IDLE_TIMEOUT_MINUTES}).",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = idleTimeoutText,
-                    onValueChange = { new -> idleTimeoutText = new.filter { it.isDigit() }.take(3) },
-                    label = { Text(stringResource(R.string.browser_settings_minutes_label)) },
-                    singleLine = true,
-                    // [T-android-browser-settings-keyboard-overlap] this
-                    // field sits near the bottom of the sheet — without
-                    // scroll-into-view it sits behind the soft keyboard
-                    // every time the user taps it.
-                    modifier = Modifier.weight(1f).bringIntoViewOnFocus(),
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(Modifier.size(8.dp))
-                MinisTextButton(
-                    onClick = {
-                        val minutes = idleTimeoutText.toIntOrNull()
-                            ?: BrowserTabPool.DEFAULT_IDLE_TIMEOUT_MINUTES
-                        tabPool.setIdleTimeoutMinutes(minutes)
-                        // Reflect clamping back into the field.
-                        idleTimeoutText = tabPool.idleTimeoutMinutes.toString()
-                    },
-                ) { Text(stringResource(R.string.browser_settings_apply)) }
-            }
-
-            Spacer(Modifier.height(20.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(16.dp))
-
-            // ── Cookies & Website Data ──
-            Text(
-                stringResource(R.string.browser_settings_cookies_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(8.dp))
-
-            val hasCookies = CookieManager.getInstance().hasCookies()
-            val historyStore = remember { com.openminis.app.browser.BrowserHistoryStore.getInstance(context) }
-            val allDomains = remember(hasCookies) { historyStore.uniqueDomains() }
-            val domains = remember(allDomains, cookieFilterText) {
-                if (cookieFilterText.isBlank()) allDomains
-                else allDomains.filter { it.contains(cookieFilterText.trim(), ignoreCase = true) }
-            }
-
-            if (allDomains.isNotEmpty()) {
-                OutlinedTextField(
-                    value = cookieFilterText,
-                    onValueChange = { cookieFilterText = it },
-                    label = { Text(stringResource(R.string.browser_settings_filter_by_domain)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    textStyle = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            if (domains.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+            ) {
                 Text(
-                    when {
-                        cookieFilterText.isNotBlank() -> stringResource(R.string.browser_settings_no_domains_match, cookieFilterText)
-                        hasCookies -> stringResource(R.string.browser_settings_cookies_stored)
-                        else -> stringResource(R.string.browser_settings_no_cookies)
-                    },
+                    stringResource(R.string.browser_settings_idle_timeout),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.browser_settings_idle_timeout_desc) + " " +
+                        "(default ${BrowserTabPool.DEFAULT_IDLE_TIMEOUT_MINUTES}, range " +
+                        "${BrowserTabPool.MIN_IDLE_TIMEOUT_MINUTES}–${BrowserTabPool.MAX_IDLE_TIMEOUT_MINUTES}).",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                LazyColumn(modifier = Modifier.height((domains.size.coerceAtMost(6) * 44).dp)) {
-                    items(domains) { domain ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                domain,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f),
-                            )
-                            IconButton(
-                                onClick = {
-                                    // Clear cookies for this domain
-                                    CookieManager.getInstance().setCookie(domain, "")
-                                    CookieManager.getInstance().flush()
-                                },
-                                modifier = Modifier.size(32.dp),
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = idleTimeoutText,
+                        onValueChange = { new -> idleTimeoutText = new.filter { it.isDigit() }.take(3) },
+                        label = { Text(stringResource(R.string.browser_settings_minutes_label)) },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f).bringIntoViewOnFocus(),
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.size(10.dp))
+                    MinisSmallButton(
+                        onClick = {
+                            val minutes = idleTimeoutText.toIntOrNull()
+                                ?: BrowserTabPool.DEFAULT_IDLE_TIMEOUT_MINUTES
+                            tabPool.setIdleTimeoutMinutes(minutes)
+                            idleTimeoutText = tabPool.idleTimeoutMinutes.toString()
+                        },
+                    ) { Text(stringResource(R.string.browser_settings_apply), fontWeight = FontWeight.SemiBold) }
+                }
+            }
+
+            // ── Cookies & Website Data ──
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+            ) {
+                Text(
+                    stringResource(R.string.browser_settings_cookies_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(8.dp))
+
+                val hasCookies = CookieManager.getInstance().hasCookies()
+                val historyStore = remember { com.openminis.app.browser.BrowserHistoryStore.getInstance(context) }
+                val allDomains = remember(hasCookies) { historyStore.uniqueDomains() }
+                val domains = remember(allDomains, cookieFilterText) {
+                    if (cookieFilterText.isBlank()) allDomains
+                    else allDomains.filter { it.contains(cookieFilterText.trim(), ignoreCase = true) }
+                }
+
+                if (allDomains.isNotEmpty()) {
+                    OutlinedTextField(
+                        value = cookieFilterText,
+                        onValueChange = { cookieFilterText = it },
+                        label = { Text(stringResource(R.string.browser_settings_filter_by_domain)) },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        textStyle = MaterialTheme.typography.bodySmall,
+                    )
+                }
+
+                if (domains.isEmpty()) {
+                    Text(
+                        when {
+                            cookieFilterText.isNotBlank() -> stringResource(R.string.browser_settings_no_domains_match, cookieFilterText)
+                            hasCookies -> stringResource(R.string.browser_settings_cookies_stored)
+                            else -> stringResource(R.string.browser_settings_no_cookies)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.height((domains.size.coerceAtMost(6) * 44).dp)) {
+                        items(domains) { domain ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.browser_settings_clear_cookies_for, domain),
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp),
+                                Text(
+                                    domain,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f),
                                 )
+                                IconButton(
+                                    onClick = {
+                                        CookieManager.getInstance().setCookie(domain, "")
+                                        CookieManager.getInstance().flush()
+                                    },
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(10.dp)),
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                    ),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.browser_settings_clear_cookies_for, domain),
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
 
-            MinisTextButton(
-                onClick = { showClearConfirm = true },
-                enabled = hasCookies,
-            ) {
-                Text(stringResource(R.string.browser_settings_clear_all_cookies), color = MaterialTheme.colorScheme.error)
+                MinisOutlinedButton(
+                    onClick = { showClearConfirm = true },
+                    enabled = hasCookies,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.browser_settings_clear_all_cookies), fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
 
     if (showClearConfirm) {
-        AlertDialog(
+        MinisAlertDialog(
             onDismissRequest = { showClearConfirm = false },
-            title = { Text(stringResource(R.string.browser_settings_clear_all_dialog_title)) },
-            text = { Text(stringResource(R.string.browser_settings_clear_all_dialog_message)) },
-            confirmButton = {
-                MinisTextButton(onClick = {
-                    CookieManager.getInstance().removeAllCookies(null)
-                    WebStorage.getInstance().deleteAllData()
-                    showClearConfirm = false
-                }) {
-                    Text(stringResource(R.string.browser_settings_clear), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                MinisTextButton(onClick = { showClearConfirm = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
+            title = stringResource(R.string.browser_settings_clear_all_dialog_title),
+            text = stringResource(R.string.browser_settings_clear_all_dialog_message),
+            confirmText = stringResource(R.string.browser_settings_clear),
+            isDestructive = true,
+            onConfirm = {
+                CookieManager.getInstance().removeAllCookies(null)
+                WebStorage.getInstance().deleteAllData()
+                showClearConfirm = false
             },
         )
     }
@@ -599,18 +617,17 @@ private fun ViewportSection(
             for ((label, w, h) in viewportPresets) {
                 val active = widthText.toIntOrNull() == w && heightText.toIntOrNull() == h
                 val bg = if (active) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                    MaterialTheme.colorScheme.primaryContainer
                 } else {
-                    MaterialTheme.colorScheme.surfaceVariant
+                    MaterialTheme.colorScheme.surfaceContainerHigh
                 }
                 val fg = if (active) {
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 Surface(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp)),
+                    shape = RoundedCornerShape(14.dp),
                     color = bg,
                     onClick = { onPreset(w, h) },
                 ) {

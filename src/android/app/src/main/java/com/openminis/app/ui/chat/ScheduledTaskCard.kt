@@ -1,11 +1,14 @@
 package com.openminis.app.ui.chat
 
+import android.app.Application
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +19,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,50 +43,33 @@ import com.openminis.app.R
 import com.openminis.app.scheduled.ScheduledTaskDetailModel
 import com.openminis.app.scheduled.ScheduledTaskManager
 import com.openminis.app.scheduled.ScheduledTaskMarker
+import com.openminis.app.ui.components.MinisAlertDialog
+import com.openminis.app.ui.components.MinisSmallOutlinedButton
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.delay
 
-/** [T-android-scheduled-task-card] Amber — a timer, not an agent. */
-internal val ScheduledAccent = Color(0xFFF59E0B)
+/** [T-android-scheduled-task-card] Warm amber accent — a timer, not an agent. */
+internal val ScheduledAccent = Color(0xFFD97706)
 
 /**
- * [T-android-scheduled-task-card / -next-fire / -cancel-from-card]
- * A fired scheduled task, rendered as a card instead of a user bubble.
- *
- * Three things the plain bubble could not say:
- *  - that a TASK wrote this, not the user;
- *  - WHEN it will run next, which until now was invisible after creation —
- *    the user had to go to Settings and read the list to find out;
- *  - that it can be stopped from right here, without going to find it.
- *
- * Cancelling asks first. A scheduled task is something the user deliberately
- * set up, so the cost of an accidental tap is not symmetric with the cost of
- * one extra confirmation.
+ * Material 3 Expressive card for a fired scheduled task inside the chat stream.
  */
 @Composable
 internal fun ScheduledTaskCard(
     marker: ScheduledTaskMarker,
     modifier: Modifier = Modifier,
-    // [T-scheduled-task-detail] The chat this card is shown in; the detail
-    // page uses it for "this chat" wording and links to other chats.
     hostSessionId: String? = null,
 ) {
     val context = LocalContext.current
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(20.dp)
     var confirming by remember { mutableStateOf(false) }
-    // Local echo: the store is not observable here, and the card must stop
-    // claiming a next run the moment the user cancels it.
     var cancelled by remember(marker.taskId) { mutableStateOf(false) }
-    // [T-scheduled-task-detail] Tapping the card opens the task's detail page.
     var showingDetail by remember { mutableStateOf(false) }
 
-    // [T-scheduled-task-detail] A passed next-fire time says nothing: the
-    // envelope is a snapshot, and the detail page has the live state.
-    // `now` is re-read once, when the next-fire time passes: read only at
-    // composition, a card on screen kept "Next: <that time>" after the fire
-    // had happened, until something else recomposed it.
     val now by produceState(System.currentTimeMillis(), marker.nextFireAtMs) {
         val next = marker.nextFireAtMs ?: return@produceState
         val wait = next - System.currentTimeMillis()
@@ -100,8 +86,6 @@ internal fun ScheduledTaskCard(
             R.string.scheduled_card_next_fire,
             DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(sub.atMs)),
         )
-        // A one-shot task, or one past its end date: say so rather than
-        // leaving the row blank, which reads as missing information.
         ScheduledTaskDetailModel.CardSubtitle.LastRun -> stringResource(R.string.scheduled_card_last_run)
         ScheduledTaskDetailModel.CardSubtitle.None -> null
     }
@@ -111,22 +95,23 @@ internal fun ScheduledTaskCard(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(shape)
-            .background(ScheduledAccent.copy(alpha = 0.07f))
-            .border(0.8.dp, ScheduledAccent.copy(alpha = 0.35f), shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .border(1.dp, ScheduledAccent.copy(alpha = 0.28f), shape)
             .clickable { showingDetail = true }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier.size(34.dp).clip(CircleShape)
-                .background(ScheduledAccent.copy(alpha = 0.15f)),
+            modifier = Modifier
+                .size(38.dp)
+                .background(ScheduledAccent.copy(alpha = 0.16f), MaterialShapes.Sunny.toShape()),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Default.Schedule,
                 contentDescription = null,
                 tint = ScheduledAccent,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(18.dp),
             )
         }
         Spacer(Modifier.width(12.dp))
@@ -135,24 +120,20 @@ internal fun ScheduledTaskCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                // Chip drawn inline rather than reusing HelperUi's private
-                // AgentChip: widening that helper's visibility for one caller
-                // would couple the scheduled card to the agent UI's styling.
                 Text(
                     stringResource(R.string.scheduled_card_label),
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = ScheduledAccent,
                     maxLines = 1,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(ScheduledAccent.copy(alpha = 0.15f))
-                        .padding(horizontal = 6.dp, vertical = 1.dp),
+                        .background(ScheduledAccent.copy(alpha = 0.14f), CircleShape)
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
                 Text(
                     marker.label.ifEmpty { marker.prompt.take(40) },
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     color = ChatColors.primaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -169,11 +150,17 @@ internal fun ScheduledTaskCard(
             }
         }
         if (!cancelled) {
-            TextButton(onClick = { confirming = true }) {
+            Spacer(Modifier.width(8.dp))
+            MinisSmallOutlinedButton(
+                onClick = { confirming = true },
+                border = BorderStroke(1.dp, ScheduledAccent.copy(alpha = 0.35f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = ScheduledAccent),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+            ) {
                 Text(
                     stringResource(R.string.scheduled_card_cancel),
                     fontSize = 11.sp,
-                    color = ScheduledAccent,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                 )
             }
@@ -189,31 +176,21 @@ internal fun ScheduledTaskCard(
     }
 
     if (confirming) {
-        AlertDialog(
+        MinisAlertDialog(
             onDismissRequest = { confirming = false },
-            title = { Text(stringResource(R.string.scheduled_card_cancel_confirm_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.scheduled_card_cancel_confirm_body,
-                        marker.label.ifEmpty { marker.prompt.take(40) },
-                    ),
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    // Disable rather than delete: the run history stays
-                    // readable, and the task is recoverable from Settings.
-                    ScheduledTaskManager(context.applicationContext as android.app.Application)
-                        .setEnabled(marker.taskId, false)
-                    cancelled = true
-                    confirming = false
-                }) { Text(stringResource(R.string.scheduled_card_cancel_confirm_ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirming = false }) {
-                    Text(stringResource(R.string.scheduled_card_cancel_confirm_keep))
-                }
+            title = stringResource(R.string.scheduled_card_cancel_confirm_title),
+            text = stringResource(
+                R.string.scheduled_card_cancel_confirm_body,
+                marker.label.ifEmpty { marker.prompt.take(40) },
+            ),
+            confirmText = stringResource(R.string.scheduled_card_cancel_confirm_ok),
+            dismissText = stringResource(R.string.scheduled_card_cancel_confirm_keep),
+            isDestructive = true,
+            onConfirm = {
+                ScheduledTaskManager(context.applicationContext as Application)
+                    .setEnabled(marker.taskId, false)
+                cancelled = true
+                confirming = false
             },
         )
     }

@@ -112,10 +112,12 @@ fun MinisAlertDialog(
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        MinisTextButton(onClick = onDismiss) {
-                            Text(dismissText)
+                        if (dismissText.isNotEmpty()) {
+                            MinisTextButton(onClick = onDismiss) {
+                                Text(dismissText)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
                         MinisButton(
                             onClick = onConfirm,
                             colors = confirmButtonColors,

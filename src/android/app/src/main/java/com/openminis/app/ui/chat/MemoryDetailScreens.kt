@@ -252,23 +252,13 @@ fun RevokeConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    com.openminis.app.ui.components.MinisAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.memory_revoke_dialog_title)) },
-        text = { Text(stringResource(R.string.memory_revoke_dialog_message)) },
-        confirmButton = {
-            MinisTextButton(onClick = onConfirm) {
-                Text(
-                    stringResource(R.string.memory_action_revoke),
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-        },
-        dismissButton = {
-            MinisTextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
+        title = stringResource(R.string.memory_revoke_dialog_title),
+        text = stringResource(R.string.memory_revoke_dialog_message),
+        confirmText = stringResource(R.string.memory_action_revoke),
+        onConfirm = onConfirm,
+        isDestructive = true,
     )
 }
 
@@ -290,11 +280,32 @@ fun MutationResultDialog(
         is MemoryRepository.EntryMutationResult.IOError ->
             ctx.getString(R.string.memory_revoke_result_io_error, result.message)
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        text = { Text(msg) },
-        confirmButton = {
-            MinisTextButton(onClick = onDismiss) { Text("OK") }
-        },
-    )
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        androidx.compose.material3.Surface(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = msg,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    com.openminis.app.ui.components.MinisButton(onClick = onDismiss) {
+                        Text(stringResource(android.R.string.ok), fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
 }

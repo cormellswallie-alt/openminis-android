@@ -88,12 +88,10 @@ fun ScheduledTaskRunsScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
+                    com.openminis.app.ui.settings.ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.back),
+                    )
                 },
             )
         },
@@ -116,23 +114,13 @@ fun ScheduledTaskRunsScreen(
 @Composable
 private fun EmptyRuns(padding: PaddingValues) {
     Box(
-        modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
-        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize().padding(padding),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Outlined.History,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                stringResource(R.string.scheduled_task_runs_empty),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
-        }
+        com.openminis.app.ui.settings.ExpressiveEmptyStateCard(
+            icon = Icons.Outlined.History,
+            title = stringResource(R.string.scheduled_task_runs_empty),
+        )
     }
 }
 

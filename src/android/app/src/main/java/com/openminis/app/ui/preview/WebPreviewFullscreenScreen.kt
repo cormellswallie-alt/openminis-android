@@ -270,8 +270,8 @@ private fun FloatingMenuButton(
             modifier = Modifier
                 .size(48.dp)
                 .background(
-                    color = Color.Black.copy(alpha = 0.55f),
-                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 )
                 .clickable(onClick = { menuOpen = true }),
             contentAlignment = Alignment.Center,
@@ -279,7 +279,7 @@ private fun FloatingMenuButton(
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Outlined.MoreHoriz,
                 contentDescription = stringResource(R.string.webpreview_more),
-                tint = Color.White,
+                tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp),
             )
         }

@@ -266,7 +266,7 @@ private fun LogsBody(
                     .padding(vertical = 32.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(32.dp))
             }
             return@Column
         }
@@ -474,19 +474,23 @@ fun LogDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(fileName) },
+                title = { Text(fileName, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
-                    IconButton(onClick = {
-                        val file = File(File(context.filesDir, "logs"), fileName)
-                        if (file.exists()) shareLogFile(context, file)
-                    }) {
-                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.common_share))
-                    }
+                    ExpressiveTopBarActionButton(
+                        onClick = {
+                            val file = File(File(context.filesDir, "logs"), fileName)
+                            if (file.exists()) shareLogFile(context, file)
+                        },
+                        icon = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.common_share),
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
                 },
             )
         },
@@ -499,7 +503,7 @@ fun LogDetailScreen(
                         .padding(padding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(36.dp))
                 }
             }
             loadError != null -> {

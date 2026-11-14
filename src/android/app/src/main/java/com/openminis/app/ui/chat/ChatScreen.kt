@@ -307,10 +307,10 @@ import com.openminis.app.ui.browser.BrowserSheet
 import com.openminis.app.ui.theme.ChatColors
 import com.openminis.app.ui.components.MinisTextButton
 
-// iOS ChatColors equivalent
-internal val ToolCheckColor = Color(0xFF34C759) // iOS .green
-internal val ToolErrorColor = Color(0xFFFF3B30) // iOS .red
-internal val ToolCancelColor = Color(0xFFFFCC00) // iOS .yellow
+// Material 3 Expressive semantic tool status colors
+internal val ToolCheckColor = Color(0xFF10B981)
+internal val ToolErrorColor = Color(0xFFDC2626)
+internal val ToolCancelColor = Color(0xFFEAB308)
 // Memory tool accent — matches iOS `.pink` on SF Symbols.
 internal val ToolMemoryAccent = Color(0xFFFF2D55)
 // Sparkle gradient colors (iOS uses linear gradient)
@@ -2905,7 +2905,8 @@ fun ChatScreen(
                                         modifier = Modifier
                                             .size(7.dp)
                                             .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF2EA043) else Color(0xFFFF9500),
+                                                if (modelName.isNotEmpty()) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.tertiary,
                                                 CircleShape,
                                             ),
                                     )
@@ -3055,13 +3056,13 @@ fun ChatScreen(
                                             Box(
                                                 contentAlignment = Alignment.Center,
                                                 modifier = Modifier
-                                                    .size(11.dp)
-                                                    .background(Color(0xFFFF9500), CircleShape),
+                                                    .size(12.dp)
+                                                    .background(MaterialTheme.colorScheme.tertiary, CircleShape),
                                             ) {
                                                 Icon(
                                                     Icons.Default.Bolt,
                                                     contentDescription = null,
-                                                    tint = Color.White,
+                                                    tint = MaterialTheme.colorScheme.onTertiary,
                                                     modifier = Modifier.size(9.dp),
                                                 )
                                             }
@@ -5523,9 +5524,8 @@ fun ChatScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     if (isMentionScanning) {
-                                        androidx.compose.material3.CircularProgressIndicator(
-                                            modifier = Modifier.size(14.dp),
-                                            strokeWidth = 1.5.dp,
+                                        com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                                            modifier = Modifier.size(16.dp),
                                             color = ChatColors.secondaryText,
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
@@ -6700,15 +6700,20 @@ fun ChatScreen(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Left: + button (iOS: 34×34 circle, secondary bg)
+                        // Left: + button (M3 Expressive morphing circle/squircle)
                         Box {
                             InputCircleButton(
                                 onClick = { showAttachMenu = true },
+                                isActive = showAttachMenu,
                             ) {
                                 Icon(
                                     Icons.Default.Add,
                                     contentDescription = "Attach",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (showAttachMenu) {
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
                                     modifier = Modifier.size(20.dp),
                                 )
                             }
@@ -6760,20 +6765,28 @@ fun ChatScreen(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Left: "/" slash command button (iOS: italic /, bold)
-                        InputCircleButton(onClick = {
-                            if (viewModel.showSlashMenu.value) {
-                                viewModel.setInputText(viewModel.dismissSlashMenu(inputText))
-                            } else {
-                                viewModel.setInputText(viewModel.showSlashMenuOverInput(inputText))
-                            }
-                        }) {
+                        // Left: "/" slash command button (M3 Expressive morphing circle/squircle)
+                        val isSlashMenuActive by viewModel.showSlashMenu.collectAsState()
+                        InputCircleButton(
+                            onClick = {
+                                if (viewModel.showSlashMenu.value) {
+                                    viewModel.setInputText(viewModel.dismissSlashMenu(inputText))
+                                } else {
+                                    viewModel.setInputText(viewModel.showSlashMenuOverInput(inputText))
+                                }
+                            },
+                            isActive = isSlashMenuActive,
+                        ) {
                             Text(
                                 "/",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (isSlashMenuActive) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                             )
                         }
 

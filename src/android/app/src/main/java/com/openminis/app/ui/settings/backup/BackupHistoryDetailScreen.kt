@@ -333,10 +333,12 @@ fun BackupHistoryDetailScreen(
     if (deletingFiles) {
         AlertDialog(
             onDismissRequest = { },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             title = { Text(stringResource(R.string.backup_delete_files_progress)) },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(22.dp))
                     Spacer(Modifier.width(12.dp))
                     Text(record.packageName.orEmpty())
                 }
@@ -422,17 +424,17 @@ private fun StatusValue(status: BackupHistory.Status) {
         BackupHistory.Status.RUNNING ->
             Triple(null, MaterialTheme.colorScheme.onSurfaceVariant, R.string.backup_history_running)
         BackupHistory.Status.SUCCEEDED ->
-            Triple(Icons.Outlined.CheckCircle, Color(0xFF34C759), R.string.backup_status_succeeded)
+            Triple(Icons.Outlined.CheckCircle, Color(0xFF10B981), R.string.backup_status_succeeded)
         BackupHistory.Status.COMPLETED_WITH_ISSUES ->
-            Triple(Icons.Outlined.Warning, Color(0xFFFF9500), R.string.backup_status_issues)
+            Triple(Icons.Outlined.Warning, Color(0xFFD97706), R.string.backup_status_issues)
         BackupHistory.Status.FAILED ->
-            Triple(Icons.Outlined.ErrorOutline, Color(0xFFFF3B30), R.string.backup_status_failed)
+            Triple(Icons.Outlined.ErrorOutline, Color(0xFFDC2626), R.string.backup_status_failed)
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (icon != null) {
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
         } else {
-            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(16.dp))
         }
         Spacer(Modifier.width(6.dp))
         Text(stringResource(textRes), style = MaterialTheme.typography.bodyMedium, color = tint)
@@ -458,7 +460,7 @@ private fun DestinationOutcomeRow(
             Icon(
                 if (outcome.succeeded) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
                 contentDescription = null,
-                tint = if (outcome.succeeded) Color(0xFF34C759) else Color(0xFFFF3B30),
+                tint = if (outcome.succeeded) Color(0xFF10B981) else Color(0xFFDC2626),
                 modifier = Modifier.size(22.dp),
             )
             Spacer(Modifier.width(12.dp))

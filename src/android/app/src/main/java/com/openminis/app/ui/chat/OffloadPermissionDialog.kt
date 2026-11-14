@@ -48,6 +48,8 @@ fun OffloadPermissionDialog() {
         onDismissRequest = {
             OffloadPermissionManager.respondToRequest(OffloadPermissionManager.Response.DENY_SESSION)
         },
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = {
             Text(
                 stringResource(R.string.offload_perm_dialog_title),

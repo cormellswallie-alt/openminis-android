@@ -421,7 +421,7 @@ private fun BackupTab(
         CategorySwitchRow(
             title = stringResource(R.string.backup_encrypt_backup),
             icon = Icons.Outlined.Lock,
-            iconColor = Color(0xFF34C759),
+            iconColor = Color(0xFF10B981),
             checked = encrypt,
             onCheckedChange = { vm.setEncrypt(it) },
             enabled = !running,
@@ -1046,7 +1046,7 @@ private fun RestoreTab(
                 serverDestinations.forEachIndexed { i, r ->
                     RestoreSourceRow(
                         icon = Icons.Outlined.Cloud,
-                        iconColor = Color(0xFFAF52DE),
+                        iconColor = Color(0xFF8B5CF6),
                         label = r.name,
                         subtitle = stringResource(
                             R.string.backup_dest_row_subtitle,
@@ -1082,7 +1082,7 @@ private fun RestoreTab(
             )
             RestoreSourceRow(
                 icon = Icons.Outlined.Cloud,
-                iconColor = Color(0xFFAF52DE),
+                iconColor = Color(0xFF8B5CF6),
                 label = stringResource(R.string.backup_choose_server),
                 enabled = !running,
                 // [T-android-restore-server-list] ALWAYS the same destination:
@@ -1385,7 +1385,7 @@ private fun DestinationsSection(
         // knew what either did.
         RestoreSourceRow(
             icon = Icons.Outlined.Add,
-            iconColor = Color(0xFF34C759),
+            iconColor = Color(0xFF10B981),
             label = stringResource(R.string.backup_manage_destinations),
             enabled = enabled,
             onClick = onManage,
@@ -1879,7 +1879,7 @@ private fun categoryIcon(cat: BackupCategory): ImageVector = when (cat) {
 
 private fun categoryTint(cat: BackupCategory): Color = when (cat) {
     BackupCategory.CHATS -> Color(0xFF3F5AA9)
-    BackupCategory.SHARED_FILES -> Color(0xFF5856D6)
+    BackupCategory.SHARED_FILES -> Color(0xFF4F46E5)
     BackupCategory.SKILLS -> Color(0xFFD97706)
     BackupCategory.MEMORY -> Color(0xFFD81B60)
     BackupCategory.PROVIDERS -> Color(0xFF00897B)

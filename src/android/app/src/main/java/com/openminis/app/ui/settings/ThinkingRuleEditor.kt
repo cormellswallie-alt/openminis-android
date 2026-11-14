@@ -130,6 +130,8 @@ fun ThinkingRuleEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = {
             Text(
                 stringResource(
@@ -180,11 +182,11 @@ fun ThinkingRuleEditorDialog(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Column {
-                    MinisTextButton(onClick = { formatMenuOpen = true }) {
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    com.openminis.app.ui.components.MinisSmallOutlinedButton(onClick = { formatMenuOpen = true }) {
                         Text(stringResource(choice.titleRes))
                     }
-                    DropdownMenu(expanded = formatMenuOpen, onDismissRequest = { formatMenuOpen = false }) {
+                    com.openminis.app.ui.components.MinisMenu(expanded = formatMenuOpen, onDismissRequest = { formatMenuOpen = false }) {
                         FormatChoice.entries.forEach { c ->
                             DropdownMenuItem(
                                 text = { Text(stringResource(c.titleRes)) },
@@ -295,7 +297,7 @@ fun ThinkingRuleEditorDialog(
             }
         },
         confirmButton = {
-            MinisTextButton(onClick = { if (isValid) onSave(buildRule()) }, enabled = isValid) {
+            com.openminis.app.ui.components.MinisSmallButton(onClick = { if (isValid) onSave(buildRule()) }, enabled = isValid) {
                 Text(stringResource(R.string.common_save))
             }
         },

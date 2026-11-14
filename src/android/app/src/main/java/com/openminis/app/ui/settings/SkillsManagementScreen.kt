@@ -649,19 +649,22 @@ fun SkillDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(skill.name) },
+                title = { Text(skill.name, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
                     // [T-android-skill-export] Export the skill as a .zip and
                     // hand it to the system share sheet — the round-trip
                     // partner of the existing zip import, and the Android
                     // equivalent of iOS's top-bar share button.
-                    IconButton(
+                    ExpressiveTopBarActionButton(
                         enabled = !isExporting,
+                        icon = Icons.Default.IosShare,
+                        contentDescription = stringResource(R.string.skill_export_share),
                         onClick = {
                             isExporting = true
                             scope.launch {
@@ -680,12 +683,7 @@ fun SkillDetailScreen(
                                 }
                             }
                         },
-                    ) {
-                        Icon(
-                            Icons.Default.IosShare,
-                            contentDescription = stringResource(R.string.skill_export_share),
-                        )
-                    }
+                    )
                 },
             )
         },
@@ -798,7 +796,7 @@ fun SkillDetailScreen(
                     is UpdateStatus.InProgress -> {
                         DetailDivider()
                         DetailRow {
-                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(s.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -806,9 +804,9 @@ fun SkillDetailScreen(
                     is UpdateStatus.Done -> {
                         DetailDivider()
                         DetailRow {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF34C759), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text(stringResource(R.string.skill_detail_updated), style = MaterialTheme.typography.bodySmall, color = Color(0xFF34C759))
+                            Text(stringResource(R.string.skill_detail_updated), style = MaterialTheme.typography.bodySmall, color = Color(0xFF10B981))
                         }
                     }
                     is UpdateStatus.Failed -> {
@@ -1156,30 +1154,37 @@ fun SkillFileViewerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(fileName) },
+                title = { Text(fileName, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
                     if (isEditing) {
-                        MinisTextButton(onClick = {
-                            if (isSkillMd) {
-                                // SKILL.md edits go through importFromContent so
-                                // YAML frontmatter changes flow back into DB metadata.
-                                skillRepository.importFromContent(editContent, skill.importSource)
-                            } else {
-                                skillRepository.writeSkillFile(skillId, relativePath, editContent)
-                            }
-                            isEditing = false
-                            onBack()
-                        }) { Text(stringResource(R.string.skill_file_save)) }
+                        com.openminis.app.ui.components.MinisSmallButton(
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = {
+                                if (isSkillMd) {
+                                    // SKILL.md edits go through importFromContent so
+                                    // YAML frontmatter changes flow back into DB metadata.
+                                    skillRepository.importFromContent(editContent, skill.importSource)
+                                } else {
+                                    skillRepository.writeSkillFile(skillId, relativePath, editContent)
+                                }
+                                isEditing = false
+                                onBack()
+                            },
+                        ) { Text(stringResource(R.string.skill_file_save)) }
                     } else {
-                        MinisTextButton(onClick = {
-                            editContent = initialContent
-                            isEditing = true
-                        }) { Text(stringResource(R.string.skill_file_edit)) }
+                        com.openminis.app.ui.components.MinisSmallOutlinedButton(
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = {
+                                editContent = initialContent
+                                isEditing = true
+                            },
+                        ) { Text(stringResource(R.string.skill_file_edit)) }
                     }
                 },
             )

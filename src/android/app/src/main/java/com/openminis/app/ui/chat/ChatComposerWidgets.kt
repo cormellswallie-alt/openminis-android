@@ -389,13 +389,20 @@ internal fun AttachmentChip(
 @Composable
 internal fun InputCircleButton(
     onClick: () -> Unit,
+    isActive: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val buttonShape = if (isActive) RoundedCornerShape(14.dp) else CircleShape
+    val buttonBg = if (isActive) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerHighest
+    }
     Box(
         modifier = Modifier
             .size(40.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
-            .clip(CircleShape)
+            .background(buttonBg, buttonShape)
+            .clip(buttonShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -412,15 +419,22 @@ internal fun MicButton(
     onLongClick: (() -> Unit)? = null,
     isVoiceActive: Boolean = false,
 ) {
-    val bg = if (isRecording) MaterialTheme.colorScheme.errorContainer
-             else MaterialTheme.colorScheme.surfaceContainerHighest
-    val tint = if (isRecording) MaterialTheme.colorScheme.error
-               else MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = if (isRecording || isVoiceActive) RoundedCornerShape(14.dp) else CircleShape
+    val bg = when {
+        isRecording -> MaterialTheme.colorScheme.errorContainer
+        isVoiceActive -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+    }
+    val tint = when {
+        isRecording -> MaterialTheme.colorScheme.error
+        isVoiceActive -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Box(
         modifier = Modifier
             .size(40.dp)
-            .background(bg, CircleShape)
-            .clip(CircleShape)
+            .background(bg, shape)
+            .clip(shape)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -1270,7 +1284,6 @@ internal fun ThinkingLevelPicker(
     // up-arrow, signalling "your setting is higher, this model caps here".
     val maxAvailable = availableLevels.lastOrNull { it != ThinkingLevel.OFF }
     val isClamped = current.isEnabled && maxAvailable != null && current.rank > maxAvailable.rank
-    val clampOrange = Color(0xFFFF9500)
     Row(
         modifier = Modifier
             .background(
@@ -1278,7 +1291,7 @@ internal fun ThinkingLevelPicker(
                 CircleShape,
             )
             .clip(CircleShape)
-            .padding(2.dp)
+            .padding(3.dp)
             .horizontalScroll(scrollState),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -1288,12 +1301,12 @@ internal fun ThinkingLevelPicker(
             val isClampedHighlight = isClamped && level == maxAvailable
             val isHighlighted = isExactMatch || isClampedHighlight
             val bg = when {
-                isClampedHighlight -> clampOrange.copy(alpha = 0.85f)
+                isClampedHighlight -> MaterialTheme.colorScheme.tertiary
                 isHighlighted -> MaterialTheme.colorScheme.primary
                 else -> Color.Transparent
             }
             val fg = when {
-                isClampedHighlight -> Color.White
+                isClampedHighlight -> MaterialTheme.colorScheme.onTertiary
                 isHighlighted -> MaterialTheme.colorScheme.onPrimary
                 else -> MaterialTheme.colorScheme.onSurfaceVariant
             }

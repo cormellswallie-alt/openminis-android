@@ -81,7 +81,7 @@ fun BackupDestinationBrowseScreen(
                         modifier = Modifier.fillMaxWidth().padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        com.openminis.app.ui.theme.ExpressiveLoadingIndicator(Modifier.size(18.dp))
                         Spacer(Modifier.width(10.dp))
                         Text(
                             stringResource(R.string.backup_dest_loading),

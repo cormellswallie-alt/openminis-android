@@ -79,11 +79,15 @@ import com.openminis.app.browser.BrowserHistoryStore
 import com.openminis.app.browser.BrowserTabPool
 import com.openminis.app.browser.UserAgentProfile
 import com.openminis.app.ui.chat.StandardChatSheet
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import kotlinx.coroutines.launch
 import com.openminis.app.ui.components.DecorativeSpinner
 import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.components.decorativePhase
 import com.openminis.app.ui.components.decorativePingPong
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 
 /**
@@ -144,9 +148,16 @@ fun BrowserSheet(
         title = pageTitle.ifEmpty { stringResource(R.string.browser_title) },
         onDismiss = onDismiss,
         leadingAction = {
-            // UA-profile icon doubles as the entry point to settings, matching
-            // the prior centered-title-with-icon affordance.
-            IconButton(onClick = { showSettings = true }) {
+            IconButton(
+                onClick = { showSettings = true },
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
                 Icon(
                     when (userAgentProfile) {
                         UserAgentProfile.MOBILE_CHROME -> Icons.Default.PhoneAndroid
@@ -154,33 +165,37 @@ fun BrowserSheet(
                         UserAgentProfile.CUSTOM -> Icons.Default.Edit
                     },
                     contentDescription = stringResource(R.string.browser_settings_title),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         },
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // ── Tab Bar with leading "+" and trailing History icon ──
-            // (Add/History flank the tabs row so all tab-related controls
-            // sit on one line, leaving the URL bar uncluttered below.)
+            // ── Tab Bar with leading "+" and trailing History tonal squircles ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(tertiaryBg)
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                    .background(secondaryBg)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
                     onClick = { scope.launch { tabPool.newTabFromUI() } },
                     enabled = tabs.size < 3 && !isAgentBusy,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(tertiaryBg, RoundedCornerShape(11.dp)),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.browser_new_tab), modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.browser_new_tab), modifier = Modifier.size(18.dp))
                 }
                 LazyRow(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -205,9 +220,9 @@ fun BrowserSheet(
                         Text(
                             "${tabs.size}/3",
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.SemiBold,
                             fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             modifier = Modifier.padding(start = 4.dp),
                         )
                     }
@@ -215,15 +230,19 @@ fun BrowserSheet(
                 IconButton(
                     onClick = { showHistory = true },
                     enabled = !isAgentBusy,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(tertiaryBg, RoundedCornerShape(11.dp)),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 ) {
-                    Icon(Icons.Default.History, contentDescription = stringResource(R.string.browser_history_action), modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.History, contentDescription = stringResource(R.string.browser_history_action), modifier = Modifier.size(18.dp))
                 }
             }
 
-            // ── URL Bar ── (compact 36dp pill — OutlinedTextField defaults to
-            // ~56dp which dominates the sheet header; users want to spend the
-            // space on the WebView.)
+            // ── URL Bar (Material 3 Expressive 40dp capsule) ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -234,14 +253,9 @@ fun BrowserSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(36.dp)
-                        .background(tertiaryBg, RoundedCornerShape(10.dp))
-                        .border(
-                            0.5.dp,
-                            MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(10.dp),
-                        )
-                        .padding(horizontal = 10.dp),
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
+                        .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     BrowserAddressBarIcon(isLoading = isLoading, accent = accent)
@@ -384,13 +398,12 @@ fun BrowserSheet(
                 }
             }
 
-            // ── Bottom Toolbar ──
-            HorizontalDivider()
+            // ── Bottom Toolbar (Material 3 Expressive tonal action dock) ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(secondaryBg)
-                    .padding(vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -406,10 +419,6 @@ fun BrowserSheet(
                     enabled = canGoForward && !isAgentBusy,
                     onClick = { selectedTab?.manager?.goForward() },
                 )
-                // [T-android-browser-download-ux] Downloads entry: shows while
-                // the session has ANY download records, disappears when the
-                // user clears the last one; the badge counts in-flight +
-                // unviewed terminal entries and hides at 0 (iOS v2 spec).
                 if (downloadEntries.isNotEmpty()) {
                     val badgeCount = tabPool.downloadBadgeCount(downloadEntries)
                     androidx.compose.material3.BadgedBox(
@@ -423,7 +432,7 @@ fun BrowserSheet(
                             icon = Icons.Default.Download,
                             contentDesc = stringResource(R.string.browser_downloads_title),
                             enabled = true,
-                            tint = accent,
+                            highlighted = badgeCount > 0,
                             onClick = { showDownloads = true },
                         )
                     }
@@ -433,7 +442,7 @@ fun BrowserSheet(
                         icon = Icons.Default.Close,
                         contentDesc = stringResource(R.string.browser_stop),
                         enabled = !isAgentBusy,
-                        tint = accent,
+                        highlighted = true,
                         onClick = { selectedTab?.manager?.stopLoading() },
                     )
                 } else {
@@ -441,7 +450,7 @@ fun BrowserSheet(
                         icon = Icons.Default.Refresh,
                         contentDesc = stringResource(R.string.browser_reload),
                         enabled = !isAgentBusy,
-                        tint = accent,
+                        highlighted = true,
                         onClick = { selectedTab?.manager?.reload() },
                     )
                 }
@@ -534,15 +543,35 @@ private fun ToolbarIcon(
     contentDesc: String,
     enabled: Boolean,
     onClick: () -> Unit,
-    tint: Color? = null,
+    highlighted: Boolean = false,
 ) {
-    IconButton(onClick = onClick, enabled = enabled) {
+    val bg = when {
+        !enabled -> MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+        highlighted -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+    val fg = when {
+        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+        highlighted -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .size(42.dp)
+            .background(bg, RoundedCornerShape(14.dp)),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = fg,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = fg,
+        ),
+    ) {
         Icon(
             icon,
             contentDescription = contentDesc,
-            modifier = Modifier.size(22.dp),
-            tint = if (!enabled) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                else tint ?: MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
@@ -580,58 +609,61 @@ private fun BrowserAddressBarIcon(isLoading: Boolean, accent: Color) {
     }
 }
 
-/** Breathing-light overlay shown when the agent is controlling the browser. */
 @Composable
 private fun AgentBrowsingOverlay(accent: Color, onTakeover: () -> Unit) {
-    // [T-android-decorative-anim-perf] The breathing dot used to rebuild
-    // `accent.copy(alpha = …)` in composition every frame; now the alpha is
-    // a layer property read from the shared tick and the background colour
-    // is constant.
     val tick = rememberDecorativeTick()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.35f))
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.38f))
             .clickable(enabled = false) {},
         contentAlignment = Alignment.Center,
     ) {
         Row(
             modifier = Modifier
-                .background(Color.Black.copy(alpha = 0.7f), CircleShape)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
+                .padding(start = 14.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(22.dp)
                     .graphicsLayer {
-                        alpha = 0.3f + 0.7f * decorativePingPong(decorativePhase(tick.value, 3000))
+                        alpha = 0.45f + 0.55f * decorativePingPong(decorativePhase(tick.value, 2400))
                     }
-                    .background(accent, CircleShape),
-            )
-            Spacer(Modifier.width(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer, MaterialShapes.Sunny.toShape()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .background(accent, CircleShape),
+                )
+            }
+            Spacer(Modifier.width(10.dp))
             Text(
                 stringResource(R.string.browser_minis_browsing),
-                color = Color.White.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.width(12.dp))
             Box(
                 modifier = Modifier
-                    .width(1.dp)
-                    .height(14.dp)
-                    .background(Color.White.copy(alpha = 0.3f)),
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                stringResource(R.string.browser_takeover),
-                color = accent,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable(onClick = onTakeover),
-            )
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(onClick = onTakeover)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    stringResource(R.string.browser_takeover),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }

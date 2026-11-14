@@ -436,14 +436,14 @@ private fun CompactSpeaker(
                 fontSize = 9.sp,
                 lineHeight = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = 6.dp, y = 4.dp)
                     .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                    .padding(horizontal = 5.dp, vertical = 1.dp),
             )
         }
     }

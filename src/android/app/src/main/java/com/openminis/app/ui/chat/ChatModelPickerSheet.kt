@@ -542,7 +542,7 @@ internal fun ModelPickerSheet(
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
                                 .background(
                                     MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    RoundedCornerShape(14.dp),
+                                    RoundedCornerShape(24.dp),
                                 ),
                         ) {
                             // [T-android-modelpicker-group-edit] Section header
@@ -610,7 +610,7 @@ internal fun ModelPickerSheet(
                                 // first-row corners are no longer rounded
                                 // (only the bottom row of the last group is).
                                 val groupShape = when {
-                                    index == filteredGroups.size - 1 -> RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
+                                    index == filteredGroups.size - 1 -> RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                                     else -> RoundedCornerShape(0.dp)
                                 }
 
@@ -625,7 +625,7 @@ internal fun ModelPickerSheet(
                                     Icon(
                                         if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(0xFF34C759)
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                         modifier = Modifier.size(22.dp),
                                     )
@@ -754,12 +754,12 @@ internal fun ModelPickerSheet(
                                     // the eye first.
                                     Box(
                                         modifier = Modifier
-                                            .size(24.dp)
+                                            .size(28.dp)
                                             .background(
-                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
-                                                CircleShape,
+                                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                RoundedCornerShape(9.dp),
                                             )
-                                            .clip(CircleShape)
+                                            .clip(RoundedCornerShape(9.dp))
                                             .clickable {
                                                 expandedGroupIds = if (isExpanded) {
                                                     expandedGroupIds - group.id
@@ -919,8 +919,8 @@ internal fun ModelPickerSheet(
                                     .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = if (isCollapsed) 6.dp else 0.dp)
                                     .background(
                                         MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        if (isCollapsed) RoundedCornerShape(14.dp)
-                                        else RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp),
+                                        if (isCollapsed) RoundedCornerShape(24.dp)
+                                        else RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
                                     ),
                             ) {
                                 // Header row, embedded in the card.
@@ -982,12 +982,12 @@ internal fun ModelPickerSheet(
                                     // tinted container was dropped.
                                     Box(
                                         modifier = Modifier
-                                            .size(24.dp)
+                                            .size(28.dp)
                                             .background(
-                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
-                                                CircleShape,
+                                                MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                RoundedCornerShape(9.dp),
                                             )
-                                            .clip(CircleShape)
+                                            .clip(RoundedCornerShape(9.dp))
                                             .clickable {
                                                 collapsedInstanceIds = if (isCollapsed) {
                                                     collapsedInstanceIds - instance.id
@@ -1031,7 +1031,10 @@ internal fun ModelPickerSheet(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .heightIn(min = 48.dp)
-                                                .clip(RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp))
+                                                .clip(
+                                                    if (entries.size > 1) RoundedCornerShape(0.dp)
+                                                    else RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                                                )
                                                 .clickable { onSelectEntry(displayEntry.id) }
                                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -1099,7 +1102,7 @@ internal fun ModelPickerSheet(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .heightIn(min = 40.dp)
-                                                .clip(RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp))
+                                                .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                                                 .clickable { collapsedInstanceIds = collapsedInstanceIds - instance.id }
                                                 .padding(horizontal = 16.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -1134,7 +1137,7 @@ internal fun ModelPickerSheet(
                                         .padding(start = 16.dp, end = 16.dp, bottom = if (isLastRow) 6.dp else 0.dp)
                                         .background(
                                             MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            if (isLastRow) RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
+                                            if (isLastRow) RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                                             else androidx.compose.ui.graphics.RectangleShape,
                                         ),
                                 ) {
@@ -1143,7 +1146,7 @@ internal fun ModelPickerSheet(
                                         // Last row clips its own bottom so the
                                         // ripple respects the card corners.
                                         val rowShape = if (index == entries.size - 1) {
-                                            RoundedCornerShape(bottomStart = 14.dp, bottomEnd = 14.dp)
+                                            RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                                         } else {
                                             RoundedCornerShape(0.dp)
                                         }
@@ -1315,41 +1318,34 @@ private fun ModelNameWithActiveBadge(name: String, showActiveBadge: Boolean) {
                 stringResource(R.string.model_picker_active_badge),
                 fontSize = 9.sp,
                 lineHeight = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF34C759),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier
                     .background(
-                        Color(0xFF34C759).copy(alpha = 0.1f),
-                        RoundedCornerShape(50),
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                        CircleShape,
                     )
-                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                    .padding(horizontal = 6.dp, vertical = 1.dp),
             )
         }
     }
 }
 
-/**
- * [T-android-model-picker-polish] Per-row Quick Test affordance, mirroring
- * iOS's `bolt.badge.checkmark` button (UnifiedModelPicker.swift:542).
- *
- * Sized to a 32dp target and given its own click surface so it never competes
- * with the row's select gesture: tapping the row picks the model, tapping the
- * bolt tests it without changing the selection.
- */
 @Composable
 private fun QuickTestButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(32.dp)
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             Icons.Default.Bolt,
             contentDescription = stringResource(R.string.model_picker_quick_test),
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(17.dp),
+            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.size(16.dp),
         )
     }
 }

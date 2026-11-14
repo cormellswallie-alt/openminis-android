@@ -619,35 +619,27 @@ internal fun InlineVoiceInputPanel(
             // correction runs regardless: consent governs whether we STORE the
             // learning data, not whether the feature works.
             if (showCorrectionConsent) {
-                androidx.compose.material3.AlertDialog(
+                com.openminis.app.ui.components.MinisAlertDialog(
                     onDismissRequest = {
-                        // Dismissing without choosing is not an answer; leave
-                        // hasPrompted unset so the question can be asked again.
                         showCorrectionConsent = false
                     },
-                    title = { Text(stringResource(R.string.voice_correction_consent_title)) },
-                    text = { Text(stringResource(R.string.voice_correction_consent_body)) },
-                    confirmButton = {
-                        androidx.compose.material3.TextButton(onClick = {
-                            com.openminis.app.speech.correction.VoiceCorrectionConsent
-                                .setEnabled(panelContext, true)
-                            com.openminis.app.speech.correction.VoiceCorrectionConsent
-                                .setPrompted(panelContext, true)
-                            showCorrectionConsent = false
-                            runCorrection()
-                        }) {
-                            Text(stringResource(R.string.voice_correction_consent_enable))
-                        }
+                    title = stringResource(R.string.voice_correction_consent_title),
+                    text = stringResource(R.string.voice_correction_consent_body),
+                    confirmText = stringResource(R.string.voice_correction_consent_enable),
+                    dismissText = stringResource(R.string.voice_correction_consent_not_now),
+                    onConfirm = {
+                        com.openminis.app.speech.correction.VoiceCorrectionConsent
+                            .setEnabled(panelContext, true)
+                        com.openminis.app.speech.correction.VoiceCorrectionConsent
+                            .setPrompted(panelContext, true)
+                        showCorrectionConsent = false
+                        runCorrection()
                     },
-                    dismissButton = {
-                        androidx.compose.material3.TextButton(onClick = {
-                            com.openminis.app.speech.correction.VoiceCorrectionConsent
-                                .setPrompted(panelContext, true)
-                            showCorrectionConsent = false
-                            runCorrection()
-                        }) {
-                            Text(stringResource(R.string.voice_correction_consent_not_now))
-                        }
+                    onDismiss = {
+                        com.openminis.app.speech.correction.VoiceCorrectionConsent
+                            .setPrompted(panelContext, true)
+                        showCorrectionConsent = false
+                        runCorrection()
                     },
                 )
             }
@@ -661,11 +653,20 @@ internal fun InlineVoiceInputPanel(
             if (!isEditing && transcript.isNotBlank()) {
                 Box(modifier = Modifier.align(Alignment.TopEnd)) {
                     if (isCorrecting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = ChatColors.secondaryText,
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                    RoundedCornerShape(12.dp),
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                        }
                     } else {
                         CircleIconButton(
                             icon = Icons.Default.AutoAwesome,
@@ -673,10 +674,6 @@ internal fun InlineVoiceInputPanel(
                                 R.string.voice_correction_button_a11y,
                             ),
                         ) {
-                            // First tap ever shows the one-time consent prompt;
-                            // afterwards it runs directly. The correction itself
-                            // runs regardless of the answer — consent governs
-                            // STORING data, not using the feature.
                             if (!com.openminis.app.speech.correction.VoiceCorrectionConsent
                                     .hasPrompted(panelContext)
                             ) {
@@ -693,9 +690,10 @@ internal fun InlineVoiceInputPanel(
                         icon = Icons.Default.Language,
                         contentDescription = stringResource(R.string.voice_panel_language),
                     ) { showLanguageMenu = true }
-                    DropdownMenu(
+                    com.openminis.app.ui.components.MinisMenu(
                         expanded = showLanguageMenu,
                         onDismissRequest = { showLanguageMenu = false },
+                        alignEnd = true,
                     ) {
                         val options = supportedLocales.ifEmpty { listOf(locale) }
                         options.forEach { opt ->
@@ -706,6 +704,7 @@ internal fun InlineVoiceInputPanel(
                                         (if (selected) "✓ " else "") + opt.getDisplayName(opt),
                                     )
                                 },
+                                colors = com.openminis.app.ui.components.MinisMenuDefaults.itemColors(),
                                 onClick = {
                                     SpeechRecognitionManager.selectLocale(opt)
                                     showLanguageMenu = false
@@ -775,29 +774,55 @@ internal fun InlineVoiceInputPanel(
         } else {
             failed.message?.takeIf { it.isNotBlank() } ?: failed.error.name
         }
-        androidx.compose.material3.AlertDialog(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = {},
-            title = { Text(stringResource(R.string.voice_asr_failed_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        R.string.voice_asr_failed_message,
-                        kotlin.math.round(failed.seconds).toInt(),
-                        reason,
-                    ),
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { retryFailedUtterance() }) {
-                    Text(stringResource(R.string.voice_asr_retry))
+            properties = androidx.compose.ui.window.DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+            ),
+        ) {
+            androidx.compose.material3.Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp,
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                    Text(
+                        stringResource(R.string.voice_asr_failed_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        stringResource(
+                            R.string.voice_asr_failed_message,
+                            kotlin.math.round(failed.seconds).toInt(),
+                            reason,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        com.openminis.app.ui.components.MinisTextButton(
+                            onClick = { VoiceSendGate.discardCurrent() },
+                        ) {
+                            Text(stringResource(R.string.voice_asr_discard))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        com.openminis.app.ui.components.MinisButton(
+                            onClick = { retryFailedUtterance() },
+                        ) {
+                            Text(stringResource(R.string.voice_asr_retry))
+                        }
+                    }
                 }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { VoiceSendGate.discardCurrent() }) {
-                    Text(stringResource(R.string.voice_asr_discard))
-                }
-            },
-        )
+            }
+        }
     }
 
     val reopenSelectorOnResume = com.openminis.app.ui.components.rememberReopenOnResume {
@@ -916,15 +941,15 @@ private fun ExpandedContent(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFFFF9500).copy(alpha = 0.12f))
+                    .background(MaterialTheme.colorScheme.errorContainer)
                     .padding(horizontal = 12.dp, vertical = 5.dp),
             ) {
-                Text("⚠︎", fontSize = 10.sp, color = Color(0xFFFF9500))
+                Text("⚠︎", fontSize = 10.sp, color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.width(5.dp))
                 Text(
                     transcribeError,
                     style = MaterialTheme.typography.labelSmall,
-                    color = ChatColors.secondaryText,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                     maxLines = 2,
                 )
             }
@@ -1208,15 +1233,21 @@ private fun MicCircleButton(
     enabled: Boolean,
     onTap: () -> Unit,
 ) {
+    val containerColor = when {
+        isRecording -> MaterialTheme.colorScheme.primary
+        isTranscribing -> MaterialTheme.colorScheme.secondaryContainer
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = when {
+        isRecording -> MaterialTheme.colorScheme.onPrimary
+        isTranscribing -> MaterialTheme.colorScheme.onSecondaryContainer
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
     Box(
         modifier = Modifier
             .size(diameter)
-            // [T-android-voice-mic-shadow] Same white circle and same soft
-            // halo as before; only the downward cast is gone. See
-            // micShadowNoOffset for why this is drawn rather than expressed as
-            // an elevation.
-            .micShadowNoOffset(10.dp)
-            .background(Color.White, CircleShape)
+            .micShadowNoOffset(10.dp, color = MaterialTheme.colorScheme.primary, maxAlpha = 0.16f)
+            .background(containerColor, CircleShape)
             .clip(CircleShape)
             .clickable(enabled = enabled) { onTap() },
         contentAlignment = Alignment.Center,
@@ -1228,17 +1259,17 @@ private fun MicCircleButton(
             )
         }
         when {
-            isRecording -> InlineMiniWaveform(levels = levels)
+            isRecording -> InlineMiniWaveform(levels = levels, barColor = contentColor)
             isTranscribing -> Icon(
                 Icons.Default.Close,
                 contentDescription = stringResource(R.string.voice_panel_cancel_transcription),
-                tint = Color.Black,
+                tint = contentColor,
                 modifier = Modifier.size(22.dp),
             )
             else -> Icon(
                 Icons.Default.Mic,
                 contentDescription = stringResource(R.string.voice_panel_toggle_recording),
-                tint = Color.Black,
+                tint = contentColor,
                 modifier = Modifier.size(26.dp),
             )
         }
@@ -1289,27 +1320,16 @@ private fun TranscribingRing(
     }
 }
 
-/** 7 dark bars inside the white mic button (iOS InlineMiniWaveform). */
+/** 7 expressive bars inside the mic button. */
 @Composable
-private fun InlineMiniWaveform(levels: List<Float>) {
+private fun InlineMiniWaveform(
+    levels: List<Float>,
+    barColor: Color = MaterialTheme.colorScheme.onPrimary,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        // [T-android-voice-parity] Indexed, and each bar animates.
-        //
-        // Two fixes over the previous `forEach { level -> Box(...) }`:
-        //  1. The bars were redrawn with raw values on every StateFlow
-        //     emission — no smoothing at all, where iOS runs a per-bar spring
-        //     (response 0.18, dampingFraction 0.6 —
-        //     InlineVoiceInputView.swift:1302). Android's level source is also
-        //     coarser (onRmsChanged at ~10-20 Hz vs iOS's ~94 Hz PCM tap), so
-        //     unsmoothed bars step visibly. `spring` with dampingRatio 0.6 and
-        //     stiffness 900 is the closest Compose analogue to a 0.18 s spring.
-        //  2. `forEach` gave Compose no per-slot identity, so a shifted list
-        //     re-associated animation state to the wrong bar. The index is a
-        //     stable slot key: bar N keeps its own animation across frames
-        //     while the VALUE flowing through it shifts left.
         val tail = levels.takeLast(7)
         tail.forEachIndexed { index, level ->
             val animated by animateFloatAsState(
@@ -1321,23 +1341,23 @@ private fun InlineMiniWaveform(levels: List<Float>) {
                 modifier = Modifier
                     .width(3.dp)
                     .height((5 + animated * 21).dp.coerceAtMost(26.dp))
-                    .background(Color.Black.copy(alpha = 0.85f), RoundedCornerShape(50)),
+                    .background(barColor.copy(alpha = 0.92f), RoundedCornerShape(50)),
             )
         }
     }
 }
 
-/** Delete key: tap = one char, hold = repeat every 120ms (iOS VoiceDeleteButton). */
+/** Delete key: tap = one char, hold = repeat every 120ms (M3 Expressive tonal squircle). */
 @Composable
 private fun VoiceDeleteButton(onDeleteOne: () -> Unit) {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var repeating by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = Modifier
-            .size(47.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
-            .clip(CircleShape)
+            .size(46.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+            .clip(shape)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onDeleteOne() },
@@ -1374,23 +1394,20 @@ private fun CircleIconButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val shape = RoundedCornerShape(12.dp)
     Box(
         modifier = modifier
-            .size(30.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
-            .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onClick() },
+            .size(34.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+            .clip(shape)
+            .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             icon,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(18.dp),
         )
     }
 }

@@ -269,11 +269,9 @@ private fun BlockquoteView(
     baseStyle: TextStyle,
     mathSpans: List<MarkdownParser.MathSpan> = emptyList(),
 ) {
-    // Orange accent rule on the leading edge — matches iOS, where the
-    // blockquote uses the app systemOrange (0xFFFF9500) at full opacity.
-    // The previous primary @ 0.5 alpha disappeared into theme purple on the
-    // dark palette and didn't read as a quote at all in some compositions.
-    val barColor = Color(0xFFFF9500)
+    // Warm amber accent rule on the leading edge for clear contrast in both
+    // light and dark Material 3 Expressive palettes.
+    val barColor = Color(0xFFD97706)
     Box(
         modifier = Modifier
             .fillMaxWidth()

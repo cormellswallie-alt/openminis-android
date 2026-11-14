@@ -33,14 +33,15 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,10 +72,15 @@ import com.openminis.app.scheduled.ScheduledTaskDetailModel.FireState
 import com.openminis.app.scheduled.ScheduledTaskDetailModel.Status
 import com.openminis.app.scheduled.ScheduledTaskManager
 import com.openminis.app.scheduled.ScheduledTaskMarker
+import com.openminis.app.ui.components.MinisAlertDialog
+import com.openminis.app.ui.components.MinisOutlinedButton
+import com.openminis.app.ui.components.MinisTonalButton
 import com.openminis.app.ui.components.decorativePhase
 import com.openminis.app.ui.components.decorativePingPong
 import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -84,8 +90,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val StatusGreen = Color(0xFF34C759)
-private val StatusRed = Color(0xFFFF3B30)
+private val StatusGreen = Color(0xFF10B981)
+private val StatusRed = Color(0xFFDC2626)
 
 /**
  * [T-scheduled-task-detail] The page a scheduled-task card opens: the task's
@@ -155,24 +161,34 @@ internal fun ScheduledTaskDetailSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = ChatColors.background,
-        dragHandle = null,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 6.dp),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(4.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                            shape = CircleShape,
+                        ),
+                )
+            }
+        },
         contentWindowInsets = { WindowInsets(0) },
     ) {
         Column(Modifier.fillMaxWidth().fillMaxHeight(0.92f)) {
-            // Nav bar: close on the left, centred title.
-            Box(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 16.dp)) {
-                IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.scheduled_detail_close), tint = ChatColors.primaryText)
-                }
-                Text(
-                    stringResource(R.string.scheduled_detail_title),
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ChatColors.primaryText,
-                )
-            }
+            StandardChatSheetHeader(
+                title = stringResource(R.string.scheduled_detail_title),
+                onDismiss = onDismiss,
+            )
+            Spacer(Modifier.height(6.dp))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -205,14 +221,32 @@ internal fun ScheduledTaskDetailSheet(
                 HistoryCard(history)
 
                 // Actions
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (task != null && task.enabled) {
-                        TextButton(onClick = { confirmingCancel = true }) {
-                            Text(stringResource(R.string.scheduled_card_cancel), color = StatusRed, fontSize = 15.sp)
-                        }
+                Column(
+                    Modifier.fillMaxWidth().padding(top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    MinisTonalButton(
+                        onClick = { copy(context, prompt) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            Icons.Default.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.scheduled_detail_copy_prompt), fontWeight = FontWeight.SemiBold)
                     }
-                    TextButton(onClick = { copy(context, prompt) }) {
-                        Text(stringResource(R.string.scheduled_detail_copy_prompt), color = ScheduledAccent, fontSize = 15.sp)
+                    if (task != null && task.enabled) {
+                        MinisOutlinedButton(
+                            onClick = { confirmingCancel = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        ) {
+                            Text(stringResource(R.string.scheduled_card_cancel), fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -220,22 +254,16 @@ internal fun ScheduledTaskDetailSheet(
     }
 
     if (confirmingCancel) {
-        AlertDialog(
+        MinisAlertDialog(
             onDismissRequest = { confirmingCancel = false },
-            title = { Text(stringResource(R.string.scheduled_card_cancel_confirm_title)) },
-            text = { Text(stringResource(R.string.scheduled_card_cancel_confirm_body, name)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    // Disable rather than delete, as the card does: the history
-                    // stays, and the task can be re-enabled from Settings.
-                    manager.setEnabled(marker.taskId, false)
-                    confirmingCancel = false
-                }) { Text(stringResource(R.string.scheduled_card_cancel_confirm_ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmingCancel = false }) {
-                    Text(stringResource(R.string.scheduled_card_cancel_confirm_keep))
-                }
+            title = stringResource(R.string.scheduled_card_cancel_confirm_title),
+            text = stringResource(R.string.scheduled_card_cancel_confirm_body, name),
+            confirmText = stringResource(R.string.scheduled_card_cancel_confirm_ok),
+            dismissText = stringResource(R.string.scheduled_card_cancel_confirm_keep),
+            isDestructive = true,
+            onConfirm = {
+                manager.setEnabled(marker.taskId, false)
+                confirmingCancel = false
             },
         )
     }
@@ -248,24 +276,23 @@ private fun SectionCard(title: String? = null, badge: String? = null, content: @
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(ChatColors.secondaryBg)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (title != null) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = ChatColors.secondaryText)
+                Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 if (badge != null) {
                     Text(
                         badge,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = ScheduledAccent,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(ScheduledAccent.copy(alpha = 0.15f))
-                            .padding(horizontal = 6.dp, vertical = 1.dp),
+                            .background(ScheduledAccent.copy(alpha = 0.15f), CircleShape)
+                            .padding(horizontal = 8.dp, vertical = 1.dp),
                     )
                 }
             }
@@ -280,10 +307,8 @@ private fun HeaderCard(name: String, trigger: String?, status: Status) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(ScheduledAccent.copy(alpha = 0.15f))
-                    .border(0.8.dp, ScheduledAccent.copy(alpha = 0.25f), CircleShape),
+                    .size(46.dp)
+                    .background(ScheduledAccent.copy(alpha = 0.16f), MaterialShapes.Sunny.toShape()),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.Default.Schedule, contentDescription = null, tint = ScheduledAccent, modifier = Modifier.size(22.dp))
@@ -458,11 +483,19 @@ private fun PromptCard(prompt: String) {
                 onTextLayout = { if (!expanded) overflows = it.hasVisualOverflow },
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = { copy(context, prompt) }, modifier = Modifier.size(32.dp)) {
+            IconButton(
+                onClick = { copy(context, prompt) },
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(10.dp)),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
                 Icon(
                     Icons.Default.ContentCopy,
                     contentDescription = stringResource(R.string.scheduled_detail_copy_prompt),
-                    tint = ChatColors.secondaryText,
                     modifier = Modifier.size(16.dp),
                 )
             }

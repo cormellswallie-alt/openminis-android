@@ -27,14 +27,18 @@ import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.TextFields
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.graphics.Color
+import com.openminis.app.ui.theme.ExpressiveLoadingIndicator
+import com.openminis.app.ui.theme.MaterialShapes
+import com.openminis.app.ui.theme.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -165,6 +169,8 @@ fun QuickTestSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier
@@ -181,48 +187,62 @@ fun QuickTestSheet(
                 Text(
                     text = stringResource(R.string.quicktest_title),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(
                     onClick = { runAll(scope, context, entry, providerRepository, runs) },
                     enabled = !isRunning,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .background(
+                            if (isRunning) MaterialTheme.colorScheme.surfaceContainer
+                            else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            RoundedCornerShape(12.dp),
+                        ),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 ) {
                     Icon(
                         Icons.Filled.Refresh,
                         contentDescription = stringResource(R.string.quicktest_run_again),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
-                MinisTextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.quicktest_done))
+                Spacer(Modifier.width(8.dp))
+                MinisSmallButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.quicktest_done), fontWeight = FontWeight.SemiBold)
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
 
-            // Header: icon + name + id.
+            // Header: organic polygon badge + name + id.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(40.dp)
                         .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            RoundedCornerShape(8.dp),
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialShapes.Sunny.toShape(),
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.Outlined.Bolt,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
                         entry.model.displayName,
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         entry.model.id,
@@ -232,7 +252,7 @@ fun QuickTestSheet(
                 }
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
 
             runs.forEach { run ->
                 TestCard(run)
@@ -248,19 +268,29 @@ private fun TestCard(run: QuickTestRun) {
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                MaterialTheme.colorScheme.surfaceContainerLow,
-                RoundedCornerShape(12.dp),
+                MaterialTheme.colorScheme.surfaceContainer,
+                RoundedCornerShape(20.dp),
             )
-            .padding(12.dp),
+            .padding(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                run.kind.icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .background(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        RoundedCornerShape(10.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    run.kind.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(Modifier.width(10.dp))
             Text(
                 stringResource(run.kind.titleRes),
                 style = MaterialTheme.typography.bodyMedium,
@@ -269,7 +299,7 @@ private fun TestCard(run: QuickTestRun) {
             )
             StatusBadge(run)
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
         TestContent(run)
     }
 }
@@ -277,9 +307,8 @@ private fun TestCard(run: QuickTestRun) {
 @Composable
 private fun StatusBadge(run: QuickTestRun) {
     when (val s = run.state) {
-        is QuickTestState.Running -> CircularProgressIndicator(
-            modifier = Modifier.size(18.dp),
-            strokeWidth = 2.dp,
+        is QuickTestState.Running -> ExpressiveLoadingIndicator(
+            modifier = Modifier.size(20.dp),
         )
         is QuickTestState.Failure -> Icon(
             Icons.Filled.Cancel,

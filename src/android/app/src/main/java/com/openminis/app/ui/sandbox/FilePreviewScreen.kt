@@ -187,6 +187,7 @@ fun FilePreviewScreen(
         onDispose { }
     }
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -195,53 +196,60 @@ fun FilePreviewScreen(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         modifier = Modifier.clickable { showFullPath = !showFullPath },
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
+                    com.openminis.app.ui.settings.ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
                 },
                 actions = {
-                    // T142: Share works for any file — FileProvider URI +
-                    // ACTION_SEND + FLAG_GRANT_READ_URI_PERMISSION. iOS parity.
-                    IconButton(onClick = { shareFile(context, item) }) {
-                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.filepreview_share))
-                    }
-                    // Print: HTML renders via WebView; markdown / plain text /
-                    // json / csv print their raw text wrapped in a WebView so we
-                    // reuse the single createPrintDocumentAdapter path (Android
-                    // has no UISimpleTextPrintFormatter equivalent). Image files
-                    // take the gallery route above and never reach this bar.
+                    com.openminis.app.ui.settings.ExpressiveTopBarActionButton(
+                        onClick = { shareFile(context, item) },
+                        icon = Icons.Default.Share,
+                        contentDescription = stringResource(R.string.filepreview_share),
+                    )
                     if (item.isHtmlFile || item.isMarkdownFile || item.isTextFile ||
                         item.isJsonFile || item.isCsvFile
                     ) {
-                        IconButton(onClick = { printFile(context, item) }) {
-                            Icon(Icons.Default.Print, contentDescription = stringResource(R.string.action_print))
-                        }
+                        com.openminis.app.ui.settings.ExpressiveTopBarActionButton(
+                            onClick = { printFile(context, item) },
+                            icon = Icons.Default.Print,
+                            contentDescription = stringResource(R.string.action_print),
+                        )
                     }
                     if (item.isImageFile) {
-                        // T142 image → MediaStore Save to Gallery.
-                        IconButton(onClick = {
-                            scope.launch {
-                                val ok = saveImageToGallery(context, item.file)
-                                Toast.makeText(
-                                    context,
-                                    context.getString(if (ok) R.string.image_saved_to_album_toast else R.string.image_save_failed_toast),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        }) {
-                            Icon(Icons.Default.Download, contentDescription = stringResource(R.string.filepreview_save_to_gallery))
-                        }
+                        com.openminis.app.ui.settings.ExpressiveTopBarActionButton(
+                            onClick = {
+                                scope.launch {
+                                    val ok = saveImageToGallery(context, item.file)
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(if (ok) R.string.image_saved_to_album_toast else R.string.image_save_failed_toast),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            },
+                            icon = Icons.Default.Download,
+                            contentDescription = stringResource(R.string.filepreview_save_to_gallery),
+                            highlighted = true,
+                        )
                     } else {
-                        // T144 non-image → SAF Save-As (user picks location).
-                        IconButton(onClick = { saveAsLauncher.launch(item.name) }) {
-                            Icon(Icons.Default.Download, contentDescription = stringResource(R.string.filepreview_save_as))
-                        }
+                        com.openminis.app.ui.settings.ExpressiveTopBarActionButton(
+                            onClick = { saveAsLauncher.launch(item.name) },
+                            icon = Icons.Default.Download,
+                            contentDescription = stringResource(R.string.filepreview_save_as),
+                            highlighted = true,
+                        )
                     }
+                    Spacer(modifier = Modifier.width(4.dp))
                 },
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
             )
         },
     ) { padding ->

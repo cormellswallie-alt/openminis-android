@@ -271,7 +271,7 @@ fun ImageGalleryViewer(
                         val pillShape = RoundedCornerShape(32.dp)
                         Row(
                             modifier = Modifier
-                                .background(color = Color(0xFF3A3A3C), shape = pillShape)
+                                .background(color = Color(0xFF272C3A), shape = pillShape)
                                 .border(
                                     width = 1.dp,
                                     color = Color.White.copy(alpha = 0.15f),

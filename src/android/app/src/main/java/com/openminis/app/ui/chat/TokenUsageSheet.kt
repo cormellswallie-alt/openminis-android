@@ -1,16 +1,19 @@
 package com.openminis.app.ui.chat
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,23 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openminis.app.R
-import com.openminis.app.i18n.uppercaseForDisplay
+import com.openminis.app.ui.components.ExpressiveArticulatedSeam
+import com.openminis.app.ui.settings.SettingsSection
 
 /**
- * Session Token Usage bottom sheet — mirrors iOS `TokenUsageSheet` and uses
- * the standardized chat sheet shell so its header/dismiss behavior matches
- * every other "⋯" menu sheet.
- *
- * Sections (top to bottom):
- *   - Context: Context Used / Context Window / Max Output
- *   - Thinking (only when the model supports reasoning): On/Off / Level / Supported
- *   - Tokens (Session Total): Input (incl. cache) / Output
- *   - Cache (Session Total): Cache Read / Cache Write
- *   - Agent Loop: Total Loops
- *
- * Data loads asynchronously via [ChatViewModel.loadSessionTokenStats] when the
- * sheet appears; we intentionally don't hold a live subscription — token
- * counters change per API call, not per keystroke, so pull-on-open is enough.
+ * Session Token Usage bottom sheet — Material 3 Expressive articulated bento cards
+ * inside [StandardChatSheet].
  */
 @Composable
 fun TokenUsageSheet(
@@ -62,118 +54,163 @@ fun TokenUsageSheet(
     StandardChatSheet(
         title = stringResource(R.string.token_usage_sheet_title),
         onDismiss = onDismiss,
-        // T148: iOS uses .presentationDetents([.medium]) for the same sheet
-        // (AIChatView.swift:508). Match that proportion on Android so the
-        // half-screen feel is consistent — the token-usage view holds maybe
-        // a screenful of stat rows max and looked overgrown at 90%.
-        heightFraction = 0.5f,
+        heightFraction = 0.62f,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(bottom = 28.dp),
         ) {
             val s = stats
             val onText = stringResource(R.string.common_on)
             val offText = stringResource(R.string.common_off)
             val yesText = stringResource(R.string.common_yes)
             val noText = stringResource(R.string.common_no)
-            StatSection(title = stringResource(R.string.token_usage_section_context)) {
-                StatRow(stringResource(R.string.token_usage_context_used), formatTokens(s?.context ?: 0))
-                contextWindow?.let { StatRow(stringResource(R.string.token_usage_context_window), formatTokens(it)) }
-                maxOutput?.let { StatRow(stringResource(R.string.token_usage_max_output), formatTokens(it)) }
-            }
 
-            thinking?.let { t ->
-                StatSection(title = stringResource(R.string.token_usage_section_thinking)) {
-                    StatRow(stringResource(R.string.token_usage_thinking_label), if (t.enabled) onText else offText)
-                    if (t.enabled) StatRow(stringResource(R.string.token_usage_thinking_level), t.level)
-                    StatRow(stringResource(R.string.token_usage_thinking_supported), if (t.supported) yesText else noText)
-                }
-            }
-
-            StatSection(title = stringResource(R.string.token_usage_section_tokens)) {
-                val inputTotal = (s?.input ?: 0L) + (s?.cacheRead ?: 0L) + (s?.cacheWrite ?: 0L)
-                StatRow(stringResource(R.string.token_usage_input_with_cache), formatTokens(inputTotal))
-                StatRow(stringResource(R.string.token_usage_output), formatTokens(s?.output ?: 0L))
-            }
-
-            StatSection(title = stringResource(R.string.token_usage_section_cache)) {
-                StatRow(stringResource(R.string.token_usage_cache_read), formatTokens(s?.cacheRead ?: 0L))
-                StatRow(stringResource(R.string.token_usage_cache_write), formatTokens(s?.cacheWrite ?: 0L))
-                // [T-android-token-usage-cache-hit-rate] iOS parity. Hidden
-                // rather than shown as 0.0% when nothing was cached, so a
-                // provider that does no caching does not look like a cache
-                // miss — see SessionTokenStats.cacheHitRate.
-                s?.cacheHitRate?.let {
+            SettingsSection(header = stringResource(R.string.token_usage_section_context)) {
+                val hasWindow = contextWindow != null
+                val hasMaxOut = maxOutput != null
+                StatRow(
+                    label = stringResource(R.string.token_usage_context_used),
+                    value = formatTokens(s?.context ?: 0),
+                    showDivider = hasWindow || hasMaxOut,
+                )
+                contextWindow?.let {
                     StatRow(
-                        stringResource(R.string.token_usage_cache_hit_rate),
-                        String.format(java.util.Locale.US, "%.1f%%", it),
+                        label = stringResource(R.string.token_usage_context_window),
+                        value = formatTokens(it),
+                        showDivider = hasMaxOut,
+                    )
+                }
+                maxOutput?.let {
+                    StatRow(
+                        label = stringResource(R.string.token_usage_max_output),
+                        value = formatTokens(it),
+                        showDivider = false,
                     )
                 }
             }
 
-            // [T-android-token-usage-output-speed] iOS parity. Always shown,
-            // with "—" until a turn has streamed measurably — the row's
-            // absence would otherwise read as "this build has no speed".
-            StatSection(title = stringResource(R.string.token_usage_section_speed)) {
-                val speed = s?.outputTokensPerSecond
+            thinking?.let { t ->
+                SettingsSection(header = stringResource(R.string.token_usage_section_thinking)) {
+                    StatRow(
+                        label = stringResource(R.string.token_usage_thinking_label),
+                        value = if (t.enabled) onText else offText,
+                        showDivider = true,
+                    )
+                    if (t.enabled) {
+                        StatRow(
+                            label = stringResource(R.string.token_usage_thinking_level),
+                            value = t.level,
+                            showDivider = true,
+                        )
+                    }
+                    StatRow(
+                        label = stringResource(R.string.token_usage_thinking_supported),
+                        value = if (t.supported) yesText else noText,
+                        showDivider = false,
+                    )
+                }
+            }
+
+            SettingsSection(header = stringResource(R.string.token_usage_section_tokens)) {
+                val inputTotal = (s?.input ?: 0L) + (s?.cacheRead ?: 0L) + (s?.cacheWrite ?: 0L)
                 StatRow(
-                    stringResource(R.string.token_usage_output_speed),
-                    if (speed != null) String.format(java.util.Locale.US, "%.1f tok/s", speed) else "—",
+                    label = stringResource(R.string.token_usage_input_with_cache),
+                    value = formatTokens(inputTotal),
+                    showDivider = true,
+                )
+                StatRow(
+                    label = stringResource(R.string.token_usage_output),
+                    value = formatTokens(s?.output ?: 0L),
+                    showDivider = false,
                 )
             }
 
-            StatSection(title = stringResource(R.string.token_usage_section_agent_loop)) {
-                StatRow(stringResource(R.string.token_usage_total_loops), (s?.loopCount ?: 0).toString())
+            SettingsSection(header = stringResource(R.string.token_usage_section_cache)) {
+                val hitRate = s?.cacheHitRate
+                StatRow(
+                    label = stringResource(R.string.token_usage_cache_read),
+                    value = formatTokens(s?.cacheRead ?: 0L),
+                    showDivider = true,
+                )
+                StatRow(
+                    label = stringResource(R.string.token_usage_cache_write),
+                    value = formatTokens(s?.cacheWrite ?: 0L),
+                    showDivider = hitRate != null,
+                )
+                hitRate?.let {
+                    StatRow(
+                        label = stringResource(R.string.token_usage_cache_hit_rate),
+                        value = String.format(java.util.Locale.US, "%.1f%%", it),
+                        showDivider = false,
+                    )
+                }
             }
+
+            SettingsSection(header = stringResource(R.string.token_usage_section_speed)) {
+                val speed = s?.outputTokensPerSecond
+                StatRow(
+                    label = stringResource(R.string.token_usage_output_speed),
+                    value = if (speed != null) String.format(java.util.Locale.US, "%.1f tok/s", speed) else "—",
+                    showDivider = false,
+                )
+            }
+
+            SettingsSection(header = stringResource(R.string.token_usage_section_agent_loop)) {
+                StatRow(
+                    label = stringResource(R.string.token_usage_total_loops),
+                    value = (s?.loopCount ?: 0).toString(),
+                    showDivider = false,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun StatSection(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = title.uppercaseForDisplay(),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 6.dp),
-        )
-        content()
+private fun StatRow(
+    label: String,
+    value: String,
+    showDivider: Boolean,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    text = value,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (showDivider) {
+            ExpressiveArticulatedSeam()
+        }
     }
-}
-
-@Composable
-private fun StatRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-    HorizontalDivider(
-        thickness = 0.5.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-    )
 }
 
 // iOS formatting: "%.1fM" >= 1M, "%.1fK" >= 1k, raw otherwise.

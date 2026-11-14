@@ -97,22 +97,10 @@ fun ScheduledTasksScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(
+                    com.openminis.app.ui.settings.ExpressiveNavIconButton(
                         onClick = onBack,
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .size(40.dp),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                        contentDescription = stringResource(R.string.back),
+                    )
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.largeTopAppBarColors(

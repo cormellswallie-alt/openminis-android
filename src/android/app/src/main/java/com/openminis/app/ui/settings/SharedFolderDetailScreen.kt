@@ -65,11 +65,9 @@ fun SharedFolderDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.shared_folder_detail_title)) },
+                title = { Text(stringResource(R.string.shared_folder_detail_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
+                    ExpressiveNavIconButton(onClick = onBack)
                 },
             )
         },
@@ -119,7 +117,7 @@ fun SharedFolderDetailScreen(
 private fun HeaderCard(folder: SharedFolderEntry) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(22.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -129,7 +127,7 @@ private fun HeaderCard(folder: SharedFolderEntry) {
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(folder.iconColor),
                 contentAlignment = Alignment.Center,
             ) {
@@ -169,9 +167,9 @@ private fun HeaderCard(folder: SharedFolderEntry) {
 @Composable
 private fun AccessBadge(writable: Boolean) {
     val (textRes, color) = if (writable) {
-        R.string.mount_badge_rw to Color(0xFF34C759)
+        R.string.mount_badge_rw to Color(0xFF10B981)
     } else {
-        R.string.mount_badge_readonly to Color(0xFFFF9500)
+        R.string.mount_badge_readonly to Color(0xFFD97706)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

@@ -485,7 +485,7 @@ private fun OpenStageSheet(
         onCancel = onCancel,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(Modifier.size(20.dp))
             Spacer(Modifier.width(12.dp))
             Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
         }
@@ -516,7 +516,7 @@ private fun LoadingRow(text: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+        com.openminis.app.ui.theme.ExpressiveLoadingIndicator(Modifier.size(18.dp))
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium,

@@ -56,11 +56,9 @@ fun SharedFoldersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.shared_folders_title)) },
+                title = { Text(stringResource(R.string.shared_folders_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
+                    ExpressiveNavIconButton(onClick = onBack)
                 },
             )
         },
@@ -78,7 +76,7 @@ fun SharedFoldersScreen(
                 items(SharedFolderRegistry.entries, key = { it.id }) { folder ->
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(20.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -95,10 +93,10 @@ fun SharedFoldersScreen(
 private fun InfoBanner() {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(12.dp)),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
             text = stringResource(R.string.shared_folders_info_banner),
@@ -156,9 +154,9 @@ private fun SharedFolderRow(
 @Composable
 private fun AccessBadge(writable: Boolean) {
     val (textRes, color) = if (writable) {
-        R.string.mount_badge_rw to Color(0xFF34C759)
+        R.string.mount_badge_rw to Color(0xFF10B981)
     } else {
-        R.string.mount_badge_readonly to Color(0xFFFF9500)
+        R.string.mount_badge_readonly to Color(0xFFD97706)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),

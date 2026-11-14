@@ -253,19 +253,17 @@ fun ScheduledTaskEditScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
+                    com.openminis.app.ui.settings.ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.back),
+                    )
                 },
             )
         },
     ) { padding ->
         if (!loaded) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(36.dp))
             }
             return@Scaffold
         }
@@ -323,10 +321,12 @@ fun ScheduledTaskEditScreen(
             ScheduledTasksViewModel.RunStatus.RUNNING -> {
                 AlertDialog(
                     onDismissRequest = { vm.clearRunNowState() },
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     title = { Text(stringResource(R.string.scheduled_task_run_now_starting)) },
                     text = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(22.dp))
                             Spacer(Modifier.width(12.dp))
                             Text(stringResource(R.string.scheduled_task_run_now_starting_body))
                         }
@@ -339,39 +339,29 @@ fun ScheduledTaskEditScreen(
                 )
             }
             ScheduledTasksViewModel.RunStatus.STARTED -> {
-                AlertDialog(
+                val sid = state.sessionId
+                com.openminis.app.ui.components.MinisAlertDialog(
                     onDismissRequest = { vm.clearRunNowState() },
-                    title = { Text(stringResource(R.string.scheduled_task_run_now_started)) },
-                    text = { Text(stringResource(R.string.scheduled_task_run_now_started_body)) },
-                    confirmButton = {
-                        val sid = state.sessionId
-                        if (sid != null) {
-                            MinisTextButton(onClick = { vm.clearRunNowState(); onOpenSession(sid) }) {
-                                Text(stringResource(R.string.scheduled_task_run_now_open_session))
-                            }
-                        } else {
-                            MinisTextButton(onClick = { vm.clearRunNowState() }) {
-                                Text(stringResource(R.string.ok))
-                            }
-                        }
+                    title = stringResource(R.string.scheduled_task_run_now_started),
+                    text = stringResource(R.string.scheduled_task_run_now_started_body),
+                    confirmText = stringResource(
+                        if (sid != null) R.string.scheduled_task_run_now_open_session else R.string.ok,
+                    ),
+                    onConfirm = {
+                        vm.clearRunNowState()
+                        if (sid != null) onOpenSession(sid)
                     },
-                    dismissButton = if (state.sessionId != null) {
-                        { MinisTextButton(onClick = { vm.clearRunNowState() }) {
-                            Text(stringResource(R.string.scheduled_task_run_now_dismiss))
-                        } }
-                    } else null,
+                    dismissText = if (sid != null) stringResource(R.string.scheduled_task_run_now_dismiss) else "",
                 )
             }
             ScheduledTasksViewModel.RunStatus.FAILED -> {
-                AlertDialog(
+                com.openminis.app.ui.components.MinisAlertDialog(
                     onDismissRequest = { vm.clearRunNowState() },
-                    title = { Text(stringResource(R.string.scheduled_task_run_now_failed)) },
-                    text = { Text(stringResource(R.string.scheduled_task_run_now_failed_body)) },
-                    confirmButton = {
-                        MinisTextButton(onClick = { vm.clearRunNowState() }) {
-                            Text(stringResource(R.string.ok))
-                        }
-                    },
+                    title = stringResource(R.string.scheduled_task_run_now_failed),
+                    text = stringResource(R.string.scheduled_task_run_now_failed_body),
+                    confirmText = stringResource(R.string.ok),
+                    onConfirm = { vm.clearRunNowState() },
+                    dismissText = "",
                 )
             }
         }
@@ -800,12 +790,14 @@ private fun SessionPickerDialog(
     LaunchedEffect(Unit) { sessions = vm.listSessions() }
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = { Text(stringResource(R.string.scheduled_task_pick_session)) },
         text = {
             val list = sessions
             if (list == null) {
                 Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(32.dp))
                 }
             } else if (list.isEmpty()) {
                 Text(stringResource(R.string.scheduled_task_no_sessions))
@@ -839,12 +831,14 @@ private fun MessagePickerDialog(
     LaunchedEffect(sessionId) { messages = vm.listUserMessages(sessionId) }
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = { Text(stringResource(R.string.scheduled_task_pick_message)) },
         text = {
             val list = messages
             if (list == null) {
                 Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    com.openminis.app.ui.theme.ExpressiveLoadingIndicator(modifier = Modifier.size(32.dp))
                 }
             } else if (list.isEmpty()) {
                 Text(stringResource(R.string.scheduled_task_no_messages_in_session))

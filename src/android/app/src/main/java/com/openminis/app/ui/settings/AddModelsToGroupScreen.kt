@@ -84,13 +84,13 @@ fun AddModelsToGroupScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.model_group_detail_add_models), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.model_group_detail_back))
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.model_group_detail_back),
+                    )
                 },
                 actions = {
-                    MinisTextButton(onClick = onBack) { Text(stringResource(R.string.common_cancel)) }
-                    MinisButton(
+                    com.openminis.app.ui.components.MinisSmallButton(
                         onClick = {
                             val updated = group.copy(
                                 memberEntryIds = (group.memberEntryIds + selectedIds).toMutableList()

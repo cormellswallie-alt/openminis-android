@@ -94,16 +94,13 @@ fun AddAgentLoopModelsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.model_group_detail_back),
-                        )
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.model_group_detail_back),
+                    )
                 },
                 actions = {
-                    MinisTextButton(onClick = onBack) { Text(stringResource(R.string.common_cancel)) }
-                    MinisButton(
+                    com.openminis.app.ui.components.MinisSmallButton(
                         onClick = {
                             // Add in stable order so the section renders
                             // pinned items in the order the user saw them
@@ -190,16 +187,13 @@ fun AddAgentLoopGroupsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.model_group_detail_back),
-                        )
-                    }
+                    ExpressiveNavIconButton(
+                        onClick = onBack,
+                        contentDescription = stringResource(R.string.model_group_detail_back),
+                    )
                 },
                 actions = {
-                    MinisTextButton(onClick = onBack) { Text(stringResource(R.string.common_cancel)) }
-                    MinisButton(
+                    com.openminis.app.ui.components.MinisSmallButton(
                         onClick = {
                             // Same stable-order add policy as the entries
                             // picker so the section ordering matches the

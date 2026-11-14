@@ -363,8 +363,8 @@ internal fun AddServerForm(
                 // size(), not height() — see BackupAndRestoreScreen: an
                 // unconstrained width falls back to the 40.dp default and
                 // overflows the button.
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp), strokeWidth = 2.dp,
+                com.openminis.app.ui.theme.ExpressiveLoadingIndicator(
+                    modifier = Modifier.size(18.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
             } else {
