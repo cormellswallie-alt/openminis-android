@@ -215,9 +215,10 @@ fun ComposerSendButton(
     val a11yLabel = stringResource(R.string.send_return_mode_a11y_action)
     Box(
         modifier = modifier
-            .size(38.dp)
+            .size(40.dp)
             .background(
-                if (canActivate) ChatColors.sendButton else ChatColors.sendButtonDisabled,
+                if (canActivate) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.surfaceContainerHighest,
                 CircleShape,
             )
             .clip(CircleShape)
@@ -244,8 +245,8 @@ fun ComposerSendButton(
         Icon(
             Icons.Default.ArrowUpward,
             contentDescription = "Send",
-            tint = if (canActivate) ChatColors.background
-            else ChatColors.primaryText.copy(alpha = 0.5f),
+            tint = if (canActivate) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
             modifier = Modifier.size(20.dp),
         )
         SendReturnModeMenu(
@@ -329,16 +330,12 @@ private fun SendReturnModeMenu(
         onDismissRequest = onDismissRequest,
         properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
     ) {
-        val shape = RoundedCornerShape(20.dp)
-        // Same surface language as MinisMenu (elevated container in dark,
-        // white in light, launcher-style soft halo, hairline border), with a
-        // touch of translucency so the composer reads through the edges.
-        val container = if (ChatColors.isDark) MaterialTheme.colorScheme.surfaceContainerHigh else Color.White
-        val border = if (ChatColors.isDark) {
-            BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
-        } else {
-            BorderStroke(0.5.dp, Color.Black.copy(alpha = 0.05f))
-        }
+        val shape = RoundedCornerShape(24.dp)
+        val container = MaterialTheme.colorScheme.surfaceContainerHigh
+        val border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (ChatColors.isDark) 0.45f else 0.28f),
+        )
         Surface(
             modifier = Modifier
                 .graphicsLayer {

@@ -1,32 +1,31 @@
 package com.openminis.app.ui.chat
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
@@ -34,27 +33,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.openminis.app.R
-import com.openminis.app.ui.theme.ChatColors
-import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.components.decorativePhase
 import com.openminis.app.ui.components.decorativePingPong
-
-// [T-android-split-chat] Self-contained "thinking / streaming" dot indicators
-// extracted verbatim from ChatScreen.kt. `internal` so the chat package can
-// still reference them. No logic change — code moved as-is.
+import com.openminis.app.ui.components.rememberDecorativeTick
 
 @Composable
 internal fun BouncingDots(color: Color) {
-    // [T-android-decorative-anim-perf] Was three infinite transitions read in
-    // composition and animated through PADDING — a layout-phase property, so
-    // every frame recomposed and re-laid-out the row. Now one shared 30 fps
-    // tick, read inside the layer lambda, moving translationY only.
     val tick = rememberDecorativeTick()
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
         repeat(3) { i ->
             Box(
                 modifier = Modifier
-                    .size(4.dp)
+                    .size(4.5.dp)
                     .graphicsLayer {
                         val p = decorativePingPong(decorativePhase(tick.value, 700, i * 120))
                         translationY = -2.dp.toPx() * p
@@ -65,20 +55,16 @@ internal fun BouncingDots(color: Color) {
     }
 }
 
-// iOS-style streaming "..." after tool title — 3 dots bouncing inline with text
 @Composable
 internal fun StreamingDotsText() {
-    // [T-android-decorative-anim-perf] `Modifier.offset(y = …)` in its
-    // non-lambda form is a layout-phase read; the dots re-laid-out the pill
-    // title row every frame. Layer translation instead, from the shared tick.
     val tick = rememberDecorativeTick()
     Row {
         repeat(3) { i ->
             Text(
                 text = ".",
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.graphicsLayer {
                     val p = decorativePingPong(decorativePhase(tick.value, 700, i * 120))
                     translationY = -3.dp.toPx() * p
@@ -88,25 +74,12 @@ internal fun StreamingDotsText() {
     }
 }
 
-// ─── Compaction progress ──────────────────────────────────────────────────────
-
-/**
- * [T-android-compact-progress] Live status while a compaction runs, with a
- * Cancel affordance.
- *
- * Compaction used to present as a single unchanging flag for however long it
- * took — which on a slow or rate-limited model could be many minutes, and is
- * indistinguishable from a hang. This ticks once a second so the elapsed count
- * visibly moves, and names the split segment when the run had to fall back to
- * summarising halves, so "still working" is legible rather than inferred.
- */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CompactProgressIndicator(
     progress: ChatViewModel.CompactProgress,
     onCancel: () -> Unit,
 ) {
-    // Re-reads the clock every second; the changing value is what makes the
-    // row demonstrably alive.
     var elapsedSec by remember(progress.startedAtMs) { mutableStateOf(0) }
     LaunchedEffect(progress.startedAtMs) {
         while (true) {
@@ -115,76 +88,80 @@ internal fun CompactProgressIndicator(
         }
     }
 
-    Row(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        modifier = Modifier.padding(vertical = 6.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Text(
-            text = if (progress.depth > 0) {
-                // Only surfaced once a split actually happened — saying
-                // "segment 1" on the common single-call path would imply a
-                // complexity that isn't there.
-                stringResource(
-                    R.string.compact_progress_split,
-                    elapsedSec,
-                    progress.callsIssued,
-                    progress.callBudget,
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LoadingIndicator(
+                modifier = Modifier.size(22.dp),
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = if (progress.depth > 0) {
+                    stringResource(
+                        R.string.compact_progress_split,
+                        elapsedSec,
+                        progress.callsIssued,
+                        progress.callBudget,
+                    )
+                } else {
+                    stringResource(R.string.compact_progress, elapsedSec)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.errorContainer,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = onCancel),
+            ) {
+                Text(
+                    text = stringResource(R.string.cancel),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
-            } else {
-                stringResource(R.string.compact_progress, elapsedSec)
-            },
-            fontSize = 14.sp,
-            color = ChatColors.tertiaryText,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(R.string.cancel),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .clickable(onClick = onCancel)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        )
+            }
+        }
     }
 }
 
-// ─── Typing Indicator (three dots pulsing) ────────────────────────────────────
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun TypingIndicator() {
-    // [T-android-decorative-anim-perf] Shared 30 fps tick instead of a private
-    // 90 fps infinite transition; the layer-lambda read below was already right.
-    val tick = rememberDecorativeTick()
-    // Live Soul name → "<custom name> is thinking…" when the user renamed
-    // the assistant in Soul settings. SoulStore.cachedMetadata is a StateFlow
-    // that's updated on save (SoulSettingsScreen) and at app start
-    // (MinisApp.onCreate via refreshCache); collectAsState makes Compose
-    // recompose the indicator immediately when it changes.
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
     val soulName = soulMeta.name.trim().ifEmpty { "Minis" }
 
-    Row(
-        modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.Bottom,
+    Surface(
+        modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Text(
-            text = stringResource(R.string.chat_typing_indicator, soulName),
-            fontSize = 15.sp,
-            color = ChatColors.tertiaryText,
-        )
-        // Animated bouncing dots
-        val dots = listOf(".", ".", ".")
-        dots.forEachIndexed { index, dot ->
+        Row(
+            modifier = Modifier.padding(start = 10.dp, end = 16.dp, top = 7.dp, bottom = 7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            LoadingIndicator(
+                modifier = Modifier.size(22.dp),
+                color = MaterialTheme.colorScheme.primary,
+            )
             Text(
-                text = dot,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = ChatColors.tertiaryText,
-                modifier = Modifier.graphicsLayer {
-                    val p = decorativePingPong(decorativePhase(tick.value, 800, index * 150))
-                    translationY = -6.dp.toPx() * p
-                },
+                text = stringResource(R.string.chat_typing_indicator, soulName) + "…",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

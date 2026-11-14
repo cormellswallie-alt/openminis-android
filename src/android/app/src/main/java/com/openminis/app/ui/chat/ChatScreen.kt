@@ -166,8 +166,12 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -507,7 +511,7 @@ private data class ScrollFollowKey(
     val blockSig: Long,
 )
 
-@OptIn(ExperimentalMaterial3Api::class, kotlinx.coroutines.FlowPreview::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, kotlinx.coroutines.FlowPreview::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatScreen(
     sessionId: String,
@@ -2844,30 +2848,16 @@ fun ChatScreen(
                         }
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
                             modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color.Red.copy(alpha = 0.35f * fallbackPulseAlpha.value))
-                                // [T-android-topbar-shrink] vertical 4dp→2dp.
-                                // Combined with the expandedHeight drop below,
-                                // closes the dead-space gap between the model
-                                // name row and the TopAppBar bottom edge that
-                                // T-topbar-model-row-clip's 76dp overshoot left
-                                // behind. Horizontal 32dp keeps the fallback
-                                // pulse highlight comfortably padded around
-                                // the longest title.
-                                .padding(horizontal = 32.dp, vertical = 2.dp),
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.errorContainer.copy(
+                                        alpha = 0.7f * fallbackPulseAlpha.value,
+                                    ),
+                                )
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
                         ) {
-                            // Nav title: current session title when one
-                            // exists and the toggle is on, else fall back to
-                            // the Soul name (matches the input placeholder
-                            // "Message <SoulName>"), then to app_name
-                            // ("Minis") as the terminal fallback.
-                            // Tap opens the same SessionEditSheet used from
-                            // the session list — drafts return null from
-                            // loadSessionEntity so the sheet stays closed.
-                            // SoulStore.cachedMetadata is the same source the
-                            // input placeholder uses (see ~line 3581), so
-                            // soul renames in Soul Settings reflect here live.
                             val topBarSoul by com.openminis.app.agent.SoulStore
                                 .cachedMetadata.collectAsState()
                             val displayTitle = when {
@@ -2881,56 +2871,41 @@ fun ChatScreen(
                                 text = displayTitle,
                                 fontSize = 16.sp,
                                 lineHeight = 19.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ChatColors.primaryText,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 style = noFontPad,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .clip(CircleShape)
                                     .clickable {
                                         coroutineScope.launch {
                                             editingSession = viewModel.loadSessionEntity()
                                         }
                                     }
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    .padding(horizontal = 8.dp, vertical = 1.dp),
                             )
-                            // Model picker subtitle: green dot + group +
-                            // provider/model. Tap opens the model picker —
-                            // separated from the title above so tapping the
-                            // title rows opens the rename sheet instead.
+                            // M3 Expressive Tonal Model & Group Capsule
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    // [T-android-modelpicker-stuck-ripple] Own the
-                                    // interaction source so the press can be
-                                    // released explicitly. Opening the picker
-                                    // sheet puts a modal window over this row, so
-                                    // the pointer's UP never reaches the clickable:
-                                    // Compose emits PressInteraction.Press with no
-                                    // matching Release and the ripple stays lit
-                                    // behind the sheet — still there after the
-                                    // sheet closes, reading as a permanent grey
-                                    // highlight on the title bar.
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
                                     .clickable(
                                         interactionSource = modelPickerInteraction,
                                         indication = ripple(),
                                     ) { showModelPicker = true }
-                                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                                    .padding(horizontal = 10.dp, vertical = 3.dp),
                             ) {
-                                // Line 1: green dot + the active group OR
-                                // model name + dropdown arrow
-                                // (iOS: "● Default ⌄" / "● GPT-6 Astra ⌄")
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(6.dp)
+                                            .size(7.dp)
                                             .background(
-                                                if (modelName.isNotEmpty()) Color(0xFF34C759) else Color(0xFFFF9500),
+                                                if (modelName.isNotEmpty()) Color(0xFF2EA043) else Color(0xFFFF9500),
                                                 CircleShape,
                                             ),
                                     )
@@ -3019,23 +2994,23 @@ fun ChatScreen(
                                             Icon(
                                                 Icons.Default.Layers,
                                                 contentDescription = null,
-                                                tint = ChatColors.tertiaryText,
-                                                modifier = Modifier.size(10.dp),
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(11.dp),
                                             )
                                         }
                                         Text(
                                             text = groupNameDisplay,
                                             fontSize = 12.sp,
                                             lineHeight = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = ChatColors.secondaryText,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             maxLines = 1,
                                             style = noFontPad,
                                         )
                                         Icon(
                                             Icons.Default.KeyboardArrowDown,
                                             contentDescription = null,
-                                            tint = ChatColors.tertiaryText,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(14.dp),
                                         )
                                     }
@@ -3137,68 +3112,35 @@ fun ChatScreen(
                     }
                 },
                 navigationIcon = {
-                    // [T-android-tablet-split] See `isTwoPane`.
                     if (!isTwoPane) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        androidx.compose.material3.FilledIconButton(
+                            onClick = onBack,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            modifier = Modifier
+                                .padding(start = 6.dp)
+                                .size(40.dp),
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                     } else if (onToggleSidebar != null) {
-                        // [T-android-tablet-sidebar-collapse] The slot the back
-                        // arrow vacates in two-pane becomes the sidebar toggle.
-                        //
-                        // ONE glyph for both states — the list icon, meaning
-                        // "the session list", with the action stated in the
-                        // content description instead.
-                        //
-                        // A directional chevron was tried for the expanded
-                        // state and is wrong here: this is the slot that used
-                        // to hold the back arrow, so a leading chevron reads as
-                        // "go back" — precisely the meaning two-pane removed.
-                        // Swapping the glyph on toggle also makes the control
-                        // look like two different buttons rather than one
-                        // switch. A stable icon whose accessible label changes
-                        // is both clearer and honest about what it targets.
-                        //
-                        // `Menu` rather than `List`, which this first used.
-                        // List draws a bulleted list — dots plus rules — whose
-                        // ink sat high and left in the 24dp box (measured 41x23
-                        // px with its mass above centre), so it read as a small
-                        // mark floating above the ⋮ at the other end of this
-                        // same bar. Menu's three full-width bars fill the box
-                        // symmetrically and optically centre against it; both
-                        // glyphs now share a baseline to the pixel. Menu is
-                        // also the conventional sidebar-toggle icon.
-                        //
-                        // [T-android-split-toggle-align] Two corrections, both
-                        // measured on a Mate Pad against the SESSION LIST's
-                        // toolbar rather than this bar's own ⋮ — the toggle sits
-                        // hard against the pane seam, so the icons it is read
-                        // beside are the list's Schedule/Terminal, not the
-                        // kebab at the far end of this bar. Aligned only to the
-                        // kebab, it measured 8px shorter and 3.5px lower than
-                        // its actual neighbours.
-                        //
-                        // 1. `offset(y = -2.dp)`: this bar is 68dp (see
-                        //    expandedHeight below — sized for the 3-row title
-                        //    and NOT reducible without re-triggering
-                        //    T-topbar-model-row-clip), while the list's bar is
-                        //    M3's default 64dp. A TopAppBar centres its
-                        //    navigation icon in its OWN height, so the 4dp
-                        //    difference put this glyph 2dp below the list's row.
-                        //    Offsetting by half the delta lands it on the list's
-                        //    baseline while leaving the taller bar intact.
-                        //
-                        // 2. `size(28.dp)`: Menu's three bars ink only ~12 of
-                        //    their 24dp viewport (bars at y=6/11/16), where the
-                        //    circular Schedule and boxy Terminal fill ~20 of
-                        //    theirs. At a matched box size Menu therefore reads
-                        //    markedly lighter and smaller. Scaling the box to
-                        //    28dp brings its ink to ~14dp, closing most of the
-                        //    optical gap. The IconButton's 48dp touch target is
-                        //    unchanged, so this is purely visual weight.
-                        IconButton(
+                        androidx.compose.material3.FilledIconButton(
                             onClick = onToggleSidebar,
-                            modifier = Modifier.offset(y = (-2).dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            modifier = Modifier
+                                .padding(start = 6.dp)
+                                .size(40.dp),
                         ) {
                             Icon(
                                 Icons.Filled.Menu,
@@ -3209,16 +3151,27 @@ fun ChatScreen(
                                         R.string.chat_hide_sidebar
                                     },
                                 ),
-                                modifier = Modifier.size(28.dp),
+                                modifier = Modifier.size(22.dp),
                             )
                         }
                     }
                 },
                 actions = {
-                    // iOS: "..." circle button → dropdown menu
-                    Box {
-                        IconButton(onClick = { showChatMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    Box(modifier = Modifier.padding(end = 6.dp)) {
+                        androidx.compose.material3.FilledIconButton(
+                            onClick = { showChatMenu = true },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "More",
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                         MinisMenu(
                             expanded = showChatMenu,
@@ -3472,23 +3425,10 @@ fun ChatScreen(
                 },
                 windowInsets = WindowInsets.statusBars,
                 colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = ChatColors.background.copy(alpha = 0.92f),
-                    scrolledContainerColor = ChatColors.background.copy(alpha = 0.92f),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
                 ),
-                // [T-android-topbar-shrink] 76dp → 68dp. The earlier
-                // T-topbar-model-row-clip fix bumped 60dp → 76dp to give the
-                // 3-row title (14sp/lh17 + 12sp/lh14 + 11sp/lh13 ≈ 44sp text
-                // + 4dp+2dp+1dp vertical padding ≈ 51dp on mdpi, mid-60s on
-                // xxhdpi) room to breathe — but overshot, leaving visible
-                // dead-space below the model row. This trim pairs with the
-                // outer Column's vertical-padding drop (4dp→2dp above):
-                // budget is now ~44sp text + 2dp+2dp+1dp ≈ 49dp typical,
-                // ~58-62dp at xxhdpi 2.625× rounding. 68dp keeps a 6-10dp
-                // safety margin so the model name still fits at any
-                // user-configured font scale on xhdpi/xxhdpi without
-                // re-clipping (T-topbar-model-row-clip regression check).
-                // Font sizes + lineHeights stay untouched per spec.
-                expandedHeight = 68.dp,
+                expandedHeight = 72.dp,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -4172,7 +4112,59 @@ fun ChatScreen(
                 // tells us whether the bottleneck is row-list build,
                 // initial list measure, or per-row composition.
                 val perfFirstLayoutFired = remember(sessionId) { java.util.concurrent.atomic.AtomicBoolean(false) }
-                Box {
+                Box(modifier = Modifier.fillMaxSize()) {
+                if (messages.isEmpty() && !isStreaming) {
+                    val heroSoul by com.openminis.app.agent.SoulStore
+                        .cachedMetadata.collectAsState()
+                    val heroName = heroSoul.name.ifBlank { stringResource(R.string.app_name) }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(horizontal = 32.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .size(88.dp)
+                                    .clip(MaterialShapes.Cookie12Sided.toShape())
+                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
+                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(MaterialShapes.Sunny.toShape())
+                                    .background(MaterialTheme.colorScheme.primary),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(26.dp),
+                                )
+                            }
+                        }
+                        Text(
+                            text = heroName,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = composerPlaceholderText(0, heroSoul.name),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
                 AlwaysStretchOverscrollBox { sharedEffect ->
                 LazyColumn(
                     state = listState,
@@ -5151,11 +5143,12 @@ fun ChatScreen(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 12.dp + fabEndInset, bottom = upBaseBottom + 46.dp)
-                            .shadow(4.dp, CircleShape)
+                            .shadow(6.dp, RoundedCornerShape(14.dp))
                             .size(36.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                            containerColor = ChatColors.inputBg,
-                            contentColor = ChatColors.primaryText,
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         ),
                     ) {
                         Icon(
@@ -5203,11 +5196,12 @@ fun ChatScreen(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(end = 12.dp + fabEndInset, bottom = fabBottomPadding)
-                            .shadow(4.dp, CircleShape)
+                            .shadow(6.dp, RoundedCornerShape(14.dp))
                             .size(36.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                            containerColor = ChatColors.inputBg,
-                            contentColor = ChatColors.primaryText,
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                         ),
                     ) {
                         Icon(
@@ -5367,11 +5361,9 @@ fun ChatScreen(
                                     },
                                 )
                                 .padding(horizontal = 12.dp)
-                                // T240: keep a thin visible border instead of the
-                                // diffuse 8dp halo that bled out past the panel edge.
-                                .shadow(elevation = 3.dp, shape = RoundedCornerShape(10.dp))
-                                .background(ChatColors.inputBg, RoundedCornerShape(10.dp))
-                                .border(0.5.dp, ChatColors.toolBorder, RoundedCornerShape(10.dp)),
+                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(22.dp))
+                                .clip(RoundedCornerShape(22.dp)),
                         ) {
                             androidx.compose.foundation.lazy.LazyColumn(
                                 state = slashListState,
@@ -5384,17 +5376,11 @@ fun ChatScreen(
                                     .verticalScrollbar(slashListState),
                             ) {
                             itemsIndexed(filteredSlashCommands, key = { _, c -> c.id }) { index, cmd ->
-                                // Section divider between builtins and
-                                // installed Skills (mirrors iOS divider
-                                // at the first skill row). Drawn as the
-                                // top of the skill row, not between every
-                                // row — keeps the menu visually grouped
-                                // without splitting every command.
                                 if (cmd.isSkill && index > 0 && !filteredSlashCommands[index - 1].isSkill) {
                                     HorizontalDivider(
-                                        thickness = 0.5.dp,
-                                        color = ChatColors.toolBorder,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                        thickness = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                     )
                                 }
                                 val isThinking = cmd.id == "thinking"
@@ -5560,9 +5546,9 @@ fun ChatScreen(
                                     },
                                 )
                                 .padding(horizontal = 12.dp)
-                                .shadow(elevation = 8.dp, shape = RoundedCornerShape(10.dp))
-                                .background(ChatColors.inputBg, RoundedCornerShape(10.dp))
-                                .border(0.5.dp, ChatColors.toolBorder, RoundedCornerShape(10.dp)),
+                                .shadow(elevation = 6.dp, shape = RoundedCornerShape(22.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(22.dp))
+                                .clip(RoundedCornerShape(22.dp)),
                         ) {
                             if (mentionEntries.isEmpty()) {
                                 Row(
@@ -5703,10 +5689,13 @@ fun ChatScreen(
                     }
                 }
 
-                // Input box: iOS-style floating card — no visible border, separated
-                // from the backdrop by a symmetric soft shadow painted by hand
-                // (Android's Modifier.shadow only casts downward).
-                val inputBgArgb = ChatColors.inputBg.toArgb()
+                // M3 Expressive Floating Command Deck: 28dp tonal container
+                val deckSurfaceColor = if (ChatColors.isDark) {
+                    MaterialTheme.colorScheme.surfaceContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                }
+                val inputBgArgb = deckSurfaceColor.toArgb()
                 val shadowPaint = remember(inputBgArgb) {
                     android.graphics.Paint().apply {
                         color = inputBgArgb
@@ -5817,12 +5806,12 @@ fun ChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .drawBehind {
-                            val radiusPx = 20.dp.toPx()
+                            val radiusPx = 28.dp.toPx()
                             val canvas = drawContext.canvas.nativeCanvas
                             // Pass 1: symmetric ambient halo — small blur, low alpha.
                             shadowPaint.setShadowLayer(
                                 6.dp.toPx(), 0f, 0f,
-                                android.graphics.Color.argb(22, 0, 0, 0),
+                                android.graphics.Color.argb(18, 0, 0, 0),
                             )
                             canvas.drawRoundRect(
                                 0f, 0f, size.width, size.height,
@@ -5831,7 +5820,7 @@ fun ChatScreen(
                             )
                             // Pass 2: soft downward shadow (spot light).
                             shadowPaint.setShadowLayer(
-                                10.dp.toPx(), 0f, 3.dp.toPx(),
+                                12.dp.toPx(), 0f, 4.dp.toPx(),
                                 android.graphics.Color.argb(24, 0, 0, 0),
                             )
                             canvas.drawRoundRect(
@@ -5840,26 +5829,12 @@ fun ChatScreen(
                                 shadowPaint,
                             )
                         }
-                        // [T-android-context-usage-hint] Ambient inner glow
-                        // along the card's inside edge once the context window
-                        // is under pressure. Applied to the composer CARD (not
-                        // the text field) so it reads as the whole input
-                        // glowing, and drawn as a paint pass only — no layout,
-                        // no touch interception, so the caret, the +/mic/send
-                        // buttons and every hit target are untouched. The
-                        // radius matches the card's own 20.dp corner above.
-                        //
-                        // Reads `contextUsage`, which refreshes on every usage
-                        // chunk, so the colour tracks pressure live rather
-                        // than only at the end of a turn. Reduce-motion turns
-                        // off the critical breathing, same as the placeholder
-                        // crossfade honours it.
                         .contextUsageGlow(
                             tier = contextUsage?.tier ?: ContextUsage.Tier.NORMAL,
-                            cornerRadius = 20.dp,
+                            cornerRadius = 28.dp,
                             animate = !animationsDisabled(context),
                         )
-                        .padding(top = if (attachments.isNotEmpty()) 8.dp else 4.dp),
+                        .padding(top = if (attachments.isNotEmpty()) 10.dp else 6.dp),
                 ) {
                     // T185: Move-to capsule lives INSIDE the composer card,
                     // pinned 8dp from the top-right corner, mirroring iOS
@@ -5902,33 +5877,21 @@ fun ChatScreen(
                         ) {
                             androidx.compose.material3.Surface(
                                 shape = androidx.compose.foundation.shape.CircleShape,
-                                // Mirrors iOS .ultraThinMaterial — solid-
-                                // looking pill against the input bg.
-                                // Without a hairline border the capsule
-                                // washed out into the input card on the
-                                // light theme, which is why it stopped
-                                // reading as a pill.
-                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                color = MaterialTheme.colorScheme.secondaryContainer,
                                 shadowElevation = 0.dp,
                                 tonalElevation = 0.dp,
-                                border = androidx.compose.foundation.BorderStroke(
-                                    0.5.dp,
-                                    ChatColors.thumbnailBorder,
-                                ),
                                 modifier = Modifier.clickable { showMoveSheet = true },
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(start = 8.dp, end = 12.dp, top = 2.dp, bottom = 2.dp),
+                                    modifier = Modifier.padding(start = 8.dp, end = 12.dp, top = 3.dp, bottom = 3.dp),
                                 ) {
-                                    // arrow.right.circle look-alike: an
-                                    // outlined ring around a → glyph.
                                     Box(
                                         modifier = Modifier
                                             .size(15.dp)
                                             .border(
                                                 1.dp,
-                                                ChatColors.secondaryText,
+                                                MaterialTheme.colorScheme.onSecondaryContainer,
                                                 CircleShape,
                                             ),
                                         contentAlignment = Alignment.Center,
@@ -5937,15 +5900,15 @@ fun ChatScreen(
                                             Icons.AutoMirrored.Filled.ArrowForward,
                                             contentDescription = null,
                                             modifier = Modifier.size(10.dp),
-                                            tint = ChatColors.secondaryText,
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
                                         )
                                     }
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         "Move to…",
                                         fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = ChatColors.secondaryText,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                                     )
                                 }
                             }
@@ -6857,8 +6820,8 @@ fun ChatScreen(
                         if (editingId != null) {
                             Spacer(modifier = Modifier.width(8.dp))
                             Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = ChatColors.inputBg,
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondaryContainer,
                                 modifier = Modifier.clickable {
                                     viewModel.cancelEdit()
                                     viewModel.setInputText("")
@@ -6866,9 +6829,11 @@ fun ChatScreen(
                             ) {
                                 Text(
                                     text = stringResource(R.string.chat_edit_exit_button),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = ChatColors.secondaryText,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                                 )
                             }
                         }
@@ -6895,10 +6860,9 @@ fun ChatScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
-                                    .background(ChatColors.inputIconBg, CircleShape)
-                                    .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
+                                    .size(40.dp)
                                     .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer)
                                     .clickable { showLangSheet = true },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -6906,7 +6870,7 @@ fun ChatScreen(
                                     text = sttLocale.language.uppercase().take(2),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = ChatColors.primaryText,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 )
                             }
                             Spacer(modifier = Modifier.width(6.dp))
@@ -7332,16 +7296,16 @@ fun ChatScreen(
                         if (showStop) {
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
-                                    .background(Color(0xFFFF3B30), CircleShape)
-                                    .clip(CircleShape)
+                                    .size(40.dp)
+                                    .clip(MaterialShapes.Cookie9Sided.toShape())
+                                    .background(MaterialTheme.colorScheme.error)
                                     .clickable { viewModel.cancelStream() },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     Icons.Default.Stop,
                                     contentDescription = "Stop",
-                                    tint = Color.White,
+                                    tint = MaterialTheme.colorScheme.onError,
                                     modifier = Modifier.size(20.dp),
                                 )
                             }
@@ -7900,44 +7864,42 @@ private fun ThinkingLevelBadge(
     onClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    // Secondary grey for icon + label (iOS secondaryText parity) — no accent.
-    val badgeColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val containerColor = if (level.isEnabled) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerHighest
+    }
+    val badgeColor = if (level.isEnabled) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            // Faint translucent-grey capsule (iOS Color.secondary.opacity(0.10)).
-            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-            // Own clickable → consumes the tap, opens the thinking sheet.
+            .clip(CircleShape)
+            .background(containerColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+            .padding(horizontal = 6.dp, vertical = 1.dp),
     ) {
         Icon(
             imageVector = Icons.Default.Lightbulb,
             contentDescription = null,
-            // Dimmed in the Off state (sheet Off-row convention) so "Off" reads
-            // as "thinking disabled" at a glance.
-            tint = if (level.isEnabled) badgeColor else badgeColor.copy(alpha = 0.4f),
+            tint = if (level.isEnabled) badgeColor else badgeColor.copy(alpha = 0.5f),
             modifier = Modifier.size(9.dp),
         )
         Text(
             text = level.localizedName(context),
             fontSize = 9.sp,
             lineHeight = 11.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
             color = badgeColor,
             maxLines = 1,
         )
     }
 }
 
-/**
- * [T-android-thinking-badge-navbar] Bottom-sheet thinking-level selector opened
- * from [ThinkingLevelBadge]. Mirrors iOS ThinkingLevelSheetView: an Off row
- * followed by every level the current model supports; the active level shows a
- * trailing check. Selecting any row calls [onSelect] (which also dismisses).
- */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun ThinkingLevelSheet(
@@ -7946,27 +7908,32 @@ private fun ThinkingLevelSheet(
     onSelect: (com.openminis.app.data.model.ThinkingLevel) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Off is always offered (turns thinking off); availableLevels already
-    // excludes Off, so prepend it. De-dup defensively in case a caller ever
-    // includes it.
     val rows = remember(availableLevels) {
         listOf(com.openminis.app.data.model.ThinkingLevel.OFF) +
             availableLevels.filter { it != com.openminis.app.data.model.ThinkingLevel.OFF }
     }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             Text(
                 text = stringResource(R.string.thinking_level_sheet_title),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = ChatColors.primaryText,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             )
-            HorizontalDivider(color = ChatColors.toolBorder, thickness = 0.5.dp)
             val context = LocalContext.current
             rows.forEach { level ->
-                // "Off selected" = the current level is disabled; otherwise an
-                // exact match.
                 val isSelected = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) {
                     !currentLevel.isEnabled
                 } else {
@@ -7976,30 +7943,48 @@ private fun ThinkingLevelSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainer
+                            },
+                        )
                         .clickable { onSelect(level) }
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lightbulb,
                         contentDescription = null,
-                        tint = ChatColors.thinking.copy(
-                            alpha = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) 0.4f else 1f,
-                        ),
-                        modifier = Modifier.size(18.dp),
+                        tint = if (isSelected) {
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        } else {
+                            ChatColors.thinking.copy(
+                                alpha = if (level == com.openminis.app.data.model.ThinkingLevel.OFF) 0.45f else 1f,
+                            )
+                        },
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = level.localizedName(context),
-                        fontSize = 15.sp,
-                        color = ChatColors.primaryText,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        ),
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                         modifier = Modifier.weight(1f),
                     )
                     if (isSelected) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = ChatColors.thinking,
-                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }

@@ -284,7 +284,12 @@ dependencies {
 
     val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
     implementation(composeBom)
-    implementation("androidx.compose.material3:material3")
+    // Material 3 Expressive (1.5.0-alpha11 ships MaterialExpressiveTheme, MotionScheme,
+    // MaterialShapes, HorizontalFloatingToolbar, FloatingActionButtonMenu, ButtonGroup,
+    // LoadingIndicator, LargeFlexibleTopAppBar, etc. while staying compatible with
+    // compileSdk 36 / AGP 8.7.3 / Kotlin 2.1.0).
+    implementation("androidx.compose.material3:material3:1.5.0-alpha11")
+    implementation("androidx.graphics:graphics-shapes:1.0.1")
     implementation("androidx.compose.material:material-icons-extended")
 
     // [T-android-tablet-split] Adaptive list-detail layout for tablets/large

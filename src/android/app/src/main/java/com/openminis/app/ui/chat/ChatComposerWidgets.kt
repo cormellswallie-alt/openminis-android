@@ -148,6 +148,8 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Icon
@@ -317,24 +319,12 @@ internal fun AttachmentChip(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    // iOS UserAttachmentList parity: 64dp chip + xmark.circle.fill remove
-    // badge at the top-right that sits HALF on the chip and HALF outside
-    // (a 20dp circle offset by -6dp / -6dp). The outer Box is sized 72dp
-    // so the badge isn't clipped; the chip itself stays exactly 64dp,
-    // padded into the Box at TopStart.
-    val chipShape = RoundedCornerShape(8.dp)
-    // Outer Box gives the badge room to "spill out" past the chip's
-    // top-right corner without being clipped: chip is 64dp at TopStart,
-    // badge is 20dp at TopEnd, so the outer needs 64 + half(badge) ≈ 72dp
-    // wide and ≈ 70dp tall.
-    Box(modifier = Modifier.size(width = 72.dp, height = 70.dp)) {
+    val chipShape = RoundedCornerShape(16.dp)
+    Box(modifier = Modifier.size(width = 74.dp, height = 72.dp)) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .size(64.dp)
-                // Tap the chip body (NOT the remove badge — that lives in
-                // the outer Box) to preview the attachment, mirroring iOS
-                // InputAttachmentTile.onTapGesture in AIChatView.swift:3699.
+                .size(66.dp)
                 .clip(chipShape)
                 .combinedClickable(
                     onClick = onClick,
@@ -352,42 +342,37 @@ internal fun AttachmentChip(
                     contentScale = ContentScale.Crop,
                 )
             } else {
-                // File chip (iOS: icon + filename inside a tinted square)
                 Column(
                     modifier = Modifier
                         .matchParentSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, chipShape)
-                        .border(1.dp, ChatColors.thumbnailBorder, chipShape),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest, chipShape),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.InsertDriveFile,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp),
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = attachment.fileName,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 4.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp),
                     )
                 }
             }
         }
-        // Remove badge (iOS: xmark.circle.fill at the chip's top-right
-        // corner, sitting half on / half off the thumbnail). Hairline
-        // border keeps the badge readable against image content.
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(20.dp)
-                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                .border(0.5.dp, ChatColors.thumbnailBorder, CircleShape)
+                .size(22.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
                 .clip(CircleShape)
                 .clickable(onClick = onRemove),
             contentAlignment = Alignment.Center,
@@ -395,14 +380,12 @@ internal fun AttachmentChip(
             Icon(
                 Icons.Default.Close,
                 contentDescription = "Remove",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(13.dp),
             )
         }
     }
 }
-
-// ─── Input Circle Button (iOS: 34×34 circle, secondary bg + border) ─────────
 
 @Composable
 internal fun InputCircleButton(
@@ -411,9 +394,8 @@ internal fun InputCircleButton(
 ) {
     Box(
         modifier = Modifier
-            .size(38.dp)
-            .background(ChatColors.inputIconBg, CircleShape)
-            .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
+            .size(40.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -422,13 +404,6 @@ internal fun InputCircleButton(
     }
 }
 
-/**
- * Mic button with a two-state appearance — mirrors iOS `MicButton`.
- *
- * Idle: outlined mic, neutral bg.
- * Recording: filled mic, red-tinted bg, optional 2-letter locale badge
- * overlayed on the top-right (e.g. "EN", "ZH").
- */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 internal fun MicButton(
@@ -436,20 +411,16 @@ internal fun MicButton(
     localeBadge: String?,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
-    // [T-android-voice-panel] While the inline voice panel is active the same
-    // slot switches back to text input — keyboard glyph (mirrors iOS "T").
     isVoiceActive: Boolean = false,
 ) {
-    val bg = if (isRecording) Color.Red.copy(alpha = 0.15f)
-             else ChatColors.inputIconBg
-    val tint = if (isRecording) Color.Red
+    val bg = if (isRecording) MaterialTheme.colorScheme.errorContainer
+             else MaterialTheme.colorScheme.surfaceContainerHighest
+    val tint = if (isRecording) MaterialTheme.colorScheme.error
                else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (isRecording) Color.Transparent else ChatColors.inputIconBorder
     Box(
         modifier = Modifier
-            .size(38.dp)
+            .size(40.dp)
             .background(bg, CircleShape)
-            .border(0.5.dp, borderColor, CircleShape)
             .clip(CircleShape)
             .combinedClickable(
                 onClick = onClick,
@@ -469,12 +440,12 @@ internal fun MicButton(
                 text = localeBadge,
                 fontSize = 8.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.onError,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 2.dp, end = 2.dp)
-                    .background(Color.White, CircleShape)
-                    .padding(horizontal = 3.dp, vertical = 1.dp),
+                    .background(MaterialTheme.colorScheme.error, CircleShape)
+                    .padding(horizontal = 4.dp, vertical = 1.dp),
             )
         }
     }
@@ -1013,7 +984,7 @@ private fun ToolPreviewThumbnail(
 
 // [T-android-tool-pager-longpress] ExperimentalFoundationApi is for
 // combinedClickable on the pager chevrons.
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun FloatingToolStatusBar(
     toolBlocks: List<AssistantBlock>,
@@ -1091,29 +1062,26 @@ internal fun FloatingToolStatusBar(
             .fillMaxWidth()
             .padding(top = if (previewEnabled) thumbnailOverhang else 0.dp),  // reserve space for overhang
     ) {
-        // Layer 1: Status bar (bottom layer, fills from bottom)
+        // Layer 1: M3 Expressive floating tonal status bar (keeps exact 38.dp height)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(barHeight)
                 .align(Alignment.BottomCenter)
-                .shadow(elevation = 8.dp, shape = RoundedCornerShape(10.dp), ambientColor = Color.Black.copy(alpha = 0.06f), spotColor = Color.Black.copy(alpha = 0.12f))
-                .background(ChatColors.inputBg, RoundedCornerShape(10.dp))
-                .border(0.5.dp, ChatColors.toolBorder, RoundedCornerShape(10.dp))
+                .shadow(
+                    elevation = 10.dp,
+                    shape = RoundedCornerShape(19.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.08f),
+                    spotColor = Color.Black.copy(alpha = 0.14f),
+                )
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(19.dp))
                 .padding(start = barStartPadding, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Status icon
             if (isRunning) {
-                // [T-android-decorative-anim-perf] Clock-driven arc, not
-                // Material's spinner. A layer boundary alone still left the
-                // screen at 87 fps: Material's private InfiniteTransition asks
-                // for every frame regardless of who wraps it. This records the
-                // arc once and rotates a layer at ~30 fps.
-                DecorativeSpinner(
+                LoadingIndicator(
                     color = toolAccent,
-                    modifier = Modifier.size(15.dp),
-                    strokeWidth = 1.5.dp,
+                    modifier = Modifier.size(18.dp),
                 )
             } else {
                 val (icon, tint) = when {
@@ -1125,20 +1093,14 @@ internal fun FloatingToolStatusBar(
                 Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(15.dp))
             }
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(7.dp))
 
-            // [T-step-timestamp v2 aa8b1128] Inline HH:mm:ss prefix
-            // removed — see ToolDetailSheet header for the new
-            // "HH:mm:ss · 3s" display, surfaced only inside the
-            // tapped-open detail sheet so the always-visible status bar
-            // stays clean.
-
-            // Tool title
             Text(
                 text = block.toolTitle.ifEmpty { block.toolName },
+                style = MaterialTheme.typography.titleSmall,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = ChatColors.primaryText,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 modifier = Modifier
                     .weight(1f)
@@ -1287,45 +1249,41 @@ internal fun ThinkingLevelPicker(
     Row(
         modifier = Modifier
             .background(
-                ChatColors.secondaryText.copy(alpha = 0.12f),
-                RoundedCornerShape(6.dp),
+                MaterialTheme.colorScheme.surfaceContainerHighest,
+                CircleShape,
             )
-            .clip(RoundedCornerShape(6.dp))
+            .clip(CircleShape)
+            .padding(2.dp)
             .horizontalScroll(scrollState),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         availableLevels.forEach { level ->
             val isExactMatch = level == current
             val isClampedHighlight = isClamped && level == maxAvailable
             val isHighlighted = isExactMatch || isClampedHighlight
             val bg = when {
-                // [T-android-thinking-picker-ui] Clamped tier → orange; normal
-                // selection → blue (ChatColors.thinking, the theme-adaptive
-                // system blue 007AFF/0A84FF), matching iOS's Color.blue. The
-                // old ChatColors.sendButton was black in light / white in dark,
-                // so the selected capsule read as unselected. (OFF no longer
-                // appears in availableLevels, so its former branch is gone.)
-                isClampedHighlight -> clampOrange.copy(alpha = 0.75f)
-                isHighlighted -> ChatColors.thinking
+                isClampedHighlight -> clampOrange.copy(alpha = 0.85f)
+                isHighlighted -> MaterialTheme.colorScheme.primary
                 else -> Color.Transparent
             }
-            // White text on both the blue and orange fills (readable in both
-            // themes); grey when unselected.
-            val fg = if (isHighlighted) Color.White else ChatColors.secondaryText
+            val fg = when {
+                isClampedHighlight -> Color.White
+                isHighlighted -> MaterialTheme.colorScheme.onPrimary
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .background(bg)
-                    // [T-android-thinking-level-arch] Tapping the already-
-                    // highlighted capsule toggles thinking OFF (covers both exact
-                    // and clamped highlight); otherwise selects the tapped level.
+                    .clip(CircleShape)
+                    .background(bg, CircleShape)
                     .clickable { onSelect(if (isHighlighted) ThinkingLevel.OFF else level) }
-                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
             ) {
                 Text(
                     text = level.localizedName(context),
                     fontSize = 11.sp,
-                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Medium,
                     color = fg,
                 )
                 if (isClampedHighlight) {

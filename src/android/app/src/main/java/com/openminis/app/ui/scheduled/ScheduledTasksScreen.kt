@@ -2,7 +2,6 @@ package com.openminis.app.ui.scheduled
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,15 +26,21 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,30 +50,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.openminis.app.ui.settings.SettingsSwitch
 import com.openminis.app.R
 import com.openminis.app.scheduled.ScheduledRepeatMode
 import com.openminis.app.scheduled.ScheduledTask
+import com.openminis.app.ui.components.MinisAlertDialog
+import com.openminis.app.ui.components.MinisButton
+import com.openminis.app.ui.components.MinisMenu
+import com.openminis.app.ui.settings.SettingsSwitch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * [T-android-scheduled-tasks-design / T-android-scheduled-tasks-run-records]
- * List + manage scheduled tasks. Entry point from SessionListScreen's
- * TopAppBar; tap a row to edit, FAB to create, switch to enable/disable.
- * Long-press opens a menu: Edit / Run records / Delete (with confirm).
- * The row no longer shows a result preview — execution history lives in
- * the Run records screen.
- */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScheduledTasksScreen(
     onBack: () -> Unit,
@@ -82,42 +82,78 @@ fun ScheduledTasksScreen(
     )
     val tasks by vm.tasks.collectAsState()
     var pendingDelete by remember { mutableStateOf<ScheduledTask?>(null) }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = {
                     Text(
                         stringResource(R.string.scheduled_tasks_title),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .size(40.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { onEditTask(null) }, shape = CircleShape) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.scheduled_task_new))
-            }
+            ExtendedFloatingActionButton(
+                onClick = { onEditTask(null) },
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                icon = {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = null,
+                    )
+                },
+                text = {
+                    Text(
+                        stringResource(R.string.scheduled_task_new),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+            )
         },
     ) { padding ->
         if (tasks.isEmpty()) {
-            EmptyState(padding)
+            EmptyState(padding = padding, onCreate = { onEditTask(null) })
             return@Scaffold
         }
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(vertical = 8.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(tasks, key = { it.id }) { task ->
                 ScheduledTaskRow(
@@ -134,29 +170,27 @@ fun ScheduledTasksScreen(
 
     val toDelete = pendingDelete
     if (toDelete != null) {
-        androidx.compose.material3.AlertDialog(
+        MinisAlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text(stringResource(R.string.scheduled_task_delete_title)) },
-            text = { Text(stringResource(R.string.scheduled_task_delete_body, toDelete.label)) },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    vm.delete(toDelete.id)
-                    pendingDelete = null
-                }) {
-                    Text(stringResource(R.string.scheduled_task_delete_confirm))
-                }
+            title = stringResource(R.string.scheduled_task_delete_title),
+            message = stringResource(R.string.scheduled_task_delete_body, toDelete.label),
+            confirmLabel = stringResource(R.string.scheduled_task_delete_confirm),
+            confirmDestructive = true,
+            onConfirm = {
+                vm.delete(toDelete.id)
+                pendingDelete = null
             },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { pendingDelete = null }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
+            dismissLabel = stringResource(R.string.cancel),
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun EmptyState(padding: PaddingValues) {
+private fun EmptyState(
+    padding: PaddingValues,
+    onCreate: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -165,23 +199,46 @@ private fun EmptyState(padding: PaddingValues) {
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Outlined.Schedule,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
+            Box(contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(104.dp)
+                        .clip(MaterialShapes.Cookie12Sided.toShape())
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)),
+                )
+                Box(
+                    modifier = Modifier
+                        .size(66.dp)
+                        .clip(MaterialShapes.Sunny.toShape())
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
+            }
+            Spacer(Modifier.height(22.dp))
             Text(
                 stringResource(R.string.scheduled_tasks_empty),
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
             )
+            Spacer(Modifier.height(20.dp))
+            MinisButton(onClick = onCreate) {
+                Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.scheduled_task_new))
+            }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ScheduledTaskRow(
     task: ScheduledTask,
@@ -193,75 +250,112 @@ private fun ScheduledTaskRow(
 ) {
     var menuExpanded by remember(task.id) { mutableStateOf(false) }
     Box {
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true })
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .clip(RoundedCornerShape(24.dp))
+                .combinedClickable(onClick = onClick, onLongClick = { menuExpanded = true }),
+            shape = RoundedCornerShape(24.dp),
+            color = if (task.enabled) {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLowest
+            },
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (task.enabled)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-                contentAlignment = Alignment.Center,
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    Icons.Outlined.Schedule,
-                    contentDescription = null,
-                    tint = if (task.enabled)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
+                val badgeShape = if (task.enabled) {
+                    MaterialShapes.Cookie9Sided.toShape()
+                } else {
+                    RoundedCornerShape(14.dp)
+                }
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(badgeShape)
+                        .background(
+                            if (task.enabled) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        tint = if (task.enabled) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Text(
+                        text = task.label.ifBlank { task.prompt.take(40) },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (task.enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = if (task.enabled) {
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                    ) {
+                        Text(
+                            text = formatScheduleSummary(task),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (task.enabled) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                SettingsSwitch(checked = task.enabled, onCheckedChange = onToggle)
             }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.label.ifBlank { task.prompt.take(40) },
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = formatScheduleSummary(task),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            SettingsSwitch(checked = task.enabled, onCheckedChange = onToggle)
         }
 
-        // [T-android-scheduled-tasks-run-records] Long-press menu: Edit / Run
-        // records / Delete (delete is confirmed by the caller's dialog).
-        com.openminis.app.ui.components.MinisMenu(
+        MinisMenu(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
         ) {
-            androidx.compose.material3.DropdownMenuItem(
+            DropdownMenuItem(
                 text = { Text(stringResource(R.string.scheduled_task_menu_edit)) },
                 leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                 onClick = { menuExpanded = false; onEdit() },
             )
-            androidx.compose.material3.DropdownMenuItem(
+            DropdownMenuItem(
                 text = { Text(stringResource(R.string.scheduled_task_menu_runs)) },
                 leadingIcon = { Icon(Icons.Outlined.History, contentDescription = null) },
                 onClick = { menuExpanded = false; onViewRuns() },
             )
-            androidx.compose.material3.DropdownMenuItem(
+            DropdownMenuItem(
                 text = {
                     Text(
                         stringResource(R.string.scheduled_task_menu_delete),
@@ -281,8 +375,6 @@ internal fun formatScheduleSummary(task: ScheduledTask): String {
     val nextSuffix = task.nextTriggerMs()?.let {
         " · next ${SimpleDateFormat("MMM d HH:mm", Locale.getDefault()).format(Date(it))}"
     } ?: ""
-    // [T-android-scheduled-triggers] Tasks the assistant created with
-    // minis-scheduled's relative triggers, described in the CLI's own terms.
     when (task.triggerKind) {
         com.openminis.app.scheduled.ScheduledTriggerKind.AFTER ->
             return "Once after ${com.openminis.app.scheduled.ScheduledTaskDetailModel.formatDuration(task.delaySec ?: 0L)}$nextSuffix"

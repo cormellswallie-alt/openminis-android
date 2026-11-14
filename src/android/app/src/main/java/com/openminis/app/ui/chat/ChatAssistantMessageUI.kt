@@ -145,8 +145,12 @@ import com.openminis.app.ui.components.MinisMenuDivider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.toShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -277,47 +281,38 @@ import com.openminis.app.ui.components.rememberDecorativeTick
 import com.openminis.app.ui.components.decorativePhase
 import androidx.compose.ui.draw.drawWithCache
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun AssistantHeader() {
-    // [T-soul-md] Identity header = icon + SOUL.md-driven `name`.
-    //
-    // [T-android-soul-custom-icon] The icon is now the user-settable
-    // `SoulMetadata.icon` (emoji or transparent PNG), falling back to the
-    // canonical sparkle gradient when unset — so a user who never touches it
-    // sees exactly the previous rendering.
-    //
-    // Deliberately the SAME composable the settings card uses. On iOS these
-    // two surfaces were written separately and the chat one silently failed
-    // to pick up image icons; sharing the renderer makes that class of
-    // divergence impossible rather than merely unlikely.
     val soulMeta by com.openminis.app.agent.SoulStore.cachedMetadata.collectAsState()
     val displayName = soulMeta.name.ifBlank { com.openminis.app.agent.SoulMetadata.DEFAULT.name }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            // [T-android-user-assistant-spacing-16] top=10 so the
-            // User→Assistant boundary reads ~16dp: user-bubble bottom(4) +
-            // LazyColumn spacedBy(2) + this top(10) = 16. The header→body gap
-            // inside the turn is unaffected (that's this row's bottom=2).
-            .padding(top = 10.dp, bottom = 2.dp),
+            .padding(top = 12.dp, bottom = 4.dp),
     ) {
         val sparkleGradient = Brush.linearGradient(
             colors = listOf(SparkleColor1, SparkleColor2),
         )
-        // 18.dp, matching the previous Icon exactly: the row height feeds a
-        // measured-height estimate in the message list, so the icon stays
-        // square and same-sized whichever branch renders.
-        com.openminis.app.ui.settings.SoulIconGlyph(
-            icon = soulMeta.icon,
-            sizeDp = 18.dp,
-            emojiSp = 15.sp,
-            sparkleTint = sparkleGradient,
-        )
-        Spacer(modifier = Modifier.width(6.dp))
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(MaterialShapes.Sunny.toShape())
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            com.openminis.app.ui.settings.SoulIconGlyph(
+                icon = soulMeta.icon,
+                sizeDp = 16.dp,
+                emojiSp = 13.sp,
+                sparkleTint = sparkleGradient,
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = displayName,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -589,89 +584,81 @@ internal fun BoundsTrackedBlock(
 @Composable
 internal fun InlineErrorBanner(error: String, onRetry: (() -> Unit)? = null) {
     val clipboard = LocalClipboardManager.current
+    val errContainer = MaterialTheme.colorScheme.errorContainer
+    val onErrContainer = MaterialTheme.colorScheme.onErrorContainer
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFF3B30).copy(alpha = 0.12f))
+            .padding(top = 6.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(errContainer)
             .combinedClickable(
                 onClick = {},
                 onLongClick = {
                     clipboard.setText(androidx.compose.ui.text.AnnotatedString(error))
                 },
             )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = null,
-            tint = Color(0xFFFF3B30),
-            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(18.dp),
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = error,
-            color = Color(0xFFFF3B30),
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
+            color = onErrContainer,
+            style = MaterialTheme.typography.bodySmall,
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         if (onRetry != null) {
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color(0xFFFF3B30).copy(alpha = 0.15f))
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
                     .clickable(onClick = onRetry)
-                    .padding(horizontal = 10.dp, vertical = 3.dp),
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = null,
-                    tint = Color(0xFFFF3B30),
-                    modifier = Modifier.size(10.dp),
+                    tint = MaterialTheme.colorScheme.onError,
+                    modifier = Modifier.size(12.dp),
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.chat_longpress_retry), color = Color(0xFFFF3B30), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.chat_longpress_retry),
+                    color = MaterialTheme.colorScheme.onError,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
 }
 
-/**
- * T14: per-card stop affordance shown on running/streaming tool blocks.
- * Mirrors iOS `ToolCapsuleView`'s small red square that appears trailing
- * the tool title when `block.toolStatus == .running`. Tapping it routes to
- * the same global `cancelStream()` callback iOS uses for `onStop?()` —
- * iOS also has no per-tool cancellation API; the per-card button is purely
- * an affordance-discoverability win. Resume banner (T13) makes the global
- * cancel UX recoverable.
- *
- * Visual: 14×14 red rounded square (Color 0xFFFF3B30 = iOS systemRed).
- */
 @Composable
 private fun ToolStopButton(
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val label = stringResource(R.string.stop_tool)
-    // Outer Box keeps the *layout* footprint at 18×18 (unchanged capsule width).
-    // The inner clickable Box is 24×24 and overflows the outer bounds equally on
-    // all sides (requiredSize ignores the parent's 18dp constraint), enlarging the
-    // touch target to 24 while the visual 10×10 red square stays identical.
     Box(
-        modifier = modifier.size(18.dp),
+        modifier = modifier.size(20.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .requiredSize(24.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .requiredSize(26.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.errorContainer)
                 .clickable(
                     onClickLabel = label,
                     onClick = onStop,
@@ -680,9 +667,9 @@ private fun ToolStopButton(
         ) {
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFFFF3B30)),
+                    .size(9.dp)
+                    .clip(RoundedCornerShape(2.5.dp))
+                    .background(MaterialTheme.colorScheme.error),
             )
         }
     }
@@ -835,120 +822,103 @@ internal fun ToolCallPill(
     // wrapper below so it opens beneath the tapped bubble.
     var showToolMenu by remember { mutableStateOf(false) }
 
-    // Pill stretches up to the full row width so long titles can ellipsize
-    // without pushing the duration out of view. Title takes the remaining
-    // space via weight(1f), duration stays fixed-width (softWrap=false).
+    val pillShape = RoundedCornerShape(16.dp)
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
       Box(modifier = Modifier.weight(1f, fill = false)) {
         Row(
             modifier = Modifier
                 .background(
                     ChatColors.toolCapsuleBg,
-                    CircleShape,
+                    pillShape,
                 )
-                .border(0.5.dp, ChatColors.toolBorder, CircleShape)
-                .clip(CircleShape)
+                .clip(pillShape)
                 .combinedClickable(
                     onClick = { onOpenDetail(block.id) },
                     onLongClick = if (onRerunFromHere != null || onCopyDetails != null) {
                         { showToolMenu = true }
                     } else null,
                 )
-                .padding(horizontal = 12.dp)
-                .height(36.dp),
+                .padding(start = 7.dp, end = 12.dp)
+                .height(38.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Status icon — always the typed tool icon. Color shifts to
-            // reflect terminal status (success / failed / cancelled); while
-            // running it stays in the tool's accent color so the user can
-            // still recognize the tool at a glance.
-            Icon(
-                displayIcon,
-                contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(14.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(25.dp)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(iconTint.copy(alpha = if (ChatColors.isDark) 0.22f else 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    displayIcon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // [T-step-timestamp v2 aa8b1128] Inline HH:mm:ss prefix removed
-            // — user found it visually noisy on every tool pill. Start
-            // time + elapsed duration now live in the tool detail bottom
-            // sheet header instead (ToolDetailSheet, this file ~line
-            // 5209). formatStepTimestamp() is still defined further down
-            // because the detail sheet calls it.
-
-            // Tool title + streaming dots after title (iOS: Text + bouncing "...").
-            // weight(1f) lets the title absorb leftover width, ellipsis trims overflow.
             Row(
                 modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    // [T-android-subagent-control-capsule] Prefer the
-                    // operation description for a control call. `tool_title`
-                    // names the RUN it acted on, so using it would label a
-                    // status check, a steer and a resume on the same sub agent
-                    // identically.
                     text = controlSummary ?: block.toolTitle.ifEmpty { block.toolName },
+                    style = MaterialTheme.typography.titleSmall,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (isRunning) {
-                    // iOS streaming: "..." bouncing dots after title text
                     StreamingDotsText()
                 }
             }
 
-            // Duration badge (iOS: monospaced gray text after title) — fixed width,
-            // never compressed by the title. The HH:mm:ss start time is
-            // surfaced inside the tool detail bottom sheet's bottom bar
-            // instead of here — the inline pill list stays clean.
             if (durationText != null) {
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = durationText,
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    softWrap = false,
-                    maxLines = 1,
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = durationText,
+                        fontSize = 10.5.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        softWrap = false,
+                        maxLines = 1,
+                    )
+                }
             }
-            // T168: restore per-tool stop button (reverts T117). Renders only
-            // for running/streaming/pending blocks so completed pills stay
-            // clean. Routes to the same global cancelStream() — there is no
-            // per-tool cancellation API on either platform.
             if (isRunning && onStop != null) {
                 Spacer(modifier = Modifier.width(8.dp))
                 ToolStopButton(onStop = onStop)
             }
         }
-        // [T-android-decorative-anim-perf] Shimmer overlay: its own layer, so
-        // the per-tick translation invalidates nothing but this band. The outer
-        // clip pins the sweep to the pill's capsule; the gradient is built once
-        // per size in drawWithCache — the frame path writes one float.
         if (shimmerTick != null) {
+            val shimmerColor = MaterialTheme.colorScheme.primary
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clip(CircleShape)
+                    .clip(pillShape)
                     .graphicsLayer {
                         val phase = decorativePhase(shimmerTick.value, SHIMMER_PERIOD_MS)
-                        // Same -1f..2f sweep, in pill widths, the old tween produced.
                         translationX = (-1f + phase * 3f) * size.width
                     }
                     .drawWithCache {
                         val band = size.width * 0.6f
                         val brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0f),
-                                Color.White.copy(alpha = 0.18f),
-                                Color.White.copy(alpha = 0f),
+                                shimmerColor.copy(alpha = 0f),
+                                shimmerColor.copy(alpha = 0.14f),
+                                shimmerColor.copy(alpha = 0f),
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(band, 0f),
@@ -1031,6 +1001,7 @@ internal fun shouldAutoCollapseThinking(isStreaming: Boolean, userIntent: Boolea
     return userIntent != false
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: Boolean = true) {
     // Per-block expand state, keyed by block.id so the user's manual toggle on
@@ -1072,21 +1043,12 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
         // One-shot auto-collapse when streaming for this block ends.
         if (shouldAutoCollapseThinking(isStreaming, userIntent)) expanded = false
     }
-    val thinkingBlue = Color(0xFF007AFF)
+    val thinkingAccent = MaterialTheme.colorScheme.primary
     val charCount = block.content.length
     val charLabel = when {
         charCount >= 1000 -> "${charCount / 1000}K"
         else -> "$charCount"
     }
-    // [T-thinking-render-perf-android] Compose `Text` measures/lays out the
-    // ENTIRE string even when only ~300dp is visible, so a 200k-char thinking
-    // block froze the UI (and a per-token recomposition re-measured all 200k
-    // each tick). Two tiers guard this:
-    //  • > HARD_CAP: the inline scroller can't render it at all — show a
-    //    "View full content" entry that opens a native TextView dialog
-    //    (Android TextView handles large text far better than Compose Text).
-    //  • otherwise: render only the last WINDOW chars (tail) — capping layout
-    //    cost to O(WINDOW) regardless of total length.
     val thinkingWindowSize = 8000
     val thinkingHardCap = 100_000
     val overHardCap = charCount > thinkingHardCap
@@ -1096,85 +1058,93 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .background(thinkingBlue.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
-            .border(0.5.dp, thinkingBlue.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .background(
+                MaterialTheme.colorScheme.secondaryContainer.copy(
+                    alpha = if (ChatColors.isDark) 0.40f else 0.55f,
+                ),
+                RoundedCornerShape(20.dp),
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        // Header row — only the header reacts to taps. Mirrors iOS, where
-        // .onTapGesture is on the header HStack, not the whole VStack. With
-        // clickable on the outer Column, a release after dragging in the
-        // inner scroller registered as a tap and toggled `expanded`.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // [T-android-thinking-collapse-latch] Record the direction,
-                    // not merely that a tap happened. `overHardCap` opens the
-                    // native viewer instead of toggling, so it expresses no
-                    // expand/collapse intent and must not touch this.
                     if (!overHardCap) userIntent = !expanded
-                    // [T-thinking-render-perf-android] Over the hard cap the
-                    // inline scroller is bypassed entirely; tapping the header
-                    // opens the native full-content viewer instead of toggling
-                    // the (never-shown) inline expansion.
                     if (overHardCap) showFullContent = true
                     else expanded = !expanded
                 },
         ) {
-            if (isStreaming && block.toolStatus != ToolBlockStatus.SUCCESS) {
-                // iOS: ProgressView().controlSize(.mini) while streaming
-                // [T-android-decorative-anim-perf] See DecorativeAnimation.kt.
-                DecorativeSpinner(
-                    color = thinkingBlue,
-                    modifier = Modifier.size(13.dp),
-                    strokeWidth = 1.5.dp,
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Psychology,
-                    contentDescription = null,
-                    tint = thinkingBlue,
-                    modifier = Modifier.size(14.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(MaterialShapes.SoftBurst.toShape())
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (isStreaming && block.toolStatus != ToolBlockStatus.SUCCESS) {
+                    LoadingIndicator(
+                        color = thinkingAccent,
+                        modifier = Modifier.size(18.dp),
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Psychology,
+                        contentDescription = null,
+                        tint = thinkingAccent,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Deep Thinking",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = thinkingBlue,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
             Spacer(modifier = Modifier.weight(1f))
             if (charCount > 0) {
-                Text(
-                    text = charLabel,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = FontFamily.Monospace,
-                    color = thinkingBlue.copy(alpha = 0.6f),
-                )
-                Spacer(modifier = Modifier.width(4.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.75f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = charLabel,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
             }
             if (overHardCap) {
-                // [T-thinking-render-perf-android] No expand/collapse chevron —
-                // the content is too large for the inline Compose scroller.
-                // Offer the native full-content viewer instead.
                 Text(
                     text = stringResource(R.string.thinking_view_full),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = thinkingBlue,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = thinkingAccent,
                 )
             } else {
-                Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = thinkingBlue.copy(alpha = 0.5f),
-                    modifier = Modifier.size(14.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.65f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(15.dp),
+                    )
+                }
             }
         }
 
@@ -1264,7 +1234,7 @@ internal fun ThinkingBlock(block: AssistantBlock, isStreaming: Boolean, isLast: 
                 Text(
                     text = displayContent,
                     fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 19.sp,
                 )
             }
@@ -1305,9 +1275,9 @@ private fun ThinkingFullContentDialog(content: String, onDismiss: () -> Unit) {
                 ) {
                     Text(
                         text = "Deep Thinking",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF007AFF),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     MinisTextButton(onClick = onDismiss) {

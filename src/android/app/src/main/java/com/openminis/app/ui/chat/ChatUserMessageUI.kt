@@ -379,9 +379,14 @@ internal fun UserMessageBubble(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        val textColor = if (isQueued) secondaryTextColor else MaterialTheme.colorScheme.onSurface
+                        val textColor = if (isQueued) secondaryTextColor else ChatColors.onUserBubble
                         val bubbleBg = if (isQueued) Color.Transparent else userBubbleColor
-                        val shape = RoundedCornerShape(18.dp)
+                        val shape = RoundedCornerShape(
+                            topStart = 24.dp,
+                            topEnd = 24.dp,
+                            bottomStart = 24.dp,
+                            bottomEnd = 6.dp,
+                        )
                         val dashedStroke = if (isQueued) {
                             Modifier.drawBehind {
                                 val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
@@ -390,9 +395,9 @@ internal fun UserMessageBubble(
                                         floatArrayOf(6.dp.toPx(), 4.dp.toPx()), 0f
                                     ),
                                 )
-                                val r = 18.dp.toPx()
+                                val r = 20.dp.toPx()
                                 drawRoundRect(
-                                    color = secondaryTextColor.copy(alpha = 0.5f),
+                                    color = secondaryTextColor.copy(alpha = 0.55f),
                                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
                                     style = stroke,
                                 )
@@ -431,12 +436,15 @@ internal fun UserMessageBubble(
                                 Text(
                                     text = message.content,
                                     color = textColor,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.5.sp),
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = 16.sp,
+                                        lineHeight = 23.sp,
+                                    ),
                                     modifier = bubbleModifier
                                         .background(bubbleBg, shape)
                                         .clip(shape)
                                         .then(dashedStroke)
-                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                 )
                             }
                         }
@@ -594,12 +602,12 @@ internal fun UserAttachmentList(
     val imageCount = imageUris.size
     val fileNames = allFileNames.drop(imageCount)
 
-    val tileSize = 64.dp
+    val tileSize = 72.dp
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         imageUris.forEachIndexed { idx, uri ->
             AsyncImage(
@@ -608,9 +616,9 @@ internal fun UserAttachmentList(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(tileSize)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(ChatColors.secondaryBg)
-                    .border(0.5.dp, ChatColors.thumbnailBorder, RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .border(1.dp, ChatColors.thumbnailBorder, RoundedCornerShape(18.dp))
                     .clickable { previewImageIndex = idx },
             )
         }
@@ -661,25 +669,32 @@ private fun FileAttachmentTile(
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .size(tileSize)
-            .clip(RoundedCornerShape(8.dp))
-            .background(ChatColors.secondaryBg)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
+            .padding(horizontal = 6.dp, vertical = 7.dp),
     ) {
-        Icon(
-            imageVector = fileIconFor(fileName),
-            contentDescription = null,
-            tint = ChatColors.secondaryText,
+        Box(
             modifier = Modifier
-                .size(20.dp)
-                .weight(1f, fill = false),
-        )
-        Spacer(modifier = Modifier.height(2.dp))
+                .size(28.dp)
+                .clip(RoundedCornerShape(9.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = fileIconFor(fileName),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = fileName,
-            fontSize = 9.sp,
-            lineHeight = 11.sp,
-            color = ChatColors.primaryText,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
