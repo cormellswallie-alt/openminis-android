@@ -4114,56 +4114,11 @@ fun ChatScreen(
                 val perfFirstLayoutFired = remember(sessionId) { java.util.concurrent.atomic.AtomicBoolean(false) }
                 Box(modifier = Modifier.fillMaxSize()) {
                 if (messages.isEmpty() && !isStreaming) {
-                    val heroSoul by com.openminis.app.agent.SoulStore
-                        .cachedMetadata.collectAsState()
-                    val heroName = heroSoul.name.ifBlank { stringResource(R.string.app_name) }
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    EmptyChatExpressiveHero(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(horizontal = 32.dp),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Box(
-                                modifier = Modifier
-                                    .size(88.dp)
-                                    .clip(MaterialShapes.Cookie12Sided.toShape())
-                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
-                            )
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(MaterialShapes.Sunny.toShape())
-                                    .background(MaterialTheme.colorScheme.primary),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(26.dp),
-                                )
-                            }
-                        }
-                        Text(
-                            text = heroName,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = composerPlaceholderText(0, heroSoul.name),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    )
                 }
                 AlwaysStretchOverscrollBox { sharedEffect ->
                 LazyColumn(
@@ -7990,6 +7945,61 @@ private fun ThinkingLevelSheet(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun EmptyChatExpressiveHero(
+    modifier: Modifier = Modifier,
+) {
+    val heroSoul by com.openminis.app.agent.SoulStore
+        .cachedMetadata.collectAsState()
+    val heroName = heroSoul.name.ifBlank { stringResource(R.string.app_name) }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(MaterialShapes.Cookie12Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)),
+            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(MaterialShapes.Sunny.toShape())
+                    .background(MaterialTheme.colorScheme.primary),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
+        }
+        Text(
+            text = heroName,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = composerPlaceholderText(0, heroSoul.name),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
