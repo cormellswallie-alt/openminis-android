@@ -173,14 +173,14 @@ fun ScheduledTasksScreen(
         MinisAlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = stringResource(R.string.scheduled_task_delete_title),
-            message = stringResource(R.string.scheduled_task_delete_body, toDelete.label),
-            confirmLabel = stringResource(R.string.scheduled_task_delete_confirm),
-            confirmDestructive = true,
+            text = stringResource(R.string.scheduled_task_delete_body, toDelete.label),
+            confirmText = stringResource(R.string.scheduled_task_delete_confirm),
+            isDestructive = true,
             onConfirm = {
                 vm.delete(toDelete.id)
                 pendingDelete = null
             },
-            dismissLabel = stringResource(R.string.cancel),
+            dismissText = stringResource(R.string.cancel),
         )
     }
 }

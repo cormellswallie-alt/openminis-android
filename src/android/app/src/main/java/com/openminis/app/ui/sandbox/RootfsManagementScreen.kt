@@ -255,14 +255,14 @@ fun RootfsManagementScreen(
         MinisAlertDialog(
             onDismissRequest = { showResetDialog = false },
             title = stringResource(R.string.rootfs_reset_confirm_title),
-            message = stringResource(R.string.rootfs_reset_confirm_message),
-            confirmLabel = "Reset",
-            confirmDestructive = true,
+            text = stringResource(R.string.rootfs_reset_confirm_message),
+            confirmText = "Reset",
+            isDestructive = true,
             onConfirm = {
                 showResetDialog = false
                 viewModel.resetRootfs(context, keepUserData = false)
             },
-            dismissLabel = stringResource(R.string.common_cancel),
+            dismissText = stringResource(R.string.common_cancel),
         )
     }
 
@@ -270,14 +270,14 @@ fun RootfsManagementScreen(
         MinisAlertDialog(
             onDismissRequest = { showResetBackupDialog = false },
             title = stringResource(R.string.rootfs_reset_backup_confirm_title),
-            message = stringResource(R.string.rootfs_reset_backup_confirm_message),
-            confirmLabel = stringResource(R.string.rootfs_reset_backup_confirm_button),
-            confirmDestructive = true,
+            text = stringResource(R.string.rootfs_reset_backup_confirm_message),
+            confirmText = stringResource(R.string.rootfs_reset_backup_confirm_button),
+            isDestructive = true,
             onConfirm = {
                 showResetBackupDialog = false
                 viewModel.resetRootfs(context, keepUserData = true)
             },
-            dismissLabel = stringResource(R.string.common_cancel),
+            dismissText = stringResource(R.string.common_cancel),
         )
     }
 }

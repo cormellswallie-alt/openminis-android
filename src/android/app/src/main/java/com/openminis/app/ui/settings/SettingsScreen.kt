@@ -351,8 +351,8 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showFeedbackSheet = false },
             shape = RoundedCornerShape(
-                topStart = ExpressiveTokens.SheetTopRadius,
-                topEnd = ExpressiveTokens.SheetTopRadius,
+                topStart = 28.dp,
+                topEnd = 28.dp,
             ),
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {

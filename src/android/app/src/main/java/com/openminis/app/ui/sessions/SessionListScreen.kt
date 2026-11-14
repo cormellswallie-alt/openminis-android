@@ -1779,7 +1779,7 @@ private fun ExpressiveWorkspaceDock(
                                     fabMenuExpanded = false
                                     onNewChat()
                                 },
-                                text = { Text(stringResource(R.string.sessions_new_chat)) },
+                                text = { Text(stringResource(R.string.new_chat)) },
                                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                             )
                             topGroups.forEach { group ->
@@ -1811,7 +1811,7 @@ private fun ExpressiveWorkspaceDock(
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     Icons.Default.Add,
-                                    contentDescription = stringResource(R.string.sessions_new_chat),
+                                    contentDescription = stringResource(R.string.new_chat),
                                     modifier = Modifier.size(26.dp),
                                 )
                             }
@@ -1830,7 +1830,7 @@ private fun ExpressiveWorkspaceDock(
                 ) {
                     Icon(
                         Icons.Default.Add,
-                        contentDescription = stringResource(R.string.sessions_new_chat),
+                        contentDescription = stringResource(R.string.new_chat),
                         modifier = Modifier.size(26.dp),
                     )
                 }

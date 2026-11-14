@@ -396,7 +396,7 @@ private fun ExpressiveWorkspaceRail(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = stringResource(R.string.sessions_new_chat),
+                    contentDescription = stringResource(R.string.new_chat),
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -603,7 +603,7 @@ private fun NoConversationSelected(
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                stringResource(R.string.sessions_new_chat),
+                                stringResource(R.string.new_chat),
                                 fontWeight = FontWeight.Bold,
                             )
                         }
@@ -615,7 +615,7 @@ private fun NoConversationSelected(
                                     modifier = Modifier.size(18.dp),
                                 )
                                 Spacer(Modifier.width(6.dp))
-                                Text(stringResource(R.string.sessions_terminal))
+                                Text(stringResource(R.string.sessionlist_shell_terminal))
                             }
                         }
                         if (onScheduledClick != null) {
