@@ -59,6 +59,7 @@ import com.openminis.app.sandbox.ShellExitCode
 import com.openminis.app.terminal.MinisOpenUrlBroker
 import com.openminis.app.terminal.MinisUrlMarker
 import com.openminis.app.tools.AgentTools
+import com.openminis.app.tools.AskUserTool
 import com.openminis.app.tools.FileEditTool
 import com.openminis.app.tools.FileReadTool
 import com.openminis.app.tools.FileWriteTool
@@ -69,6 +70,9 @@ import com.openminis.app.offload.OffloadPermissionManager
 import com.openminis.app.service.SessionActivityTracker
 import com.openminis.app.service.SessionConcurrencyManager
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.awaitAll
@@ -976,6 +980,38 @@ class ChatViewModel(
      */
     internal val _selectedToolDetailId = MutableStateFlow<String?>(null)
     val selectedToolDetailId: StateFlow<String?> = _selectedToolDetailId.asStateFlow()
+
+    /**
+     * Active mid-turn interactive questionnaire (`ask_user`), or null when none
+     * is awaiting user input. Guarded by [askUserMutex] so multiple concurrent
+     * `ask_user` calls in one turn queue cleanly one at a time.
+     */
+    private val askUserMutex = Mutex()
+    private val _pendingQuestionnaire = MutableStateFlow<PendingQuestionnaire?>(null)
+    val pendingQuestionnaire: StateFlow<PendingQuestionnaire?> = _pendingQuestionnaire.asStateFlow()
+
+    fun submitQuestionnaire(toolId: String, result: AskUserTool.QuestionnaireResult) {
+        val current = _pendingQuestionnaire.value ?: return
+        if (current.toolId != toolId) return
+        _pendingQuestionnaire.value = null
+        if (!current.deferred.isCompleted) {
+            current.deferred.complete(result)
+        }
+    }
+
+    fun skipQuestionnaire(toolId: String) {
+        val current = _pendingQuestionnaire.value ?: return
+        if (current.toolId != toolId) return
+        _pendingQuestionnaire.value = null
+        if (!current.deferred.isCompleted) {
+            current.deferred.complete(
+                AskUserTool.QuestionnaireResult(
+                    status = "skipped",
+                    note = "User chose to skip the questionnaire; proceed using sensible defaults.",
+                ),
+            )
+        }
+    }
 
     // [T-android-split-chat] openToolDetail / closeToolDetail moved to ChatViewModelUiStateExt.kt.
 
@@ -1957,6 +1993,7 @@ class ChatViewModel(
             isHelper = isHelper,
             delegateEnabled = com.openminis.app.tools.AgentToolSwitch.AGENTS.isEnabled(context),
             browserEnabled = com.openminis.app.tools.AgentToolSwitch.BROWSER.isEnabled(context),
+            askUserEnabled = com.openminis.app.tools.AgentToolSwitch.ASK_USER.isEnabled(context),
             // [T-sub-agents-v1] Rebuilt on every schema build (this property is
             // not cached), so renaming a sub agent takes effect on the next
             // request and the enum can never advertise a name the resolver
@@ -13134,6 +13171,12 @@ class ChatViewModel(
                 } else {
                     toolDisabledResult("browser_use")
                 }
+            AskUserTool.NAME ->
+                if (!isHelper && com.openminis.app.tools.AgentToolSwitch.ASK_USER.isEnabled(context)) {
+                    executeAskUserTool(argsJson, toolId, toolBlocks, assistantId, currentText)
+                } else {
+                    toolDisabledResult(AskUserTool.NAME)
+                }
             "memory_write" -> executeMemoryWriteTool(argsJson)
             // [T-sub-agents-v1] One tool, five actions. The legacy names are
             // accepted so a replayed call from a transcript written before the
@@ -13179,6 +13222,47 @@ class ChatViewModel(
                 }
             "memory_get" -> executeMemoryGetTool(argsJson)
             else -> ToolExecutionResult("Unknown tool: $name", false)
+        }
+    }
+
+    private suspend fun executeAskUserTool(
+        argsJson: String,
+        toolId: String,
+        toolBlocks: MutableList<AssistantBlock>,
+        assistantId: String,
+        currentText: String,
+    ): ToolExecutionResult = askUserMutex.withLock {
+        val spec = AskUserTool.parseSpec(argsJson)
+            ?: return@withLock ToolExecutionResult(
+                "Invalid ask_user arguments: provide 'questions' as a non-empty array of objects with 'question' text.",
+                false,
+            )
+        val deferred = CompletableDeferred<AskUserTool.QuestionnaireResult>()
+        val pending = PendingQuestionnaire(
+            toolId = toolId,
+            assistantId = assistantId,
+            spec = spec,
+            deferred = deferred,
+        )
+        withContext(Dispatchers.Main) {
+            val idx = toolBlocks.indexOfFirst { it.id == toolId }
+            if (idx >= 0 && spec.toolTitle.isNotBlank()) {
+                toolBlocks[idx] = toolBlocks[idx].copy(toolTitle = spec.toolTitle)
+            }
+            _pendingQuestionnaire.value = pending
+            updateAssistantMessage(assistantId, currentText, true, toolBlocks)
+        }
+        try {
+            val result = deferred.await()
+            ToolExecutionResult(
+                output = result.toJsonString(),
+                success = result.status != "cancelled",
+                toolTitle = spec.toolTitle,
+            )
+        } finally {
+            if (_pendingQuestionnaire.value?.toolId == toolId) {
+                _pendingQuestionnaire.value = null
+            }
         }
     }
 
@@ -15172,8 +15256,22 @@ Memory system (currently DISABLED):
         val modelUseDelegateNote = if (delegationOffered) {
             " For delegating a whole task that needs tools and multiple rounds, use the subagent_task tool instead."
         } else ""
+        val askUserToolEnabled = !isHelper &&
+            com.openminis.app.tools.AgentToolSwitch.ASK_USER.isEnabled(context)
+        val askUserPromptBullet = if (askUserToolEnabled) {
+            "\n- ask_user: Present an interactive questionnaire card (single_select, multi_select, or text) to clarify ambiguous requirements, preferences, or design choices WITH the user mid-turn WITHOUT ending your turn. Execution pauses until the user submits or skips, then returns structured JSON answers so you can immediately continue iterating."
+        } else ""
+        val askUserGuidanceSection = if (askUserToolEnabled) {
+            """
+
+Model questionnaire (ask_user):
+- When a task has genuine ambiguity, multiple viable architectural/design directions, or missing user preferences that materially affect the outcome, call `ask_user` instead of stopping your turn to ask plain-text questions.
+- Bundle 1–4 concise, high-impact questions into a single `ask_user` call rather than asking one question at a time across multiple calls.
+- Prefer `single_select` or `multi_select` with 2–5 concrete, self-explanatory options over open-ended `text` questions whenever possible, and place your recommended option first (e.g. `"Material 3 Expressive (Recommended) — Dynamic color & morphing shapes"`). Set `allow_other: true` so the user can always provide custom input.
+- Do NOT call `ask_user` for trivial confirmations, routine low-risk actions, or details you can infer from context or inspect with `file_read` / `shell_execute`. If the user skips the questionnaire (`status: "skipped"`), proceed immediately using your recommended defaults."""
+        } else ""
         val browserPromptBullet = if (browserToolEnabled) """- browser_use: Web browsing (navigate, screenshot, click, type, get_text, scroll, scroll_and_collect, get_readable, get_backbone, fetch, etc.). Starts with a desktop Chrome user agent. Use screenshot to see the page.
-  当 browser_use 触达 Google 登录 / OAuth 页（accounts.google.com、signin.google.com、myaccount.google.com、oauth2.googleapis.com 等）或网页返回 "disallowed_useragent" / 403 包含 "browser is not secure" 字样时，**不要重试或尝试登录** — Google 永久禁止 in-app WebView 完成登录，重试只会浪费 turn。改为告诉用户："此页面需要在系统 Chrome 完成登录" 并给出可点击的 Markdown link [在 Chrome 中打开](https://accounts.google.com/...)。点该 link 时 app 会跳出 Custom Tab；用户在 Chrome 完成操作后，请他**把所需结果（邮件正文 / 文档摘要 / 表格数据）粘贴回 chat**，你再继续帮他处理。这是 Android 平台限制，不是 bug。${toolListMemoryBullets}""" else ""
+  当 browser_use 触达 Google 登录 / OAuth 页（accounts.google.com、signin.google.com、myaccount.google.com、oauth2.googleapis.com 等）或网页返回 "disallowed_useragent" / 403 包含 "browser is not secure" 字样时，**不要重试或尝试登录** — Google 永久禁止 in-app WebView 完成登录，重试只会浪费 turn。改为告诉用户："此页面需要在系统 Chrome 完成登录" 并给出可点击的 Markdown link [在 Chrome 中打开](https://accounts.google.com/...)。点该 link 时 app 会跳出 Custom Tab；用户在 Chrome 完成操作后，请他**把所需结果（邮件正文 / 文档摘要 / 表格数据）粘贴回 chat**，你再继续帮他处理。这是 Android 平台限制，不是 bug。${askUserPromptBullet}${toolListMemoryBullets}""" else "${askUserPromptBullet.removePrefix("\n")}${toolListMemoryBullets}"
         val minisUrlNote = if (browserToolEnabled) """IMPORTANT: minis:// URLs are app-internal — they are NOT web URLs. Do NOT pass minis:// action URLs (open_terminal, views, settings) to browser_use — those are app deep links, use Markdown links in chat instead. However, minis:// resource URLs CAN be opened in browser_use with navigate. All directories under /var/minis/ are accessible: workspace, attachments, offloads, shared, etc. The built-in browser fully supports minis:// — HTML pages and all sub-resources (JS, CSS, images, fonts, etc.) referenced via minis:// absolute URLs or relative paths resolve correctly within the current session. When building multi-file web projects, use file_write to create files in the same directory (e.g. /var/minis/workspace/myapp/), then reference sub-resources with relative paths in HTML (e.g. <link href="style.css">, <script src="app.js">, <img src="logo.png">). The browser resolves relative paths against the minis:// base URL automatically. Cross-directory references also work with absolute minis:// URLs (e.g. <img src="minis://attachments/photo.png"> from a workspace HTML page). Navigate to the entry HTML to preview, e.g. minis://workspace/myapp/index.html.""" else """IMPORTANT: minis:// URLs are app-internal — they are NOT web URLs. Do NOT treat minis:// action URLs (open_terminal, views, settings) as web links — those are app deep links, use Markdown links in chat instead."""
         // [T-prompt-file-search-rg] The "File search" bullet below is the single
         // place for finding files and searching their contents, and steers the
@@ -15232,7 +15330,7 @@ Tool call style:
 - Narrate only when it helps: multi-step work, complex problems, sensitive actions, or when the user explicitly asks.
 - Keep narration brief and value-dense; avoid repeating obvious steps.
 - When a tool exists for an action, use it directly instead of explaining what you plan to do or asking the user to confirm.
-- Use reasonable defaults and contextual inference to fill in missing details (e.g. 'tonight' means today, 'remind me' implies creating a reminder immediately). Only ask for clarification when genuinely ambiguous.
+- Use reasonable defaults and contextual inference to fill in missing details (e.g. 'tonight' means today, 'remind me' implies creating a reminder immediately). Only ask for clarification when genuinely ambiguous.${askUserGuidanceSection}
 
 Tone and style:
 - Reply in the language that best matches the user's input. Only switch languages when the user explicitly asks.
@@ -16403,6 +16501,17 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
         com.openminis.app.agent.jobs.AgentJobRegistry.muteDelegationResults(activeSessionId)
         com.openminis.app.agent.jobs.AgentJobRegistry.dropQueuedDelegations(activeSessionId, "user-stopped")
         com.openminis.app.agent.jobs.AgentJobRegistry.cancelAll(activeSessionId, "user-stopped")
+        _pendingQuestionnaire.value?.let { pending ->
+            _pendingQuestionnaire.value = null
+            if (!pending.deferred.isCompleted) {
+                pending.deferred.complete(
+                    AskUserTool.QuestionnaireResult(
+                        status = "cancelled",
+                        note = "User cancelled generation while questionnaire was open.",
+                    ),
+                )
+            }
+        }
         streamJob?.cancel()
         _isStreaming.value = false
         // T-streaming-side-channel: flush any in-flight delta back into the
@@ -17526,6 +17635,7 @@ Scheduled tasks: crontab / at / nohup loops will stop when the app is suspended,
         "memory_write" -> "Write Memory"
         "memory_get" -> "Read Memory"
         "web_search" -> "Search Web"
+        "ask_user" -> "Ask User"
         else -> toolName
             .split('_')
             .filter { it.isNotEmpty() }

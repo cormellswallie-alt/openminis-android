@@ -543,80 +543,58 @@ private fun BorderedMarkdownTable(
 
 @Composable
 internal fun FallbackInfoBlock(block: AssistantBlock, onRevert: (() -> Unit)? = null) {
-    val divider = ChatColors.separator
-    val fg = ChatColors.secondaryText
+    val divider = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+    val fg = MaterialTheme.colorScheme.onSurfaceVariant
     val icon = when (block.toolName) {
-        // T84: CloseFullscreen ≈ iOS arrow.down.right.and.arrow.up.left
-        // (two diagonal arrows pointing inward — "fold/collapse" glyph),
-        // closer to the iOS compactDividerRow icon than the vertical
-        // Compress squeeze. Other system rows (legacy compact notices that
-        // pre-date the dedicated compactor) keep the squeeze for backward
-        // visual continuity if any old sessions still hold them.
         "compact" -> Icons.Default.CloseFullscreen
         "memory" -> Icons.Default.Psychology
         "thinking" -> Icons.Default.Lightbulb
         else -> Icons.Default.Info
     }
-    // Mirrors iOS systemDividerRow: HStack { Divider, label, Divider }.
-    // Implemented via SubcomposeLayout so the centered label can be measured
-    // first (intrinsic width), then both flanking rules are sized to fill the
-    // remaining space symmetrically. Earlier `weight(1f)` attempts collapsed
-    // to zero width on this Compose version, so we lay the two rules out
-    // ourselves at known x-coordinates.
-    // Trailing info-circle — only when the block carries a payload (e.g. a
-    // compact summary). Tapping opens a bottom sheet showing the full text.
-    // Mirrors iOS compactDividerRow's info.circle button.
     val hasDetail = block.toolArgs.isNotEmpty()
     var showDetail by remember(block.id) { mutableStateOf(false) }
 
     androidx.compose.ui.layout.SubcomposeLayout(
         modifier = Modifier
             .fillMaxWidth()
-            // Mirror iOS: small horizontal inset, modest vertical breathing
-            // room so consecutive rows don't stick together.
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) { constraints ->
         val totalWidth = constraints.maxWidth
-        val labelGap = 8.dp.roundToPx()
+        val labelGap = 10.dp.roundToPx()
         val ruleHeight = 1.dp.roundToPx()
-        // Reserve at most 80% for the label so the rules always have meaningful
-        // length, even with long status strings.
-        val labelMax = (totalWidth * 0.80f).toInt().coerceAtLeast(0)
+        val labelMax = (totalWidth * 0.82f).toInt().coerceAtLeast(0)
 
-        // 1) Measure the label. Reserve room for the leading kind-icon and
-        // (when present) the trailing info-circle so the middle Text shrinks
-        // first and the info-icon never gets pushed off-screen.
         val labelPlaceables = subcompose("label") {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .then(if (hasDetail) Modifier.clickable { showDetail = true } else Modifier)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = fg,
-                    modifier = Modifier.size(10.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(12.dp),
                 )
                 Text(
                     text = block.content,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = fg,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    // weight(1f, fill=false) lets the text take just what it
-                    // needs but lose space first when the row gets tight,
-                    // so the info-icon stays visible.
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (hasDetail) {
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = "Show full summary",
-                        tint = fg,
-                        modifier = Modifier
-                            .size(14.dp)
-                            .clickable { showDetail = true },
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(13.dp),
                     )
                 }
             }
@@ -922,65 +900,79 @@ internal fun rememberBrowserLiveSnapshot(
  */
 @Composable
 internal fun ResumeBanner(onResume: () -> Unit) {
-    val orange = Color(0xFFFF9500)
-    // [T-android-c3a-resume-one-tap] Crash-aware resume. When the previous app
-    // cycle ended in crash_or_stall we surface a one-line warning as CONTEXT
-    // (the user is about to re-enter the load that killed the last cycle), but
-    // the warning is informational only — a deliberate tap on the Resume BUTTON
-    // is itself an explicit user action, so it resumes in one tap. (Previously
-    // the first tap only armed the warning and a second tap was required; that
-    // extra confirm was friction on an already-explicit gesture.)
     val showCrashWarning = com.openminis.app.diagnostics.LaunchCycleBeacon.lastCycleWasCrash
+    val bannerShape = RoundedCornerShape(18.dp)
+    val bannerBg = if (showCrashWarning) {
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = if (ChatColors.isDark) 0.45f else 0.72f)
+    } else {
+        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = if (ChatColors.isDark) 0.42f else 0.68f)
+    }
+    val bannerBorder = if (showCrashWarning) {
+        MaterialTheme.colorScheme.error.copy(alpha = 0.35f)
+    } else {
+        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.32f)
+    }
+    val accent = if (showCrashWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 2.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(orange.copy(alpha = 0.08f))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(vertical = 3.dp)
+            .clip(bannerShape)
+            .background(bannerBg)
+            .border(1.dp, bannerBorder, bannerShape)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f),
         ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = null,
-                tint = orange,
-                modifier = Modifier.size(12.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = if (showCrashWarning) {
                     stringResource(R.string.chat_resume_crash_warning)
                 } else {
                     stringResource(R.string.resume_banner_title)
                 },
-                fontSize = 11.sp,
-                color = if (showCrashWarning) MaterialTheme.colorScheme.error else ChatColors.secondaryText,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (showCrashWarning) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface,
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(orange)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable(onClick = { onResume() })
-                .padding(horizontal = 10.dp, vertical = 3.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(10.dp),
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(13.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = stringResource(R.string.resume_action),
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
         }
     }

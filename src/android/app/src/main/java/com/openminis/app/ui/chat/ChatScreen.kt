@@ -626,6 +626,7 @@ fun ChatScreen(
     val showBrowserSheet by viewModel.showBrowserSheet.collectAsState()
     val showMemorySheet by viewModel.showMemorySheet.collectAsState()
     val memoryToolRecords by viewModel.memoryToolRecords.collectAsState()
+    val pendingQuestionnaire by viewModel.pendingQuestionnaire.collectAsState()
     val selectedGroupName by viewModel.selectedGroupName.collectAsState()
     val providerName by viewModel.providerName.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -4562,6 +4563,16 @@ fun ChatScreen(
                             // Replaces the bespoke one-line row, which read as a
                             // section divider and could not be opened.
                             is FlatChatItem.AssistantToolUse -> if (
+                                item.block.toolName == com.openminis.app.tools.AskUserTool.NAME
+                            ) {
+                                AskUserToolCard(
+                                    block = item.block,
+                                    pending = pendingQuestionnaire,
+                                    onSubmit = { id, res -> viewModel.submitQuestionnaire(id, res) },
+                                    onSkip = { id -> viewModel.skipQuestionnaire(id) },
+                                    onOpenDetail = { viewModel.openToolDetail(it) },
+                                )
+                            } else if (
                                 com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(item.block.toolName) &&
                                 helperControlSummary(item.block) != null
                             ) {

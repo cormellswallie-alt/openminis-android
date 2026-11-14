@@ -248,7 +248,7 @@ fun LazyListScope.modelEntryPickerItems(
             // model picker.
             HorizontalDivider(
                 modifier = Modifier.padding(start = 20.dp, end = 16.dp),
-                thickness = 0.5.dp,
+                thickness = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
             )
         }
@@ -428,7 +428,7 @@ private fun SelectionDot(isSelected: Boolean) {
     Icon(
         if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
         contentDescription = null,
-        tint = if (isSelected) Color(0xFF007AFF)
+        tint = if (isSelected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
         modifier = Modifier.size(20.dp),
     )
@@ -499,8 +499,8 @@ fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
     // the neutral gray used for "no provider".
     ProviderType.openAIResponses -> Color(0xFF4CAF50)
     ProviderType.antigravity,
-    ProviderType.unsupported -> Color(0xFF8E8E93)
-    null -> Color(0xFF8E8E93)
+    ProviderType.unsupported -> Color(0xFF79747E)
+    null -> Color(0xFF79747E)
 }
 
 /**

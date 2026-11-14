@@ -1838,4 +1838,21 @@
     <string name="sub_agents_move_down">Переместить вниз</string>
     <string name="sub_agents_move_up">Переместить вверх</string>
     <string name="tool_pager_position">Вызов инструмента %1$d из %2$d в этом разговоре</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Опросник модели (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Разрешить модели задавать интерактивные вопросы без прерывания цикла диалога.</string>
+    <string name="questionnaire_status_waiting">Ожидание ответа</string>
+    <string name="questionnaire_status_answered">Отправлено</string>
+    <string name="questionnaire_status_skipped">Пропущено</string>
+    <string name="questionnaire_status_cancelled">Отменено</string>
+    <string name="questionnaire_multi_hint">Можно выбрать несколько</string>
+    <string name="questionnaire_other_label">Другое (свой вариант)</string>
+    <string name="questionnaire_other_placeholder">Введите свой вариант…</string>
+    <string name="questionnaire_text_placeholder">Введите ответ…</string>
+    <string name="questionnaire_skip">Пропустить</string>
+    <string name="questionnaire_submit">Отправить</string>
+    <string name="questionnaire_expand_sheet">Развернуть</string>
+    <string name="thinking_header_streaming">Размышление</string>
+    <string name="thinking_header_done">Ход мыслей</string>
 </resources>

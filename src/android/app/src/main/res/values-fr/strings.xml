@@ -1851,4 +1851,21 @@
     <string name="sub_agent_builtin_name">Sous-agent général</string>
     <string name="sub_agent_builtin_description">Travail ouvert qui nécessite sa propre boucle d’outils : explorer une base de code ou le web sur de nombreux tours, condenser de gros résultats en une conclusion, ou mener des branches indépendantes en parallèle.</string>
     <string name="tool_pager_position">Appel d\'outil %1$d sur %2$d dans cette conversation</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Questionnaire du modèle (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Autoriser le modèle à poser des questions interactives sans interrompre la boucle de conversation.</string>
+    <string name="questionnaire_status_waiting">En attente de réponse</string>
+    <string name="questionnaire_status_answered">Envoyé</string>
+    <string name="questionnaire_status_skipped">Ignoré</string>
+    <string name="questionnaire_status_cancelled">Annulé</string>
+    <string name="questionnaire_multi_hint">Sélection multiple possible</string>
+    <string name="questionnaire_other_label">Autre (personnalisé)</string>
+    <string name="questionnaire_other_placeholder">Saisissez votre réponse…</string>
+    <string name="questionnaire_text_placeholder">Saisissez votre réponse…</string>
+    <string name="questionnaire_skip">Ignorer</string>
+    <string name="questionnaire_submit">Envoyer</string>
+    <string name="questionnaire_expand_sheet">Agrandir</string>
+    <string name="thinking_header_streaming">Réflexion</string>
+    <string name="thinking_header_done">Raisonnement</string>
 </resources>

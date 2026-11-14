@@ -993,7 +993,7 @@ private fun DetailDivider() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 14.dp, end = 14.dp)
-            .height(0.5.dp)
+            .height(1.dp)
             .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
     )
 }
@@ -1036,8 +1036,8 @@ private fun shareSkillZip(context: android.content.Context, zip: java.io.File) {
 /** [T-android-skill-icon-circular] The same iOS-system-palette values the main
  *  Settings rows use (SettingsScreen): blue for navigational/remote actions,
  *  green for local filesystem operations. */
-private val SettingsIconBlue = Color(0xFF007AFF)
-private val SettingsIconGreen = Color(0xFF34C759)
+private val SettingsIconBlue = Color(0xFF3F5AA9)
+private val SettingsIconGreen = Color(0xFF1E8E5A)
 
 /**
  * [T-android-skill-icon-circular] A colored circular badge with a white glyph

@@ -814,6 +814,32 @@ private fun ToolPreviewThumbnail(
                 }
             }
 
+            "ask_user" -> {
+                val spec = com.openminis.app.tools.AskUserTool.parseSpec(block.toolArgs)
+                val qSummary = spec?.questions?.joinToString("\n") { "• ${it.question}" }.orEmpty()
+                Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)) {
+                    Text(
+                        text = spec?.toolTitle ?: "Questionnaire",
+                        fontSize = 7.sp,
+                        lineHeight = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = toolAccent,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (qSummary.isNotEmpty()) {
+                        Text(
+                            text = qSummary,
+                            fontSize = 5.5.sp,
+                            color = ChatColors.primaryText.copy(alpha = 0.8f),
+                            maxLines = 8,
+                            lineHeight = 6.5.sp,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+
             "read_image" -> {
                 // [T-android-read-image-preview] Show the read image as a
                 // thumbnail (parity with iOS ToolCapsuleView .readImageTool and

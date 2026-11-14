@@ -1335,8 +1335,8 @@ private fun VoiceDeleteButton(onDeleteOne: () -> Unit) {
     Box(
         modifier = Modifier
             .size(47.dp)
-            .background(ChatColors.inputIconBg, CircleShape)
-            .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
             .clip(CircleShape)
             .pointerInput(Unit) {
                 detectTapGestures(
@@ -1361,7 +1361,7 @@ private fun VoiceDeleteButton(onDeleteOne: () -> Unit) {
         Icon(
             Icons.AutoMirrored.Filled.Backspace,
             contentDescription = stringResource(R.string.voice_panel_delete),
-            tint = ChatColors.secondaryText,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(21.dp),
         )
     }
@@ -1377,8 +1377,8 @@ private fun CircleIconButton(
     Box(
         modifier = modifier
             .size(30.dp)
-            .background(ChatColors.inputIconBg, CircleShape)
-            .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), CircleShape)
             .clip(CircleShape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -1389,7 +1389,7 @@ private fun CircleIconButton(
         Icon(
             icon,
             contentDescription = contentDescription,
-            tint = ChatColors.secondaryText,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp),
         )
     }
@@ -1544,20 +1544,19 @@ private fun VoiceEngineUnavailableNotice(
 private fun NoticeActionButton(label: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .background(ChatColors.inputIconBg, RoundedCornerShape(14.dp))
-            .border(0.5.dp, ChatColors.inputIconBorder, RoundedCornerShape(14.dp))
-            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) { onClick() }
-            .padding(horizontal = 12.dp, vertical = 7.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            style = TextStyle(fontSize = 12.sp),
-            color = MaterialTheme.colorScheme.onSurface,
+            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
 }

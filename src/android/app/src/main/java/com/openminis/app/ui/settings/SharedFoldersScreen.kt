@@ -191,7 +191,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/shared",
             writable = true,
             icon = Icons.Outlined.Folder,
-            iconColor = Color(0xFF007AFF),
+            iconColor = Color(0xFF3F5AA9),
         ),
         SharedFolderEntry(
             id = "skills",
@@ -199,7 +199,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/skills",
             writable = false,
             icon = Icons.Outlined.AutoAwesome,
-            iconColor = Color(0xFFAF52DE),
+            iconColor = Color(0xFF7C4DFF),
         ),
         SharedFolderEntry(
             id = "memory",
@@ -207,7 +207,7 @@ internal object SharedFolderRegistry {
             linuxPath = "/var/minis/memory",
             writable = false,
             icon = Icons.Outlined.Psychology,
-            iconColor = Color(0xFFFF2D55),
+            iconColor = Color(0xFFD81B60),
         ),
     )
 

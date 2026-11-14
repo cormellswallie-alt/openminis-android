@@ -381,8 +381,8 @@ private fun TableView(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .border(0.5.dp, borderColor, RoundedCornerShape(4.dp))
-            .clip(RoundedCornerShape(4.dp)),
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp)),
     ) {
         Column {
             // Header row
@@ -761,9 +761,9 @@ private fun MinisImageBlock(block: MarkdownParser.Block.Image) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 360.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(surfaceBg)
-            .border(0.5.dp, borderColor, RoundedCornerShape(8.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .padding(vertical = 4.dp),
     )
 }
@@ -807,9 +807,9 @@ private fun MinisVideoBlock(block: MarkdownParser.Block.Video) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(surfaceBg)
-            .border(0.5.dp, borderColor, RoundedCornerShape(8.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable {
                 file?.let { openMediaExternally(context, it, "video/*") }
             },
@@ -908,9 +908,9 @@ private fun MinisAudioBlock(block: MarkdownParser.Block.Audio) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(cardBg)
-            .border(0.5.dp, borderColor, RoundedCornerShape(10.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable(enabled = file != null) {
                 if (player == null) {
                     file?.let { openMediaExternally(context, it, "audio/*") }

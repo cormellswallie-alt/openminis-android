@@ -115,21 +115,16 @@ fun SkillRowItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 14.dp, end = 14.dp)
-                    .height(0.5.dp)
+                    .height(1.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }
 }
 
-/**
- * Source-of-truth mapping for the small badge icon next to a skill's name.
- * Kept here (rather than duplicated in each screen) so badge colors and icons
- * stay consistent between Settings and the in-chat sheet.
- */
 fun sourceIconAndColor(source: SkillRepository.ImportSource): Pair<ImageVector, Color> = when (source) {
-    SkillRepository.ImportSource.URL -> Icons.Default.Link to Color(0xFF007AFF)
-    SkillRepository.ImportSource.FILE -> Icons.Outlined.Description to Color(0xFFFF9500)
-    SkillRepository.ImportSource.BUNDLED -> Icons.Default.Inventory2 to Color(0xFF34C759)
-    SkillRepository.ImportSource.SESSION -> Icons.Outlined.ChatBubble to Color(0xFFAF52DE)
+    SkillRepository.ImportSource.URL -> Icons.Default.Link to Color(0xFF3F5AA9)
+    SkillRepository.ImportSource.FILE -> Icons.Outlined.Description to Color(0xFFD97706)
+    SkillRepository.ImportSource.BUNDLED -> Icons.Default.Inventory2 to Color(0xFF1E8E5A)
+    SkillRepository.ImportSource.SESSION -> Icons.Outlined.ChatBubble to Color(0xFF7C4DFF)
 }

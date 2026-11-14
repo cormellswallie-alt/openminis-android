@@ -156,7 +156,12 @@ fun MoveToSessionSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
                 stringResource(R.string.move_to_sheet_title),
@@ -352,8 +357,8 @@ private fun categoryStyle(category: String?): CategoryStyle {
         "design"       -> CategoryStyle(Icons.Outlined.Palette, Color(0xFFFF2D55))
         "productivity" -> CategoryStyle(Icons.Outlined.CalendarMonth, Color(0xFFFFCC00))
         "support"      -> CategoryStyle(Icons.Outlined.Settings, Color(0xFF8B6914))
-        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF8E8E93))
-        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF8E8E93))
+        "other"        -> CategoryStyle(Icons.Outlined.GridView, Color(0xFF79747E))
+        else           -> CategoryStyle(Icons.Outlined.Forum, Color(0xFF79747E))
     }
 }
 

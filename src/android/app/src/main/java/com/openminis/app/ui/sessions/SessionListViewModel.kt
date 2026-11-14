@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -311,22 +312,39 @@ class SessionListViewModel(
                 started.await()
                 runCatching { unsub() }
             }
-            chatRepository.observeSessions().collect { rows ->
-                // [T-p1-delegate-task] Child sessions never appear in the home
-                // list (design §3.2) — filtered HERE, in the UI layer, not in the
-                // DAO: sync, backup and the debug RPC must still see them. Done
-                // at the source rather than only in displayedSessions so group
-                // counts, select-all and the new-session detector agree.
-                val it = rows.filter { !it.isChild }
-                _allSessions.value = it
-                if (!_isInitialLoadComplete.value) _isInitialLoadComplete.value = true
-                detectNewTopSession(it)
-            }
+            chatRepository.observeSessions()
+                .catch { e ->
+                    AppLogger.error(
+                        "SessionList",
+                        "observeSessions failed: ${e.javaClass.simpleName}: ${e.message}",
+                    )
+                    _isInitialLoadComplete.value = true
+                    emit(emptyList())
+                }
+                .collect { rows ->
+                    // [T-p1-delegate-task] Child sessions never appear in the home
+                    // list (design §3.2) — filtered HERE, in the UI layer, not in the
+                    // DAO: sync, backup and the debug RPC must still see them. Done
+                    // at the source rather than only in displayedSessions so group
+                    // counts, select-all and the new-session detector agree.
+                    val it = rows.filter { !it.isChild }
+                    _allSessions.value = it
+                    if (!_isInitialLoadComplete.value) _isInitialLoadComplete.value = true
+                    detectNewTopSession(it)
+                }
         }
         // [T-android-session-grouping] Started alongside the session collector,
         // not after it — see `folders` for why ordering matters on first paint.
         viewModelScope.launch {
-            chatRepository.observeFolders().collect { folders.value = it }
+            chatRepository.observeFolders()
+                .catch { e ->
+                    AppLogger.error(
+                        "SessionList",
+                        "observeFolders failed: ${e.javaClass.simpleName}: ${e.message}",
+                    )
+                    emit(emptyList())
+                }
+                .collect { folders.value = it }
         }
         viewModelScope.launch {
             combine(searchQuery, isSearchActive) { q, active -> q to active }

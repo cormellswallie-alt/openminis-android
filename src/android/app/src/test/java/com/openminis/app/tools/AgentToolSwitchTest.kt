@@ -25,6 +25,7 @@ class AgentToolSwitchTest {
         // agent_status must ride with delegate_task: inspecting agents you can
         // no longer create is a dead tool in the schema.
         assertEquals(AgentToolSwitch.AGENTS, AgentToolSwitch.governing("agent_status"))
+        assertEquals(AgentToolSwitch.ASK_USER, AgentToolSwitch.governing("ask_user"))
     }
 
     @Test
@@ -77,9 +78,10 @@ class AgentToolSwitchTest {
     fun `a helper never gets delegation even with the switch on`() {
         // Depth cap: helpers must not spawn helpers. The switch must not be
         // able to re-open that path.
-        val helperTools = AgentTools.makeAgentTools(isHelper = true, delegateEnabled = true)
+        val helperTools = AgentTools.makeAgentTools(isHelper = true, delegateEnabled = true, askUserEnabled = true)
             .map { it.name }
         assertFalse("delegate_task" in helperTools)
         assertFalse("agent_status" in helperTools)
+        assertFalse("ask_user" in helperTools)
     }
 }

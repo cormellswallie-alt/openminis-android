@@ -39,7 +39,7 @@ import com.openminis.app.ui.components.openExternalUrl
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val tileBlue = Color(0xFF007AFF)
+    val tileBlue = MaterialTheme.colorScheme.primary
 
     SettingsScaffold(title = stringResource(R.string.about_title), onBack = onBack) {
         Column(
@@ -50,18 +50,16 @@ fun AboutScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val iconPainter = remember(context) {
-                // painterResource() can't load adaptive-icon XML drawables (mipmap-anydpi-v26),
-                // so fetch the launcher icon as a Drawable and convert to a Bitmap.
                 val drawable = context.packageManager.getApplicationIcon(context.packageName)
                 BitmapPainter(drawable.toBitmap(width = 192, height = 192).asImageBitmap())
             }
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(84.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
                     .border(
-                        width = 0.5.dp,
+                        width = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                         shape = CircleShape,
                     ),
@@ -71,7 +69,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     painter = iconPainter,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(84.dp)
                         .clip(CircleShape),
                 )
             }

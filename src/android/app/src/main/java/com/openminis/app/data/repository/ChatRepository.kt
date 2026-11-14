@@ -1044,6 +1044,14 @@ class ChatRepository(internal val dao: ChatDao) {
                     return if (url != null) cap(cleanPreview("$action $url"))
                     else cap(cleanPreview("browser_use $action"))
                 }
+                "ask_user" -> {
+                    val qs = input.optJSONArray("questions")
+                    val firstQ = qs?.optJSONObject(0)?.optString("question", "")
+                        ?.trim()?.takeIf { it.isNotEmpty() }
+                        ?: str("question")
+                    if (firstQ != null) return cap(cleanPreview("❓ $firstQ"))
+                    return "❓ Questionnaire"
+                }
                 "memory_write" -> str("content")?.let { return cap(cleanPreview("memory_write: $it")) }
                 "memory_get" -> {
                     val arr = input.optJSONArray("keywords")

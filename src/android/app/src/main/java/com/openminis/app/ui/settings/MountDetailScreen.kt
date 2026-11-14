@@ -159,7 +159,7 @@ fun MountDetailScreen(
             Spacer(Modifier.height(20.dp))
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
@@ -190,7 +190,7 @@ fun MountDetailScreen(
             Spacer(Modifier.height(20.dp))
             ActionRow(
                 icon = Icons.Outlined.Folder,
-                tint = Color(0xFF007AFF),
+                tint = MaterialTheme.colorScheme.primary,
                 label = stringResource(R.string.mount_detail_browse_files),
                 onClick = onBrowseFiles,
             )

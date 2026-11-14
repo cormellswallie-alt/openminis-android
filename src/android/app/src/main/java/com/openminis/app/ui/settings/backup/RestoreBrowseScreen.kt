@@ -283,8 +283,8 @@ private fun BreadcrumbBar(
             }
         }
         Box(
-            Modifier.fillMaxWidth().height(0.5.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant),
+            Modifier.fillMaxWidth().height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         )
     }
 }
@@ -320,7 +320,7 @@ private fun EntryRow(
         ) {
             Box(
                 Modifier.size(30.dp).background(
-                    if (entry.isDirectory) Color(0xFF8E8E93) else Color(0xFF007AFF),
+                    if (entry.isDirectory) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                     CircleShape,
                 ),
                 contentAlignment = Alignment.Center,
@@ -328,7 +328,7 @@ private fun EntryRow(
                 Icon(
                     if (entry.isDirectory) Icons.Outlined.Folder else Icons.Outlined.Inventory2,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = if (entry.isDirectory) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(17.dp),
                 )
             }
@@ -362,8 +362,8 @@ private fun EntryRow(
         }
         if (showDivider) {
             Box(
-                Modifier.fillMaxWidth().padding(start = 56.dp).height(0.5.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant),
+                Modifier.fillMaxWidth().padding(start = 56.dp).height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }

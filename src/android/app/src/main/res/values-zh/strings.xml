@@ -2134,4 +2134,21 @@
     <string name="chat_import_done_body">已导入 %1$d 个对话（%2$d 条消息），跳过 %3$d 个（已导入过或为空）。格式：%4$s</string>
     <string name="chat_import_failed_title">导入失败</string>
     <string name="chat_import_ok">好</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">模型问卷 (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">允许模型在任务执行中途向你发起单选、多选或简答问卷，无需中断当前对话与工具迭代循环。</string>
+    <string name="questionnaire_status_waiting">等待你的回答</string>
+    <string name="questionnaire_status_answered">已提交</string>
+    <string name="questionnaire_status_skipped">已跳过</string>
+    <string name="questionnaire_status_cancelled">已取消</string>
+    <string name="questionnaire_multi_hint">可多选</string>
+    <string name="questionnaire_other_label">其他（自定义）</string>
+    <string name="questionnaire_other_placeholder">输入自定义回答…</string>
+    <string name="questionnaire_text_placeholder">输入你的回答…</string>
+    <string name="questionnaire_skip">跳过</string>
+    <string name="questionnaire_submit">提交回答</string>
+    <string name="questionnaire_expand_sheet">展开填写</string>
+    <string name="thinking_header_streaming">深度思考中</string>
+    <string name="thinking_header_done">思维链</string>
 </resources>

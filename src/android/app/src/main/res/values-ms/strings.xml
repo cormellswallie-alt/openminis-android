@@ -1825,4 +1825,21 @@
     <string name="sub_agents_move_down">Alih ke bawah</string>
     <string name="sub_agents_move_up">Alih ke atas</string>
     <string name="tool_pager_position">Panggilan alat %1$d daripada %2$d dalam perbualan ini</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Model Questionnaire (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Allow the model to ask interactive multiple-choice or short-answer questions mid-task without interrupting the conversation loop.</string>
+    <string name="questionnaire_status_waiting">Awaiting your response</string>
+    <string name="questionnaire_status_answered">Submitted</string>
+    <string name="questionnaire_status_skipped">Skipped</string>
+    <string name="questionnaire_status_cancelled">Cancelled</string>
+    <string name="questionnaire_multi_hint">Select all that apply</string>
+    <string name="questionnaire_other_label">Other (custom)</string>
+    <string name="questionnaire_other_placeholder">Type your custom answer…</string>
+    <string name="questionnaire_text_placeholder">Type your answer…</string>
+    <string name="questionnaire_skip">Skip</string>
+    <string name="questionnaire_submit">Submit</string>
+    <string name="questionnaire_expand_sheet">Expand</string>
+    <string name="thinking_header_streaming">Thinking</string>
+    <string name="thinking_header_done">Thought Process</string>
 </resources>

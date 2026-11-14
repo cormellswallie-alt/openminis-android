@@ -194,7 +194,7 @@ internal fun StorageManagementScreen(
             item(key = "overview") {
                 SettingsSection(header = stringResource(R.string.storage_section_overview)) {
                     StorageOverviewRow(
-                        color = Color(0xFF8E8E93),
+                        color = MaterialTheme.colorScheme.secondary,
                         label = stringResource(R.string.storage_overview_shell),
                         value = Formatter.formatFileSize(context, state.shellSize),
                         onClick = {
@@ -204,19 +204,19 @@ internal fun StorageManagementScreen(
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFF007AFF),
+                        color = MaterialTheme.colorScheme.primary,
                         label = stringResource(R.string.storage_overview_database),
                         value = Formatter.formatFileSize(context, state.dbSize),
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFF5856D6),
+                        color = MaterialTheme.colorScheme.tertiary,
                         label = stringResource(R.string.storage_overview_sessions),
                         value = Formatter.formatFileSize(context, state.totalSessionSize),
                         showDivider = true,
                     )
                     StorageOverviewRow(
-                        color = Color(0xFFFF9500),
+                        color = Color(0xFFD97706),
                         label = stringResource(R.string.storage_overview_logs_caches),
                         value = Formatter.formatFileSize(context, state.logsCachesSize),
                         showDivider = false,
@@ -433,7 +433,7 @@ private fun StorageSessionRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = if (selecting) 50.dp else 16.dp)
-                    .height(0.5.dp)
+                    .height(1.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
@@ -716,7 +716,7 @@ private fun StorageOverviewRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp)
-                    .height(0.5.dp)
+                    .height(1.dp)
                     .background(divider),
             )
         }

@@ -49,14 +49,19 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.StopCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -507,95 +512,97 @@ private fun HelperSpinner(size: Int, stroke: Float = 2f) {
  * deliberately shows no result summary; the deliverable lives in the detail
  * sheet, so the block never grows and jolts the list when a run ends.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HelperToolBlock(
     block: AssistantBlock,
     onOpenDetail: (String) -> Unit,
     onStop: (() -> Unit)? = null,
-    /**
-     * [T-android-neverstarted-not-running] Run a delegation that never got off
-     * the queue. Only offered for [HelperPhase.NeverStarted], which is the one
-     * state where the work is fully described (the task text is in the block's
-     * own arguments) but definitively did not happen.
-     */
     onStart: (() -> Unit)? = null,
-    /**
-     * [T-android-subagent-card-resume] Restart an INTERRUPTED run (the app
-     * stopped while it was working). Returns whether it was accepted, started
-     * or queued: the button stays dimmed and disabled after an accepted tap,
-     * and comes back after a refusal so the user can try again. Port of iOS
-     * HelperBlockView's resume button.
-     */
     onResume: (() -> Boolean)? = null,
     modifier: Modifier = Modifier,
 ) {
     val info = remember(block.content, block.toolStatus, block.toolTitle) { parseHelperBlock(block) }
-    // [T-android-subagent-card-resume] iOS `resuming`. Once a resume starts, the
-    // block flips to Running and the button leaves on its own; a queued one
-    // stays interrupted until a slot frees, so the tap must not be repeatable.
     var resuming by remember(block.id) { mutableStateOf(false) }
     val accent = helperAccent()
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(22.dp)
+    val badgeShape = MaterialShapes.Cookie9Sided.toShape()
+    val bgColor = if (info.isRunning) {
+        accent.copy(alpha = if (ChatColors.isDark) 0.14f else 0.09f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    val strokeColor = if (info.isRunning) {
+        accent.copy(alpha = 0.38f)
+    } else {
+        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clip(shape)
-            .background(accent.copy(alpha = 0.07f))
-            .border(0.8.dp, accent.copy(alpha = 0.35f), shape)
+            .background(bgColor)
+            .border(1.dp, strokeColor, shape)
             .clickable(onClickLabel = stringResource(R.string.agent_open_detail)) { onOpenDetail(block.id) }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(modifier = Modifier.size(34.dp).clip(CircleShape).background(accent.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(badgeShape)
+                .background(accent.copy(alpha = 0.18f)),
+            contentAlignment = Alignment.Center,
+        ) {
             val f = info.finished
             when {
-                // [T-android-subagent-card-metrics] 13, not 15. iOS draws these
-                // at 13pt, and an SF Symbol at 13 carries less visual weight
-                // than a Material icon at 15 — the two differences compounded,
-                // so the 34dp disc read as packed next to iOS's. The disc
-                // itself stays 34; only the glyph inside it changes.
-                info.isRunning && info.phase is HelperPhase.Running -> HelperSpinner(13)
+                info.isRunning && info.phase is HelperPhase.Running -> HelperSpinner(14)
                 f != null -> Icon(
                     helperStatusGlyph(f.status),
-                    contentDescription = null, tint = helperStatusColor(f.status), modifier = Modifier.size(13.dp),
+                    contentDescription = null,
+                    tint = helperStatusColor(f.status),
+                    modifier = Modifier.size(15.dp),
                 )
-                // [T-android-queued-visual] A QUEUED agent is paused, and must
-                // not wear the same generic Groups glyph as one that is
-                // starting. With a fan-out of five, the two that were waiting
-                // for a slot looked identical to the three that were about to
-                // run — the only difference was the word in the second line.
-                // iOS draws `pause.fill` here (HelperBlockView.swift:589).
                 info.phase is HelperPhase.Queued -> Icon(
-                    Icons.Default.Pause, contentDescription = null,
-                    tint = accent, modifier = Modifier.size(13.dp),
+                    Icons.Default.Pause,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(15.dp),
                 )
-                else -> Icon(Icons.Default.Groups, contentDescription = null, tint = accent, modifier = Modifier.size(13.dp))
+                else -> Icon(
+                    Icons.Default.Groups,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(15.dp),
+                )
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                // [T-android-subagent-badge] Name the sub agent once the payload
-                // carries one; the generic label until then. Several agents in
-                // one fan-out all reading "Agent" left the user unable to tell
-                // which card was which.
                 AgentChip(info.agent ?: stringResource(R.string.helper_label))
                 Text(
-                    info.title, fontSize = 13.sp, lineHeight = 14.sp,
-                    fontWeight = FontWeight.Medium, color = ChatColors.primaryText,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    info.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 13.5.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             HelperSecondLine(info)
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(6.dp))
         if (info.phase is HelperPhase.NeverStarted && onStart != null) {
-            // A play triangle, not a stop square: this card's work never ran,
-            // and the only useful action is to run it.
             val startLabel = stringResource(R.string.helper_start)
             Box(
-                modifier = Modifier.size(24.dp).clip(CircleShape).background(helperAccent())
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(accent)
                     .clickable(onClickLabel = startLabel) { onStart() }
                     .semantics { contentDescription = startLabel },
                 contentAlignment = Alignment.Center,
@@ -604,19 +611,17 @@ internal fun HelperToolBlock(
                     Icons.Default.PlayArrow,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(15.dp),
                 )
             }
             Spacer(Modifier.width(8.dp))
         } else if (info.finished?.status == "interrupted" && onResume != null) {
-            // [T-android-subagent-card-resume] Same slot as Stop, and its
-            // counterpart: an accent disc with a restart arrow (iOS
-            // arrow.clockwise). Once the run is going again the card turns
-            // Running and Stop takes this slot back by itself.
             val resumeLabel = stringResource(R.string.helper_resume)
             Box(
-                modifier = Modifier.size(24.dp).clip(CircleShape)
-                    .background(helperAccent().copy(alpha = if (resuming) 0.25f else 1f))
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = if (resuming) 0.25f else 1f))
                     .clickable(enabled = !resuming, onClickLabel = resumeLabel) { resuming = onResume() }
                     .semantics { contentDescription = resumeLabel },
                 contentAlignment = Alignment.Center,
@@ -625,22 +630,44 @@ internal fun HelperToolBlock(
                     Icons.Default.Refresh,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(15.dp),
                 )
             }
             Spacer(Modifier.width(8.dp))
         } else if (info.isRunning && onStop != null) {
-            // Classic stop-recording look: red disc, white rounded square.
             val stopLabel = stringResource(R.string.helper_stop)
             Box(
-                modifier = Modifier.size(24.dp).clip(CircleShape).background(HelperStatusRed)
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer)
                     .clickable(onClickLabel = stopLabel) { onStop() }
                     .semantics { contentDescription = stopLabel },
                 contentAlignment = Alignment.Center,
-            ) { Box(Modifier.size(9.dp).clip(RoundedCornerShape(2.dp)).background(Color.White)) }
+            ) {
+                Box(
+                    Modifier
+                        .size(9.dp)
+                        .clip(RoundedCornerShape(2.5.dp))
+                        .background(MaterialTheme.colorScheme.error),
+                )
+            }
             Spacer(Modifier.width(8.dp))
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = ChatColors.tertiaryText, modifier = Modifier.size(16.dp))
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(15.dp),
+            )
+        }
     }
 }
 
@@ -648,8 +675,15 @@ internal fun HelperToolBlock(
 private fun AgentChip(text: String) {
     val accent = helperAccent()
     Text(
-        text, fontSize = 10.sp, lineHeight = 11.sp, fontWeight = FontWeight.SemiBold, color = accent,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(accent.copy(alpha = 0.15f)).padding(horizontal = 5.dp, vertical = 1.dp),
+        text,
+        fontSize = 10.5.sp,
+        lineHeight = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = accent,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(accent.copy(alpha = 0.16f))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
     )
 }
 
@@ -657,37 +691,44 @@ private fun AgentChip(text: String) {
 private fun TierChip(tier: String, tinted: Boolean = false) {
     val accent = helperAccent()
     Text(
-        tier, fontSize = 9.sp, lineHeight = 10.sp, fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace,
-        color = if (tinted) accent else ChatColors.secondaryText,
-        modifier = Modifier.clip(RoundedCornerShape(50)).background(if (tinted) accent.copy(alpha = 0.15f) else ChatColors.secondaryBg).padding(horizontal = 5.dp, vertical = 1.dp),
+        tier,
+        fontSize = 9.5.sp,
+        lineHeight = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontFamily = FontFamily.Monospace,
+        color = if (tinted) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(
+                if (tinted) accent.copy(alpha = 0.16f)
+                else MaterialTheme.colorScheme.surfaceContainerHigh,
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }
 
-/**
- * [T-subagent-thinking-badge] The reasoning level a sub agent run used, as a
- * pill beside its model — the same relationship the main conversation's top
- * bar has between its model and its thinking level.
- *
- * Not interactive: the level was decided when the run started, and changing it
- * now would not affect the run.
- */
 @Composable
 private fun ThinkingLevelPill(level: ThinkingLevel) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(ChatColors.secondaryBg)
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
     ) {
         Icon(
-            Icons.Default.Psychology, contentDescription = null,
-            tint = ChatColors.secondaryText, modifier = Modifier.size(9.dp),
+            Icons.Default.Psychology,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.size(10.dp),
         )
         Text(
-            level.displayName, fontSize = 9.sp, lineHeight = 10.sp,
-            fontWeight = FontWeight.Medium, color = ChatColors.secondaryText,
+            level.displayName,
+            fontSize = 9.5.sp,
+            lineHeight = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
 }
@@ -845,25 +886,44 @@ internal fun HelperThumbContent(block: AssistantBlock) {
 internal fun AgentDetailCard(
     title: String,
     icon: ImageVector,
-    iconTint: Color = ChatColors.secondaryText,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     trailing: (@Composable () -> Unit)? = null,
     body: (@Composable () -> Unit)? = null,
 ) {
-    val isDark = ChatColors.isDark
-    val barBg = if (isDark) Color(0xFF212121) else Color(0xFFEBEBEB)
-    val cardBg = if (isDark) Color(0xFF1A1A1A) else Color(0xFFF0F0F0)
-    val stroke = if (isDark) Color(0xFF404040) else Color(0xFFD1D1D1)
-    val shape = RoundedCornerShape(10.dp)
-    Column(modifier = Modifier.fillMaxWidth().clip(shape).background(cardBg).border(0.5.dp, stroke, shape)) {
-        Row(modifier = Modifier.fillMaxWidth().background(barBg).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
-            Spacer(Modifier.width(6.dp))
-            Text(title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = ChatColors.primaryText, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+    val barBg = MaterialTheme.colorScheme.surfaceContainer
+    val cardBg = MaterialTheme.colorScheme.surfaceContainerLowest
+    val stroke = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(cardBg)
+            .border(1.dp, stroke, shape),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(barBg)
+                .padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
             trailing?.invoke()
         }
         if (body != null) {
-            HorizontalDivider(color = stroke)
-            Box(modifier = Modifier.fillMaxWidth().padding(12.dp)) { body() }
+            HorizontalDivider(thickness = 1.dp, color = stroke)
+            Box(modifier = Modifier.fillMaxWidth().padding(14.dp)) { body() }
         }
     }
 }
@@ -1191,22 +1251,15 @@ internal fun AgentCallback.syntheticBlock(): AssistantBlock {
 
 /** Compact, left-aligned card for an <agent_callback> message that has no
  *  delegate block in the transcript (a scheduled child-of-current run). */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun AgentCallbackCard(callback: AgentCallback, onTap: () -> Unit, modifier: Modifier = Modifier) {
-    // [T-android-subagent-callback-card-metrics] Sized and composed like iOS
-    // AgentCallbackCellView (cardHeight 56, rowHeight 64): a 30pt status
-    // circle, ONE headline line "<kind> · <title>" at 14 semibold, ONE subline
-    // "<status> · <elapsed> · …" at 12, spacing 2 between them, 12 horizontal
-    // padding, 14 corner, accent 0.25 hairline. The previous card was 64 + 8
-    // tall with a 34 circle, a chip + title row and 5dp between rows, which
-    // read as a taller component with loose line spacing next to the pill
-    // above it.
     val helperAccent = helperAccent()
     val finished = callback.kind == AgentCallback.Kind.FINISHED
     val accent = when (callback.status) {
         "running" -> helperAccent
         "done" -> HelperStatusGreen
-        "cancelled", "timeout" -> Color(0xFFFFCC00)
+        "cancelled", "timeout" -> Color(0xFFF59E0B)
         else -> HelperStatusRed
     }
     val icon = when {
@@ -1229,28 +1282,61 @@ internal fun AgentCallbackCard(callback: AgentCallback, onTap: () -> Unit, modif
             callback.summary?.takeIf { it.isNotEmpty() }?.let { add(it) }
         }
     }.joinToString(" · ")
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(20.dp)
+    val badgeShape = MaterialShapes.SoftBurst.toShape()
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .height(56.dp)
+            .heightIn(min = 58.dp)
             .clip(shape)
-            .background(ChatColors.secondaryBg)
-            .border(1.dp, accent.copy(alpha = 0.25f), shape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .border(1.dp, accent.copy(alpha = 0.28f), shape)
             .clickable(onClickLabel = stringResource(R.string.agent_open_detail), onClick = onTap)
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(modifier = Modifier.size(30.dp).clip(CircleShape).background(accent.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(14.dp))
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(badgeShape)
+                .background(accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(headline, fontSize = 14.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold, color = ChatColors.primaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(subline, fontSize = 12.sp, lineHeight = 15.sp, color = ChatColors.secondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                headline,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                subline,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = ChatColors.tertiaryText, modifier = Modifier.size(16.dp))
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(15.dp),
+            )
+        }
     }
 }
 
@@ -1297,13 +1383,24 @@ fun AgentTranscriptScreen(sessionId: String, onBack: () -> Unit) {
         },
     ) {
     Scaffold(
-        containerColor = ChatColors.background,
+        containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ChatColors.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.helper_close), tint = ChatColors.primaryText) }
+                    IconButton(
+                        onClick = onBack,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.helper_close),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
                 },
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -1455,7 +1552,14 @@ internal fun HelperTranscript(
                     isLast = item.isLast,
                 )
                 is FlatChatItem.AssistantToolUse ->
-                    if (HelperRunner.isSubAgentToolName(item.block.toolName)) HelperToolBlock(item.block, onOpenDetail = { onOpenDetail(item.block.id) })
+                    if (item.block.toolName == com.openminis.app.tools.AskUserTool.NAME) AskUserToolCard(
+                        block = item.block,
+                        pending = null,
+                        onSubmit = { _, _ -> },
+                        onSkip = {},
+                        onOpenDetail = { onOpenDetail(it.id) },
+                    )
+                    else if (HelperRunner.isSubAgentToolName(item.block.toolName)) HelperToolBlock(item.block, onOpenDetail = { onOpenDetail(item.block.id) })
                     else ToolCallPill(item.block, allToolBlocks = item.allToolBlocks, onOpenDetail = onOpenDetail)
                 is FlatChatItem.AssistantInfo -> FallbackInfoBlock(item.block)
                 is FlatChatItem.AssistantTyping -> TypingIndicator()

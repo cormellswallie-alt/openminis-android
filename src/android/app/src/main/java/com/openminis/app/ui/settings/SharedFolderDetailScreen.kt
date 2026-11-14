@@ -87,7 +87,7 @@ fun SharedFolderDetailScreen(
             Spacer(Modifier.height(20.dp))
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onBrowseFiles),
@@ -100,7 +100,7 @@ fun SharedFolderDetailScreen(
                     Icon(
                         imageVector = Icons.Outlined.Folder,
                         contentDescription = null,
-                        tint = Color(0xFF007AFF),
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(
                         text = stringResource(R.string.shared_folder_browse_files),

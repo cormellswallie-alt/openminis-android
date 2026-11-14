@@ -270,12 +270,19 @@ import com.openminis.app.data.model.ThinkingLevel
 import com.openminis.app.data.repository.ChatRepository
 import com.openminis.app.data.repository.MemoryRepository
 import com.openminis.app.data.repository.ProviderRepository
+import com.openminis.app.tools.AskUserTool
 import com.openminis.app.ui.browser.BrowserSheet
 import com.openminis.app.ui.theme.ChatColors
+import com.openminis.app.ui.theme.ExpressiveTokens
 import com.openminis.app.ui.DisplayBitmapLimits
 import com.openminis.app.ui.components.MinisTextButton
+import com.openminis.app.ui.components.MinisTonalButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ToolDetailSheet(
     toolBlocks: List<AssistantBlock>,
@@ -299,79 +306,95 @@ internal fun ToolDetailSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = null,
+        shape = RoundedCornerShape(
+            topStart = ExpressiveTokens.SheetTopRadius,
+            topEnd = ExpressiveTokens.SheetTopRadius,
+        ),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.outlineVariant),
+                )
+            }
+        },
         contentWindowInsets = { WindowInsets(0) },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.85f)
-                .background(ChatColors.secondaryBg),
+                .fillMaxHeight(0.86f)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow),
         ) {
-            // ── Top Nav Bar (iOS: X button + "Minis Computer" + action button) ──
+            // ── Top Nav Bar (M3 Expressive: tonal close + Sunny emblem + tonal action) ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ChatColors.sheetHeaderBg)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Close button (iOS: xmark in circle)
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(ChatColors.secondaryBg, CircleShape)
-                        .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
-                        .clip(CircleShape)
-                        .clickable { onDismiss() },
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(36.dp),
                 ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = ChatColors.primaryText,
-                        modifier = Modifier.size(16.dp),
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(MaterialShapes.Sunny.toShape())
+                            .background(toolAccent.copy(alpha = 0.16f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = toolIconFor(block.toolName),
+                            contentDescription = null,
+                            tint = toolAccent,
+                            modifier = Modifier.size(15.dp),
+                        )
+                    }
+                    Text(
+                        text = "Minis Computer",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // [T-step-timestamp v3 aa8b1128] Sheet header reverted to a
-                // single-line title. The HH:mm:ss + duration line was moved
-                // out to the inline ToolCallPill's trailing column (under
-                // the elapsed-duration text) so it sits next to where the
-                // user is already scanning timing info.
-                Text(
-                    text = "Minis Computer",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ChatColors.primaryText,
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Action button: dispatches per tool kind.
-                //  - shell_execute → opens the in-app terminal pre-filled
-                //    with the running command (mirrors iOS ToolLiveSheet
-                //    `Button { showTerminal = true }` →
-                //    `ISHTerminalView(initCommand: shell command)`).
-                //  - browser_use → fires Intent.ACTION_VIEW for the
-                //    resolved page URL so the user can jump to the system
-                //    browser (or any chooser) and continue from there.
-                //  - everything else → still copies the tool output to
-                //    clipboard.
                 val clipboardManager = LocalClipboardManager.current
-                val actionContext = LocalContext.current
                 var copyDone by remember { mutableStateOf(false) }
                 val isShellTool = block.toolName == "shell_execute"
                 val isBrowserTool = block.toolName == "browser_use"
                 val toolArgsForAction = remember(block.toolArgs) {
                     try { org.json.JSONObject(block.toolArgs) } catch (_: Exception) { org.json.JSONObject() }
                 }
-                // Resolve the browser URL the same way the inline preview does
-                // (block.browserURL → args.url → most-recent prior browser_use
-                // block) so the top-right action lines up with the URL pill
-                // shown below.
                 val browserActionUrl = remember(block.id, block.browserURL, block.toolArgs, toolBlocks) {
                     if (!isBrowserTool) ""
                     else {
@@ -397,65 +420,54 @@ internal fun ToolDetailSheet(
                 val hasBrowserUrl = isBrowserTool && browserActionUrl.isNotEmpty()
                 val isAgentTool = com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(block.toolName)
                 val agentChildId = if (isAgentTool) com.openminis.app.agent.jobs.HelperRunner.childSessionIdFrom(block.content) else null
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(ChatColors.secondaryBg, CircleShape)
-                        .border(0.5.dp, ChatColors.inputIconBorder, CircleShape)
-                        .clip(CircleShape)
-                        .clickable {
-                            if (isAgentTool) {
-                                // [T-agent-detail-buttons] The single entry to the
-                                // live / historical agent conversation.
-                                if (agentChildId != null) onOpenAgentTranscript?.invoke(agentChildId)
-                            } else if (isShellTool) {
-                                val command = extractShellCommand(toolArgsForAction, block)
-                                if (command.isNotBlank() && command != "Shell command") {
-                                    AppLogger.info(
-                                        "ChatScreen",
-                                        "opening terminal with prefill: ${command.take(120)}",
-                                    )
-                                    onDismiss()
-                                    onOpenTerminalWithCommand(command)
-                                }
-                            } else if (hasBrowserUrl) {
-                                // Mirror iOS ToolLiveSheet: nav-bar globe
-                                // routes back into the Session WebView pool
-                                // (BrowserTabPool.selectOrCreateTabForURL)
-                                // so an existing browser_use tab for this
-                                // URL is reused; otherwise a new tab is
-                                // spawned and loaded. Avoids dumping the
-                                // user into a system chooser for what is
-                                // already a live in-app browser session.
+                Surface(
+                    onClick = {
+                        if (isAgentTool) {
+                            if (agentChildId != null) onOpenAgentTranscript?.invoke(agentChildId)
+                        } else if (isShellTool) {
+                            val command = extractShellCommand(toolArgsForAction, block)
+                            if (command.isNotBlank() && command != "Shell command") {
                                 AppLogger.info(
                                     "ChatScreen",
-                                    "browser_use action → open in session pool: ${browserActionUrl.take(160)}",
+                                    "opening terminal with prefill: ${command.take(120)}",
                                 )
-                                onOpenBrowserForUrl(browserActionUrl)
-                            } else if (block.content.isNotEmpty()) {
-                                clipboardManager.setText(AnnotatedString(block.content))
-                                copyDone = true
+                                onDismiss()
+                                onOpenTerminalWithCommand(command)
                             }
-                        },
-                    contentAlignment = Alignment.Center,
+                        } else if (hasBrowserUrl) {
+                            AppLogger.info(
+                                "ChatScreen",
+                                "browser_use action → open in session pool: ${browserActionUrl.take(160)}",
+                            )
+                            onOpenBrowserForUrl(browserActionUrl)
+                        } else if (block.content.isNotEmpty()) {
+                            clipboardManager.setText(AnnotatedString(block.content))
+                            copyDone = true
+                        }
+                    },
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier.size(36.dp),
                 ) {
-                    Icon(
-                        when {
-                            copyDone -> Icons.Default.Check
-                            isAgentTool -> Icons.AutoMirrored.Outlined.Chat
-                            isShellTool -> Icons.Default.Terminal
-                            isBrowserTool -> Icons.Outlined.Public
-                            else -> Icons.Default.ContentCopy
-                        },
-                        contentDescription = when {
-                            isAgentTool -> "Open agent conversation"
-                            isShellTool -> "Open in terminal"
-                            isBrowserTool -> "Open in session browser"
-                            else -> "Copy"
-                        },
-                        tint = ChatColors.primaryText,
-                        modifier = Modifier.size(16.dp),
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            when {
+                                copyDone -> Icons.Default.Check
+                                isAgentTool -> Icons.AutoMirrored.Outlined.Chat
+                                isShellTool -> Icons.Default.Terminal
+                                isBrowserTool -> Icons.Outlined.Public
+                                else -> Icons.Default.ContentCopy
+                            },
+                            contentDescription = when {
+                                isAgentTool -> "Open agent conversation"
+                                isShellTool -> "Open in terminal"
+                                isBrowserTool -> "Open in session browser"
+                                else -> "Copy"
+                            },
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(17.dp),
+                        )
+                    }
                 }
                 LaunchedEffect(copyDone) {
                     if (copyDone) {
@@ -465,10 +477,12 @@ internal fun ToolDetailSheet(
                 }
             }
 
-            // Divider
-            HorizontalDivider(thickness = 1.dp, color = ChatColors.sheetHeaderBorder)
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
 
-            // ── Content Area (iOS: tool-specific rendering) ──
+            // ── Content Area ──
             val outputScrollState = rememberScrollState()
             val toolArgsObj = remember(block.toolArgs) {
                 try { org.json.JSONObject(block.toolArgs) } catch (_: Exception) { org.json.JSONObject() }
@@ -480,70 +494,42 @@ internal fun ToolDetailSheet(
                     .fillMaxWidth(),
             ) {
                 when (block.toolName) {
-                    // ── Agent: stacked cards (header · current tool · screenshot · result) ──
                     com.openminis.app.agent.jobs.HelperRunner.TOOL_NAME -> HelperDetailContent(block)
 
-                    // ── Shell: black rounded terminal card (mirrors iOS ToolLiveSheet) ──
+                    AskUserTool.NAME -> QuestionnaireDetailContent(block)
+
+                    // ── Shell: rounded obsidian terminal card ──
                     "shell_execute" -> {
                         val command = extractShellCommand(toolArgsObj, block)
-                        // T141: monitor active only while the tool is still running;
-                        // sheet may stay open after the run completes (user reading
-                        // output), and we don't want a stuck HUD there.
                         val sheetMonitor = rememberSystemResourceMonitor(active = isLive)
-                        // BoxWithConstraints lets us mirror the iOS GeometryReader
-                        // computation `cardWidth = width - 24; cardMinHeight =
-                        // cardWidth * 3/4` so the terminal card stays at a 4:3
-                        // floor when output is short (ToolLiveSheet.swift L1490).
+                        val terminalShape = RoundedCornerShape(20.dp)
                         BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 12.dp)
-                                .padding(top = 12.dp, bottom = 16.dp),
+                                .padding(horizontal = 14.dp)
+                                .padding(top = 12.dp, bottom = 14.dp),
                         ) {
-                            // T177 / T179: card grows from a 4:3 floor and
-                            // fills the surrounding weight(1f) Box so the
-                            // footer sits directly beneath it. The outer
-                            // ModalBottomSheet column is already clamped at
-                            // 0.85f viewport, so the card's effective max
-                            // height is automatically the sheet body minus
-                            // header + footer — no separate cardMaxHeight
-                            // cap needed (and a 55%-screen cap was actively
-                            // wrong: it left a ~200dp gray gap between the
-                            // card's bottom edge and the footer Column on
-                            // tall devices, which is the T179 user report).
-                            // Internal verticalScroll takes over once the
-                            // command + output exceed the card height.
                             val cardMinHeight = maxWidth * 3f / 4f
-                            // T141 ribbon's measured height (vertical 2.5dp +
-                            // 11sp text ≈ 22dp). Reserve enough bottom padding
-                            // inside the scroll content so the last output line
-                            // never slides under the HUD when scrolled to end.
-                            val hudReservePadding = if (isLive) 28.dp else 0.dp
+                            val hudReservePadding = if (isLive) 30.dp else 0.dp
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .fillMaxHeight()
                                     .heightIn(min = cardMinHeight)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color.Black)
+                                    .clip(terminalShape)
+                                    .background(Color(0xFF0D1117))
                                     .border(
-                                        width = 0.5.dp,
-                                        color = Color(0xFF404040),
-                                        shape = RoundedCornerShape(10.dp),
+                                        width = 1.dp,
+                                        color = Color(0xFF30363D),
+                                        shape = terminalShape,
                                     ),
                             ) {
-                                // T193 (supersedes T191): nested SelectionContainer
-                                // gives shell output its own SelectionRegistrar so a
-                                // long-press inside the ToolLiveSheet copy stays within
-                                // this subtree (no cross-tree findCommonAncestor crash)
-                                // while still letting the user select / copy command
-                                // output and the linkified URLs inside it.
                                 androidx.compose.foundation.text.selection.SelectionContainer {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .verticalScroll(outputScrollState)
-                                            .padding(14.dp)
+                                            .padding(16.dp)
                                             .padding(bottom = hudReservePadding),
                                     ) {
                                         Text(
@@ -551,20 +537,18 @@ internal fun ToolDetailSheet(
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             fontFamily = FontFamily.Monospace,
-                                            color = Color.White,
+                                            color = Color(0xFFE6EDF3),
                                             lineHeight = 18.sp,
                                         )
                                         if (block.content.isNotEmpty()) {
-                                            // T38: linkify http/https URLs in shell output so the user can
-                                            // tap them to open the in-app web preview (matches iOS
-                                            // TerminalCanvasView.addURLLinks → MinisOpenURLBroker).
+                                            Spacer(modifier = Modifier.height(6.dp))
                                             val urlClick = LocalMarkdownUrlClickHandler.current
                                             val linkified = remember(block.content, urlClick) {
                                                 if (urlClick != null) {
                                                     com.openminis.app.ui.util.linkifyUrls(
                                                         text = block.content,
                                                         onClick = urlClick,
-                                                        linkColor = Color(0xFF7CC4FF), // light blue on dark terminal bg
+                                                        linkColor = Color(0xFF79C0FF),
                                                     )
                                                 } else androidx.compose.ui.text.AnnotatedString(block.content)
                                             }
@@ -572,26 +556,20 @@ internal fun ToolDetailSheet(
                                                 text = linkified,
                                                 fontSize = 13.sp,
                                                 fontFamily = FontFamily.Monospace,
-                                                color = Color(0xFF34C759),  // iOS .green
+                                                color = Color(0xFF56D364),
                                                 lineHeight = 18.sp,
                                             )
                                         }
                                     }
                                 }
-                                // T141 / T173 / T177: live CPU/MEM HUD ribbon
-                                // overlaid on the card's bottom edge, *outside*
-                                // the verticalScroll so it stays pinned even
-                                // when the command/output content scrolls.
-                                // Mirrors iOS ToolLiveSheet.swift L1523
-                                // `.overlay(alignment: .bottom)`.
                                 if (isLive) {
                                     Row(
                                         modifier = Modifier
                                             .align(Alignment.BottomCenter)
                                             .fillMaxWidth()
-                                            .background(Color(0xFF141414))
-                                            .padding(vertical = 2.5.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                                            .background(Color(0xFF161B22))
+                                            .padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
@@ -599,14 +577,14 @@ internal fun ToolDetailSheet(
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             fontFamily = FontFamily.Monospace,
-                                            color = Color(0xFF34C759),  // iOS .green
+                                            color = Color(0xFF56D364),
                                         )
                                         Text(
                                             text = sheetMonitor.formattedMem(),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             fontFamily = FontFamily.Monospace,
-                                            color = Color(0xFF34C759),
+                                            color = Color(0xFF56D364),
                                         )
                                     }
                                 }
@@ -614,12 +592,7 @@ internal fun ToolDetailSheet(
                         }
                     }
 
-                    // ── File Edit: mock-editor card (iOS ToolLiveSheet.swift L1051-1190) ──
-                    // T131-B: replace the previous flat red/green stripes with a
-                    // bordered card — title bar with `(size)` label, ribbon-style
-                    // diff body (no inter-line gaps), and a `Edited <path> (detail)`
-                    // footer once the tool finishes. minHeight=cardWidth × 3/4 keeps
-                    // small diffs from collapsing into a thin stripe.
+                    // ── File Edit: M3 Expressive diff editor card ──
                     "file_edit" -> {
                         val path = toolArgsObj.optString("path", "")
                             .ifEmpty { extractPartialJsonString("path", block.toolArgs) ?: "" }
@@ -629,15 +602,14 @@ internal fun ToolDetailSheet(
                         val newStr = toolArgsObj.optString("new_string", "")
                             .ifEmpty { extractPartialJsonString("new_string", block.toolArgs) ?: "" }
 
-                        // T126-fix: ChatPalette.isDark follows the in-app theme
-                        // override, isSystemInDarkTheme() doesn't.
                         val isDark = ChatColors.isDark
-                        val cardBg = if (isDark) Color(0xFF1A1A1A) else Color(0xFFF0F0F0)
-                        val cardBorder = if (isDark) Color(0xFF404040) else Color(0xFFD1D1D1)
-                        val redBg = if (isDark) Color(0xFF4D1414) else Color(0xFFFFE5E5)
-                        val redText = if (isDark) Color(0xFFFF6666) else Color(0xFFCC1A1A)
-                        val greenBg = if (isDark) Color(0xFF144D14) else Color(0xFFE5FFE5)
-                        val greenText = if (isDark) Color(0xFF66FF66) else Color(0xFF1A991A)
+                        val cardBg = MaterialTheme.colorScheme.surfaceContainer
+                        val cardBorder = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                        val redBg = if (isDark) Color(0xFF49181D) else Color(0xFFFFE8EA)
+                        val redText = if (isDark) Color(0xFFFF8A8A) else Color(0xFFB31D28)
+                        val greenBg = if (isDark) Color(0xFF163D22) else Color(0xFFE6FFEC)
+                        val greenText = if (isDark) Color(0xFF7EE787) else Color(0xFF1A7F37)
+                        val diffCardShape = RoundedCornerShape(20.dp)
 
                         val bytes = (oldStr.toByteArray(Charsets.UTF_8).size +
                             newStr.toByteArray(Charsets.UTF_8).size)
@@ -646,8 +618,6 @@ internal fun ToolDetailSheet(
                             bytes < 1024 -> "$bytes B"
                             else -> "${bytes / 1024} KB"
                         }
-                        // Mirrors iOS — pull `(N replacement(s), N bytes)` etc.
-                        // out of the tool result to surface alongside the path.
                         val resultDetail = block.content
                             .takeIf { it.isNotEmpty() && !isLive }
                             ?.let { Regex("""\(([^)]+)\)""").find(it)?.value }
@@ -655,70 +625,52 @@ internal fun ToolDetailSheet(
                         BoxWithConstraints(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(12.dp),
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
                         ) {
                             val cardMinHeight = maxWidth * 3f / 4f
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    // T260: bound the Column to the parent
-                                    // BoxWithConstraints' maxHeight so the inner
-                                    // verticalScroll ribbon (Minis Computer sheet
-                                    // edit-card body) actually scrolls. Without
-                                    // fillMaxHeight the Column's vertical constraint
-                                    // is unbounded, the inner Column.verticalScroll
-                                    // degenerates (each row laid out at full height
-                                    // instead of scrolling), and the overflow
-                                    // bleeds past the parent Box(weight=1f) onto
-                                    // the footer ("Minis is editing File / 2/3 /
-                                    // prev-next" at L5094). Mirrors the shell
-                                    // branch (L4489) which already does this.
                                     .fillMaxHeight()
                                     .heightIn(min = cardMinHeight)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(diffCardShape)
                                     .background(cardBg)
-                                    .border(0.5.dp, cardBorder, RoundedCornerShape(10.dp)),
+                                    .border(1.dp, cardBorder, diffCardShape),
                             ) {
-                                // Title bar — filename + (size) label
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(ChatColors.secondaryBg)
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Icon(
                                         Icons.Default.EditNote,
                                         contentDescription = null,
-                                        tint = Color(0xFFFF9500),
-                                        modifier = Modifier.size(12.dp),
+                                        tint = toolAccent,
+                                        modifier = Modifier.size(16.dp),
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = if (fileName.isNotEmpty()) fileName else "(file)",
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium,
+                                        fontWeight = FontWeight.SemiBold,
                                         fontFamily = FontFamily.Monospace,
-                                        color = ChatColors.primaryText,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         modifier = Modifier.weight(1f, fill = false),
                                     )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "($sizeLabel)",
                                         fontSize = 11.sp,
-                                        color = if (isLive) Color(0xCCFF9500) else ChatColors.tertiaryText,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isLive) toolAccent else MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-                                HorizontalDivider(thickness = 0.5.dp, color = cardBorder)
+                                HorizontalDivider(thickness = 1.dp, color = cardBorder)
 
-                                // Diff ribbon — scrollable body, zero inter-line spacing.
-                                // T193 (supersedes T191): nested SelectionContainer scopes
-                                // the diff lines into their own SelectionRegistrar so a
-                                // long-press inside the ToolLiveSheet copy can't walk back
-                                // to the outer chat-list container and trip
-                                // findCommonAncestor. Users can select / copy + / - lines.
                                 androidx.compose.foundation.text.selection.SelectionContainer {
                                     Column(
                                         modifier = Modifier
@@ -733,7 +685,7 @@ internal fun ToolDetailSheet(
                                                     fontSize = 13.sp,
                                                     fontFamily = FontFamily.Monospace,
                                                     color = redText,
-                                                    lineHeight = 17.sp,
+                                                    lineHeight = 18.sp,
                                                     modifier = Modifier
                                                         .fillMaxWidth()
                                                         .background(redBg)
@@ -748,7 +700,7 @@ internal fun ToolDetailSheet(
                                                     fontSize = 13.sp,
                                                     fontFamily = FontFamily.Monospace,
                                                     color = greenText,
-                                                    lineHeight = 17.sp,
+                                                    lineHeight = 18.sp,
                                                     modifier = Modifier
                                                         .fillMaxWidth()
                                                         .background(greenBg)
@@ -759,23 +711,21 @@ internal fun ToolDetailSheet(
                                     }
                                 }
 
-                                // Footer — only after streaming completes and we have
-                                // a path or a parenthesized detail to show.
                                 if (!isLive && (path.isNotEmpty() || resultDetail != null)) {
                                     Spacer(modifier = Modifier.weight(1f))
-                                    HorizontalDivider(thickness = 0.5.dp, color = cardBorder)
+                                    HorizontalDivider(thickness = 1.dp, color = cardBorder)
                                     Column(
-                                        modifier = Modifier.padding(
-                                            horizontal = 14.dp,
-                                            vertical = 10.dp,
-                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f))
+                                            .padding(horizontal = 14.dp, vertical = 10.dp),
                                     ) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
                                                 text = "Edited",
                                                 fontSize = 13.sp,
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = ChatColors.primaryText,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                             )
                                             if (path.isNotEmpty()) {
                                                 Spacer(modifier = Modifier.width(6.dp))
@@ -783,7 +733,7 @@ internal fun ToolDetailSheet(
                                                     text = path,
                                                     fontSize = 12.sp,
                                                     fontFamily = FontFamily.Monospace,
-                                                    color = ChatColors.secondaryText,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
                                                     modifier = Modifier.weight(1f),
@@ -794,7 +744,7 @@ internal fun ToolDetailSheet(
                                             Text(
                                                 text = resultDetail,
                                                 fontSize = 12.sp,
-                                                color = ChatColors.tertiaryText,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                                                 modifier = Modifier.padding(top = 2.dp),
                                             )
                                         }
@@ -804,7 +754,7 @@ internal fun ToolDetailSheet(
                         }
                     }
 
-                    // ── File Read / File Write: editor-style with title bar (mirrors iOS fileEditorContent) ──
+                    // ── File Read / File Write: M3 Expressive editor card ──
                     "file_read", "file_write" -> {
                         val path = toolArgsObj.optString("path", "")
                             .ifEmpty { extractPartialJsonString("path", block.toolArgs) ?: "" }
@@ -820,11 +770,11 @@ internal fun ToolDetailSheet(
                             title = fileName.ifEmpty { "file" },
                             icon = if (block.toolName == "file_read") Icons.Default.Description
                                    else Icons.AutoMirrored.Filled.NoteAdd,
-                            iconTint = ChatColors.secondaryText,
-                            titleColor = ChatColors.primaryText,
-                            sizeColor = ChatColors.tertiaryText,
+                            iconTint = MaterialTheme.colorScheme.primary,
+                            titleColor = MaterialTheme.colorScheme.onSurface,
+                            sizeColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             bodyText = displayText,
-                            bodyColor = ChatColors.primaryText,
+                            bodyColor = MaterialTheme.colorScheme.onSurface,
                             isStreaming = isLive,
                             scrollState = outputScrollState,
                             trailingText = if (block.toolName == "file_write" &&
@@ -832,12 +782,10 @@ internal fun ToolDetailSheet(
                         )
                     }
 
-                    // ── Browser: action capsule + URL bar + screenshot + result text ──
+                    // ── Browser: action capsule + URL bar + screenshot + result card ──
                     "browser_use" -> {
                         val action = toolArgsObj.optString("action", "")
                         val argsUrl = toolArgsObj.optString("url", "")
-                        // Resolved URL: prefer block.browserURL (actual page URL), fallback to args URL,
-                        // then inherit from preceding browser block (mirrors iOS resolvedBrowserURL).
                         val resolvedUrl = block.browserURL?.takeIf { it.isNotEmpty() }
                             ?: argsUrl.takeIf { it.isNotEmpty() }
                             ?: run {
@@ -852,20 +800,7 @@ internal fun ToolDetailSheet(
                                     }
                                 } else null
                             } ?: ""
-                        // Preview priority (matches iOS): live WebView snapshot while the
-                        // tool is running → current block's saved imageFilePath → most
-                        // recent preceding browser_use block's screenshot.
                         val liveBitmap = rememberBrowserLiveSnapshot(block)
-                        // T285: decode off main thread. Pre-T285 this was a
-                        // synchronous BitmapFactory.decodeFile inside `remember{}`
-                        // — for a multi-MB browser screenshot it ran a ~150-350ms
-                        // blocking decode on the composition thread, stuttering
-                        // any concurrent navigation transition (chat → image
-                        // preview is the worst case because that recomposition
-                        // runs the same frame the destination begins to slide in).
-                        // Preserve the look-back-to-prev-browser_use semantics:
-                        // try the current block's screenshot first, fall back to
-                        // the most recent prior browser_use block's screenshot.
                         val savedBitmap by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(
                             initialValue = null,
                             block.imageFilePath,
@@ -894,12 +829,11 @@ internal fun ToolDetailSheet(
                                 .verticalScroll(outputScrollState)
                                 .padding(top = 12.dp, bottom = 16.dp),
                         ) {
-                            // Action + URL capsules row (iOS: HStack { action capsule, URL capsule })
                             if (action.isNotEmpty() || resolvedUrl.isNotEmpty()) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp),
+                                        .padding(horizontal = 14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
@@ -908,40 +842,33 @@ internal fun ToolDetailSheet(
                                             text = action,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color.White,
+                                            color = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier
-                                                .background(Color(0xFF007AFF), CircleShape)
-                                                .padding(horizontal = 10.dp, vertical = 2.dp),
+                                                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                                .padding(horizontal = 11.dp, vertical = 3.dp),
                                         )
                                     }
                                     if (resolvedUrl.isNotEmpty()) {
                                         val clipboardManager = LocalClipboardManager.current
-                                        // iOS CopyableURLCapsule: Color(white: 0.85) fill,
-                                        // Color(white: 0.35) text — distinct pill against sheet bg.
                                         Text(
                                             text = resolvedUrl,
                                             fontSize = 12.sp,
-                                            color = Color(0xFF595959),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .background(Color(0xFFD9D9D9), CircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceContainerHighest, CircleShape)
                                                 .clip(CircleShape)
                                                 .clickable { clipboardManager.setText(AnnotatedString(resolvedUrl)) }
-                                                .padding(horizontal = 10.dp, vertical = 2.dp),
+                                                .padding(horizontal = 12.dp, vertical = 3.dp),
                                         )
                                     }
                                 }
                             }
 
-                            // Screenshot image (iOS: shadowed card)
                             if (screenshotBitmap != null) {
                                 Spacer(modifier = Modifier.height(12.dp))
-                                // aspectRatio binds the intrinsic bitmap ratio into the
-                                // layout; without it, Image on a bitmap source ignores
-                                // fillMaxWidth and draws at native px dimensions, causing
-                                // wide screenshots to clip on the right.
                                 val aspect = screenshotBitmap.width.toFloat() /
                                     screenshotBitmap.height.coerceAtLeast(1)
                                 Image(
@@ -950,74 +877,90 @@ internal fun ToolDetailSheet(
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp)
+                                        .padding(horizontal = 14.dp)
                                         .aspectRatio(aspect)
-                                        .shadow(8.dp, RoundedCornerShape(10.dp))
-                                        .clip(RoundedCornerShape(10.dp)),
+                                        .shadow(6.dp, RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                            RoundedCornerShape(16.dp),
+                                        ),
                                 )
                             } else if (isLive) {
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp)
+                                        .padding(horizontal = 14.dp)
                                         .height(200.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(ChatColors.secondaryBg),
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(24.dp),
-                                            strokeWidth = 2.dp,
-                                            color = ChatColors.link,
+                                        LoadingIndicator(
+                                            modifier = Modifier.size(28.dp),
+                                            color = MaterialTheme.colorScheme.primary,
                                         )
-                                        Text("Loading...", fontSize = 12.sp, color = ChatColors.tertiaryText)
+                                        Text(
+                                            "Loading...",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
                                 }
                             }
 
-                            // Result content
                             if (block.content.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(12.dp))
+                                val resultShape = RoundedCornerShape(20.dp)
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 12.dp)
-                                        .background(ChatColors.toolBg, RoundedCornerShape(10.dp))
-                                        .border(0.5.dp, ChatColors.toolBorder, RoundedCornerShape(10.dp)),
+                                        .padding(horizontal = 14.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceContainer, resultShape)
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                            resultShape,
+                                        )
+                                        .clip(resultShape),
                                 ) {
-                                    // Result header
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                             .padding(horizontal = 14.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
                                             Icons.Default.Language,
                                             contentDescription = null,
-                                            tint = ChatColors.tertiaryText,
-                                            modifier = Modifier.size(12.dp),
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(14.dp),
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Result",
                                             fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = ChatColors.secondaryText,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                         )
                                     }
-                                    HorizontalDivider(thickness = 0.5.dp, color = ChatColors.separator)
+                                    HorizontalDivider(
+                                        thickness = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                    )
                                     Text(
                                         text = block.content,
                                         fontSize = 13.sp,
                                         fontFamily = FontFamily.Monospace,
-                                        color = ChatColors.primaryText,
-                                        lineHeight = 16.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        lineHeight = 18.sp,
                                         modifier = Modifier.padding(14.dp),
                                     )
                                 }
@@ -1025,10 +968,8 @@ internal fun ToolDetailSheet(
                         }
                     }
 
-                    // ── Memory: pink editor card (iOS: memoryEditorContent) ──
+                    // ── Memory: tinted M3 Expressive editor card ──
                     "memory_write", "memory_get" -> {
-                        // memory_write: content comes from tool args.
-                        // memory_get: content comes from the tool's result text.
                         val memContent = if (block.toolName == "memory_write") {
                             toolArgsObj.optString("content", "")
                                 .ifEmpty { extractPartialJsonString("content", block.toolArgs) ?: "" }
@@ -1043,21 +984,19 @@ internal fun ToolDetailSheet(
                         EditorCard(
                             title = block.toolName,
                             icon = Icons.Default.Psychology,
-                            iconTint = ToolMemoryAccent.copy(alpha = 0.6f),
+                            iconTint = ToolMemoryAccent,
                             titleColor = ToolMemoryAccent,
-                            sizeColor = ToolMemoryAccent.copy(alpha = 0.5f),
+                            sizeColor = ToolMemoryAccent.copy(alpha = 0.7f),
                             bodyText = prefix + memContent,
-                            bodyColor = ToolMemoryAccent.copy(alpha = 0.85f),
+                            bodyColor = MaterialTheme.colorScheme.onSurface,
                             isStreaming = isLive,
                             scrollState = outputScrollState,
                         )
                     }
 
-                    // ── read_image: inline image preview + metadata (iOS parity) ──
+                    // ── read_image: inline image preview + metadata ──
                     "read_image" -> {
                         val imgPath = block.imageFilePath
-                        // T285: async decode (was sync inside remember{}, blocking the
-                        // composition thread when the chat list scrolled into view).
                         val bitmap by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(
                             initialValue = null,
                             imgPath,
@@ -1071,20 +1010,13 @@ internal fun ToolDetailSheet(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(ChatColors.background)
                                 .verticalScroll(outputScrollState)
                                 .padding(16.dp),
                         ) {
                             val bmp = bitmap
                             if (bmp != null) {
-                                // [T-android-read-image-preview] Bind the bitmap's
-                                // intrinsic ratio into the layout. Without
-                                // aspectRatio, Image on a bitmap source ignores
-                                // fillMaxWidth and lays out at native px height, so
-                                // a wide screenshot rendered small/letterboxed at
-                                // the top with dead space below (same fix the
-                                // browser_use screenshot branch already applies).
                                 val aspect = bmp.width.toFloat() / bmp.height.coerceAtLeast(1)
+                                val imgShape = RoundedCornerShape(16.dp)
                                 Image(
                                     bitmap = bmp.asImageBitmap(),
                                     contentDescription = null,
@@ -1092,8 +1024,12 @@ internal fun ToolDetailSheet(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .aspectRatio(aspect)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .border(0.5.dp, ChatColors.separator, RoundedCornerShape(10.dp)),
+                                        .clip(imgShape)
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                            imgShape,
+                                        ),
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                             }
@@ -1102,7 +1038,7 @@ internal fun ToolDetailSheet(
                                     text = block.content,
                                     fontSize = 13.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = ChatColors.primaryText,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     lineHeight = 18.sp,
                                 )
                             }
@@ -1112,28 +1048,33 @@ internal fun ToolDetailSheet(
                     // ── Default: generic text output ──
                     else -> {
                         if (block.content.isNotEmpty()) {
+                            val genericShape = RoundedCornerShape(20.dp)
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(ChatColors.background)
                                     .verticalScroll(outputScrollState)
-                                    .padding(16.dp),
+                                    .padding(14.dp),
                             ) {
-                                // T38: linkify URLs in fallback tool-result text so curl /
-                                // file_read / generic command output produces tappable links
-                                // that route through the in-app web preview.
-                                // [T-android-tool-result-lazy-render] Reveal large
-                                // generic output incrementally (LazyRevealToolText
-                                // handles the linkify + reveal window); wrap in a
-                                // SelectionContainer so the revealed text stays
-                                // selectable/copyable (it wasn't before).
-                                androidx.compose.foundation.text.selection.SelectionContainer {
-                                    LazyRevealToolText(
-                                        bodyText = block.content,
-                                        color = ChatColors.primaryText,
-                                        scrollState = outputScrollState,
-                                        linkify = true,
-                                    )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceContainer, genericShape)
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                            genericShape,
+                                        )
+                                        .clip(genericShape)
+                                        .padding(16.dp),
+                                ) {
+                                    androidx.compose.foundation.text.selection.SelectionContainer {
+                                        LazyRevealToolText(
+                                            bodyText = block.content,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            scrollState = outputScrollState,
+                                            linkify = true,
+                                        )
+                                    }
                                 }
                             }
                         } else {
@@ -1142,17 +1083,32 @@ internal fun ToolDetailSheet(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        toolIconFor(block.toolName),
-                                        contentDescription = null,
-                                        tint = toolAccent.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(40.dp),
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(MaterialShapes.SoftBurst.toShape())
+                                            .background(toolAccent.copy(alpha = 0.14f)),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (isLive) {
+                                            LoadingIndicator(
+                                                color = toolAccent,
+                                                modifier = Modifier.size(32.dp),
+                                            )
+                                        } else {
+                                            Icon(
+                                                toolIconFor(block.toolName),
+                                                contentDescription = null,
+                                                tint = toolAccent,
+                                                modifier = Modifier.size(28.dp),
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
                                     Text(
                                         text = if (isLive) "Running..." else "No output",
-                                        color = ChatColors.tertiaryText,
-                                        fontSize = 14.sp,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
@@ -1161,29 +1117,29 @@ internal fun ToolDetailSheet(
                 }
             }
 
-            // ── Bottom Bar (iOS: tool info row + navigation row) ──
+            // ── Bottom Bar (M3 Expressive: tool info + tonal step pagination) ──
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ChatColors.background)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .navigationBarsPadding(),
             ) {
-                HorizontalDivider(thickness = 0.5.dp, color = ChatColors.separator)
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                )
 
-                // Tool info row: status icon + title/subtitle + duration
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .padding(top = 10.dp, bottom = 4.dp),
+                        .padding(top = 10.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Status icon (iOS: 18x18)
                     if (isLive) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
+                        LoadingIndicator(
+                            modifier = Modifier.size(20.dp),
                             color = toolAccent,
-                            strokeWidth = 2.dp,
                         )
                     } else {
                         val (icon, tint) = when (block.toolStatus) {
@@ -1193,41 +1149,31 @@ internal fun ToolDetailSheet(
                             ToolBlockStatus.TIMEOUT -> Icons.Default.Schedule to ToolErrorColor
                             else -> Icons.Default.CheckCircle to ToolCheckColor
                         }
-                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(19.dp))
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
 
-                    // Title + subtitle
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = toolTitleLabel(block.toolName),
                             fontSize = 14.sp,
-                            lineHeight = 16.sp,
+                            lineHeight = 17.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = ChatColors.primaryText,
+                            color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             text = block.toolTitle.ifEmpty { block.toolName },
                             fontSize = 12.sp,
-                            lineHeight = 14.sp,
-                            color = ChatColors.secondaryText,
+                            lineHeight = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
 
-                    // [T-step-timestamp v3-fix aa8b1128] Trailing column in
-                    // the detail-view bottom bar: duration on top, the
-                    // step's HH:mm:ss start time on a smaller / lighter
-                    // line right beneath it. This is where the user goes
-                    // to inspect a single step, so the timestamp lives
-                    // here instead of on every pill in the message list.
-                    // [T-agent-port-round3] A background delegate_task's tool
-                    // call returns in ~2 s; the run it stands for is measured
-                    // by the payload's elapsed_s. Show that for agent blocks.
                     val shownDurationMs = if (com.openminis.app.agent.jobs.HelperRunner.isSubAgentToolName(block.toolName)) {
                         runCatching { org.json.JSONObject(block.content).optLong("elapsed_s", -1L) }.getOrDefault(-1L)
                             .takeIf { it >= 0 }?.let { it * 1000L } ?: block.durationMs
@@ -1242,87 +1188,117 @@ internal fun ToolDetailSheet(
                                     text = formatToolDuration(shownDurationMs),
                                     fontSize = 11.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = ChatColors.tertiaryText,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             if (block.startTimeMs > 0L) {
                                 Text(
                                     text = formatStepTimestamp(block.startTimeMs),
-                                    fontSize = 9.sp,
+                                    fontSize = 9.5.sp,
                                     fontFamily = FontFamily.Monospace,
-                                    color = ChatColors.tertiaryText.copy(alpha = 0.75f),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 )
                             }
                         }
                     }
                 }
 
-                // Navigation row: |< ... 1/N ... >|
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = 8.dp),
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Back button (iOS: backward.end.fill)
-                    IconButton(
-                        onClick = { if (currentIdx > 0) currentIdx-- },
-                        enabled = currentIdx > 0,
-                        modifier = Modifier.size(32.dp),
+                    val hasPrev = currentIdx > 0
+                    Surface(
+                        onClick = { if (hasPrev) currentIdx-- },
+                        enabled = hasPrev,
+                        shape = CircleShape,
+                        color = if (hasPrev) {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+                        },
+                        modifier = Modifier.size(34.dp),
                     ) {
-                        Icon(
-                            Icons.Default.SkipPrevious,
-                            contentDescription = "Previous",
-                            tint = if (currentIdx > 0) ChatColors.primaryText else ChatColors.disabledText,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Center: Live indicator or pagination
-                    if (isLive) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(7.dp)
-                                    .background(Color(0xFF34C759), CircleShape),
-                            )
-                            Text(
-                                "Live",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = ChatColors.primaryText,
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.SkipPrevious,
+                                contentDescription = "Previous",
+                                tint = if (hasPrev) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                                },
+                                modifier = Modifier.size(20.dp),
                             )
                         }
-                    } else {
-                        Text(
-                            "${currentIdx + 1} / ${toolBlocks.size}",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = FontFamily.Monospace,
-                            color = ChatColors.secondaryText,
-                        )
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Forward button (iOS: forward.end.fill)
-                    IconButton(
-                        onClick = { if (currentIdx < toolBlocks.lastIndex) currentIdx++ },
-                        enabled = currentIdx < toolBlocks.lastIndex,
-                        modifier = Modifier.size(32.dp),
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
                     ) {
-                        Icon(
-                            Icons.Default.SkipNext,
-                            contentDescription = "Next",
-                            tint = if (currentIdx < toolBlocks.lastIndex) ChatColors.primaryText else ChatColors.disabledText,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        if (isLive) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .background(ToolCheckColor, CircleShape),
+                                )
+                                Text(
+                                    "Live",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                        } else {
+                            Text(
+                                "${currentIdx + 1} / ${toolBlocks.size}",
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    val hasNext = currentIdx < toolBlocks.lastIndex
+                    Surface(
+                        onClick = { if (hasNext) currentIdx++ },
+                        enabled = hasNext,
+                        shape = CircleShape,
+                        color = if (hasNext) {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+                        },
+                        modifier = Modifier.size(34.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.SkipNext,
+                                contentDescription = "Next",
+                                tint = if (hasNext) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                                },
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -1517,33 +1493,38 @@ private fun LazyRevealToolText(
             val remainingChunks = total - revealed
             val nextLines = minOf(LAZY_TOOL_BATCH_CHUNKS, remainingChunks) * LAZY_TOOL_CHUNK_LINES
             val remainingLines = remainingChunks * LAZY_TOOL_CHUNK_LINES
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = "Load more ($nextLines lines)",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = color.copy(alpha = 0.9f),
-                    modifier = Modifier.clickable {
+                MinisTonalButton(
+                    onClick = {
                         revealed = (revealed + LAZY_TOOL_BATCH_CHUNKS).coerceAtMost(total)
                     },
-                )
-                Text(
-                    text = "Load all (~$remainingLines)",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = color.copy(alpha = 0.9f),
-                    modifier = Modifier.clickable { revealed = total },
-                )
+                ) {
+                    Text(
+                        text = "Load more ($nextLines lines)",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                MinisTonalButton(
+                    onClick = { revealed = total },
+                ) {
+                    Text(
+                        text = "Load all (~$remainingLines)",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditorCard(
     title: String,
@@ -1563,49 +1544,38 @@ private fun EditorCard(
         bytes >= 1024 -> String.format("%.1f KB", bytes / 1024.0)
         else -> "$bytes B"
     }
-    // Match iOS fileEditorContent (ToolLiveSheet.swift:1350) instead of the
-    // generic chat palette: the editor card needs its own dark/light grayscale
-    // ramp so the body stands out from the sheet container and the header
-    // strip reads as one notch lighter than the body.
-    //   iOS dark  : body white:0.10 (#1A1A1A), header white:0.13 (#212121),
-    //               border white:0.25 (#404040)
-    //   iOS light : body white:0.94 (#F0F0F0), header white:0.92 (#EBEBEB),
-    //               border white:0.82 (#D1D1D1)
-    // T126-fix: use ChatPalette.isDark so the in-app theme override (Settings →
-    // Appearance) wins over the system setting. Otherwise users on Light system
-    // + Dark in-app would see white card on black chat.
-    val isDark = ChatColors.isDark
-    val cardBg = if (isDark) Color(0xFF1A1A1A) else Color(0xFFF0F0F0)
-    val headerBg = if (isDark) Color(0xFF212121) else Color(0xFFEBEBEB)
-    val cardBorder = if (isDark) Color(0xFF404040) else Color(0xFFD1D1D1)
+    val cardBg = MaterialTheme.colorScheme.surfaceContainer
+    val headerBg = MaterialTheme.colorScheme.surfaceContainerHigh
+    val cardBorder = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+    val cardShape = RoundedCornerShape(20.dp)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
+                .clip(cardShape)
                 .background(cardBg)
-                .border(0.5.dp, cardBorder, RoundedCornerShape(10.dp)),
+                .border(1.dp, cardBorder, cardShape),
         ) {
-            // Header row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(headerBg)
                     .padding(vertical = 10.dp, horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(16.dp))
                 Text(
                     text = title,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace,
                     color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -1615,29 +1585,15 @@ private fun EditorCard(
                     Text(
                         text = if (isStreaming) "($sizeLabel received)" else "($sizeLabel)",
                         fontSize = 11.sp,
-                        color = if (isStreaming) Color(0xFFFF9500).copy(alpha = 0.8f) else sizeColor,
+                        fontFamily = FontFamily.Monospace,
+                        color = if (isStreaming) MaterialTheme.colorScheme.primary else sizeColor,
                     )
                 }
             }
-            HorizontalDivider(thickness = 0.5.dp, color = cardBorder)
+            HorizontalDivider(thickness = 1.dp, color = cardBorder)
 
-            // Body
             if (bodyText.isNotEmpty()) {
-                // T193 (supersedes T191): EditorCard renders both inline in
-                // the chat LazyColumn (wrapped in SelectionContainer at L1519)
-                // AND inside the ToolLiveSheet ModalBottomSheet — two
-                // independent Compose subtrees. T191 used DisableSelection to
-                // dodge the cross-tree `findCommonAncestor` crash but lost
-                // the ability to select text. A nested SelectionContainer
-                // creates its own SelectionRegistrar; Texts inside it register
-                // there instead of the outer chat-list registrar, so the
-                // selection toolbar's coordinate walk stays within this
-                // subtree and never tries to span two hierarchies — both
-                // instances are crash-safe and individually selectable.
                 androidx.compose.foundation.text.selection.SelectionContainer {
-                    // [T-android-tool-result-lazy-render] Reveal large bodies
-                    // incrementally instead of laying the whole string out on
-                    // open (a 70KB memory_get janked the sheet for seconds).
                     LazyRevealToolText(
                         bodyText = bodyText,
                         color = bodyColor,
@@ -1654,10 +1610,9 @@ private fun EditorCard(
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
+                    LoadingIndicator(
+                        modifier = Modifier.size(24.dp),
                         color = iconTint,
-                        strokeWidth = 2.dp,
                     )
                 }
             }
@@ -1667,7 +1622,7 @@ private fun EditorCard(
             Text(
                 text = trailingText,
                 fontSize = 12.sp,
-                color = ChatColors.tertiaryText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp),
             )
         }

@@ -298,7 +298,7 @@ fun ProviderDetailScreen(
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp,
+                    thickness = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                 )
                 // Auto-append /v1 switch row — inline Row with heightIn=44dp
@@ -326,7 +326,7 @@ fun ProviderDetailScreen(
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    thickness = 0.5.dp,
+                    thickness = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                 )
                 // [T-provider-custom-user-agent] Custom User-Agent input —
@@ -356,7 +356,7 @@ fun ProviderDetailScreen(
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
+                        thickness = 1.dp,
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                     )
                 }

@@ -164,27 +164,27 @@ fun UnifiedModelPickerSheet(
     }
 
     val cardColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    val cardShape = RoundedCornerShape(14.dp)
+    val cardShape = RoundedCornerShape(20.dp)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        // Slim drag handle, same as the main picker / StandardChatSheet — the
-        // Material default puts ~44dp of whitespace above the title.
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         dragHandle = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 6.dp, bottom = 4.dp),
+                    .padding(top = 10.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Box(
                     modifier = Modifier
-                        .width(32.dp)
+                        .width(36.dp)
                         .height(4.dp)
                         .background(
-                            color = ChatColors.secondaryText.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(2.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = CircleShape,
                         ),
                 )
             }
@@ -356,7 +356,7 @@ fun UnifiedModelPickerSheet(
                                 Icon(
                                     Icons.Default.Layers,
                                     contentDescription = null,
-                                    tint = Color(0xFF007AFF),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(18.dp),
                                 )
                                 Spacer(Modifier.width(10.dp))
@@ -446,7 +446,7 @@ fun UnifiedModelPickerSheet(
                                 members.forEach { entry ->
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 52.dp, end = 16.dp),
-                                        thickness = 0.5.dp,
+                                        thickness = 1.dp,
                                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                                     )
                                     val inst = config.instances
@@ -555,7 +555,7 @@ fun UnifiedModelPickerSheet(
                                 if (i > 0) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 52.dp, end = 16.dp),
-                                        thickness = 0.5.dp,
+                                        thickness = 1.dp,
                                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                                     )
                                 }
@@ -769,7 +769,7 @@ fun UnifiedModelPickerSheet(
                             }
                             HorizontalDivider(
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                thickness = 0.5.dp,
+                                thickness = 1.dp,
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                             )
                             if (!collapsed) {
@@ -890,7 +890,7 @@ private fun SelectionMark(selected: Boolean) {
     Icon(
         if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
         contentDescription = null,
-        tint = if (selected) Color(0xFF007AFF)
+        tint = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
         modifier = Modifier.size(20.dp),
     )

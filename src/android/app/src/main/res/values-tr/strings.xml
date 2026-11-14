@@ -1825,4 +1825,21 @@
     <string name="sub_agents_move_down">Aşağı taşı</string>
     <string name="sub_agents_move_up">Yukarı taşı</string>
     <string name="tool_pager_position">Bu sohbetteki %2$d araç çağrısından %1$d. si</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Model Anketi (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Modelin sohbet döngüsünü kesmeden etkileşimli sorular sormasına izin verir.</string>
+    <string name="questionnaire_status_waiting">Yanıtınız bekleniyor</string>
+    <string name="questionnaire_status_answered">Gönderildi</string>
+    <string name="questionnaire_status_skipped">Atlandı</string>
+    <string name="questionnaire_status_cancelled">İptal edildi</string>
+    <string name="questionnaire_multi_hint">Birden fazla seçebilirsiniz</string>
+    <string name="questionnaire_other_label">Diğer (özel)</string>
+    <string name="questionnaire_other_placeholder">Özel yanıtınızı yazın…</string>
+    <string name="questionnaire_text_placeholder">Yanıtınızı yazın…</string>
+    <string name="questionnaire_skip">Atla</string>
+    <string name="questionnaire_submit">Gönder</string>
+    <string name="questionnaire_expand_sheet">Genişlet</string>
+    <string name="thinking_header_streaming">Düşünüyor</string>
+    <string name="thinking_header_done">Düşünce Süreci</string>
 </resources>

@@ -162,7 +162,7 @@ fun BackgroundSettingsScreen(onBack: () -> Unit) {
             BgSectionTitle(stringResource(R.string.settings_section_notifications))
             BgToggleRow(
                 icon = Icons.Outlined.NotificationsActive,
-                iconColor = Color(0xFF007AFF),
+                iconColor = MaterialTheme.colorScheme.primary,
                 title = stringResource(R.string.settings_task_notifications),
                 checked = taskNotificationsEnabled,
                 onCheckedChange = { backgroundRepo.setTaskNotificationsEnabled(it) },
@@ -177,7 +177,7 @@ fun BackgroundSettingsScreen(onBack: () -> Unit) {
             Spacer(Modifier.size(8.dp))
             BgToggleRow(
                 icon = Icons.Outlined.Layers,
-                iconColor = Color(0xFF5856D6),
+                iconColor = MaterialTheme.colorScheme.tertiary,
                 title = stringResource(R.string.settings_bg_overlay),
                 // [T-android-overlay-toggle-reflects-intent] Reflect the user's
                 // PERSISTED intent, not the derived ready-state. Previously this

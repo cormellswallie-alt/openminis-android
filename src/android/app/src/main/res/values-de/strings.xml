@@ -1851,4 +1851,21 @@
     <string name="sub_agent_builtin_name">Allgemeiner Subagent</string>
     <string name="sub_agent_builtin_description">Offene Aufgaben, die eine eigene Tool-Schleife brauchen: eine Codebasis oder das Web über viele Runden erkunden, große Ausgaben zu einem Ergebnis verdichten oder unabhängige Zweige parallel ausführen.</string>
     <string name="tool_pager_position">Werkzeugaufruf %1$d von %2$d in dieser Unterhaltung</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Modell-Fragebogen (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Erlaubt dem Modell, Rückfragen zu stellen, ohne die Konversationsschleife zu unterbrechen.</string>
+    <string name="questionnaire_status_waiting">Wartet auf Antwort</string>
+    <string name="questionnaire_status_answered">Gesendet</string>
+    <string name="questionnaire_status_skipped">Übersprungen</string>
+    <string name="questionnaire_status_cancelled">Abgebrochen</string>
+    <string name="questionnaire_multi_hint">Mehrfachauswahl möglich</string>
+    <string name="questionnaire_other_label">Sonstiges (eigene Angabe)</string>
+    <string name="questionnaire_other_placeholder">Eigene Antwort eingeben…</string>
+    <string name="questionnaire_text_placeholder">Antwort eingeben…</string>
+    <string name="questionnaire_skip">Überspringen</string>
+    <string name="questionnaire_submit">Senden</string>
+    <string name="questionnaire_expand_sheet">Erweitern</string>
+    <string name="thinking_header_streaming">Denkt nach</string>
+    <string name="thinking_header_done">Gedankengang</string>
 </resources>

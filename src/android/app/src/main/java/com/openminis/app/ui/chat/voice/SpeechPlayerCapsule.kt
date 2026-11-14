@@ -411,8 +411,8 @@ private fun CompactSpeaker(
         Box(
             Modifier
                 .size(40.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), CircleShape)
-                .border(0.5.dp, Color.Gray.copy(alpha = 0.25f), CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f), CircleShape)
                 .pointerInput(muted) {
                     detectTapGestures(
                         onDoubleTap = { onDoubleTap() },
@@ -471,8 +471,8 @@ private fun ExpandedCapsule(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(40.dp)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), RoundedCornerShape(50))
-            .border(0.5.dp, Color.Gray.copy(alpha = 0.25f), RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(50))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f), RoundedCornerShape(50))
             .padding(horizontal = 14.dp),
     ) {
         // Speaker = mute toggle (temporary silence; capsule stays visible).

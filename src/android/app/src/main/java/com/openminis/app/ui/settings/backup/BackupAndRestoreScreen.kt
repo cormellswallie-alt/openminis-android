@@ -697,13 +697,13 @@ private fun DeviceNameSection(enabled: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF007AFF), CircleShape),
+                modifier = Modifier.size(30.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.PhoneAndroid,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(17.dp),
                 )
             }
@@ -783,7 +783,7 @@ private fun BackupHistorySection(
         if (!expanded && records.size > shown.size) {
             RestoreSourceRow(
                 icon = Icons.Outlined.History,
-                iconColor = Color(0xFF8E8E93),
+                iconColor = MaterialTheme.colorScheme.secondary,
                 label = stringResource(
                     R.string.backup_history_show_all,
                     records.size,
@@ -803,10 +803,10 @@ private fun BackupHistoryRow(
     onClick: () -> Unit,
 ) {
     val (icon, tint) = when (record.status) {
-        BackupHistory.Status.RUNNING -> Icons.Outlined.Sync to Color(0xFF8E8E93)
-        BackupHistory.Status.SUCCEEDED -> Icons.Outlined.CheckCircle to Color(0xFF34C759)
-        BackupHistory.Status.COMPLETED_WITH_ISSUES -> Icons.Outlined.Warning to Color(0xFFFF9500)
-        BackupHistory.Status.FAILED -> Icons.Outlined.ErrorOutline to Color(0xFFFF3B30)
+        BackupHistory.Status.RUNNING -> Icons.Outlined.Sync to MaterialTheme.colorScheme.secondary
+        BackupHistory.Status.SUCCEEDED -> Icons.Outlined.CheckCircle to Color(0xFF1E8E5A)
+        BackupHistory.Status.COMPLETED_WITH_ISSUES -> Icons.Outlined.Warning to Color(0xFFD97706)
+        BackupHistory.Status.FAILED -> Icons.Outlined.ErrorOutline to MaterialTheme.colorScheme.error
     }
     Column {
         Row(
@@ -852,7 +852,7 @@ private fun BackupHistoryRow(
         if (showDivider) {
             Box(
                 Modifier.fillMaxWidth().padding(start = 56.dp)
-                    .height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant),
+                    .height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }
@@ -930,12 +930,12 @@ private fun MaxFileSizeRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF8E8E93), CircleShape),
+                modifier = Modifier.size(30.dp).background(MaterialTheme.colorScheme.secondary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     Icons.Outlined.FolderZip, contentDescription = null,
-                    tint = Color.White, modifier = Modifier.size(17.dp),
+                    tint = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.size(17.dp),
                 )
             }
             Spacer(Modifier.width(14.dp))
@@ -1073,7 +1073,7 @@ private fun RestoreTab(
             // folder support is untouched — only this duplicate entry is gone.
             RestoreSourceRow(
                 icon = Icons.Outlined.Description,
-                iconColor = Color(0xFF007AFF),
+                iconColor = MaterialTheme.colorScheme.primary,
                 label = if (running) status ?: stringResource(R.string.backup_reading)
                 else stringResource(R.string.backup_choose_file),
                 enabled = !running,
@@ -1438,10 +1438,10 @@ private fun DestinationRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier.size(30.dp).background(Color(0xFF007AFF), CircleShape),
+                modifier = Modifier.size(30.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(17.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -1469,7 +1469,7 @@ private fun DestinationRow(
         }
         Box(
             Modifier.fillMaxWidth().padding(start = 56.dp)
-                .height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant),
+                .height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         )
     }
 }
@@ -1494,7 +1494,7 @@ private fun DetailValueRow(label: String, value: String, showDivider: Boolean) {
         if (showDivider) {
             Box(
                 Modifier.fillMaxWidth().padding(start = 14.dp)
-                    .height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant),
+                    .height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }
@@ -1515,7 +1515,7 @@ private fun ResultDestinationRow(
             Icon(
                 if (outcome.succeeded) Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
                 contentDescription = null,
-                tint = if (outcome.succeeded) Color(0xFF34C759) else Color(0xFFFF9500),
+                tint = if (outcome.succeeded) Color(0xFF1E8E5A) else Color(0xFFD97706),
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(10.dp))
@@ -1533,7 +1533,7 @@ private fun ResultDestinationRow(
         if (showDivider) {
             Box(
                 Modifier.fillMaxWidth().padding(start = 44.dp)
-                    .height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant),
+                    .height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }
@@ -1690,7 +1690,7 @@ internal fun RestoreSourceRow(
         if (showDivider) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(start = 58.dp, end = 14.dp)
-                    .height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    .height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
     }
@@ -1832,7 +1832,7 @@ private fun CategorySwitchRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 58.dp, end = 14.dp)
-                    .height(0.5.dp)
+                    .height(1.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             )
         }
@@ -1877,16 +1877,15 @@ private fun categoryIcon(cat: BackupCategory): ImageVector = when (cat) {
     BackupCategory.VOICE_CORRECTIONS -> Icons.Outlined.RecordVoiceOver // waveform
 }
 
-/** Tint per category, mirroring iOS BackupCategoryIcon.tint(for:). */
 private fun categoryTint(cat: BackupCategory): Color = when (cat) {
-    BackupCategory.CHATS -> Color(0xFF007AFF)                 // blue
-    BackupCategory.SHARED_FILES -> Color(0xFF5856D6)         // indigo
-    BackupCategory.SKILLS -> Color(0xFFFF9500)              // orange
-    BackupCategory.MEMORY -> Color(0xFFFF2D55)             // pink
-    BackupCategory.PROVIDERS -> Color(0xFF30B0C7)         // teal
-    BackupCategory.MCP_SERVERS -> Color(0xFF32ADE6)      // cyan
-    BackupCategory.ENVIRONMENT_VARIABLES -> Color(0xFFA2845E) // brown
-    BackupCategory.VOICE_CORRECTIONS -> Color(0xFFAF52DE) // purple
+    BackupCategory.CHATS -> Color(0xFF3F5AA9)
+    BackupCategory.SHARED_FILES -> Color(0xFF5856D6)
+    BackupCategory.SKILLS -> Color(0xFFD97706)
+    BackupCategory.MEMORY -> Color(0xFFD81B60)
+    BackupCategory.PROVIDERS -> Color(0xFF00897B)
+    BackupCategory.MCP_SERVERS -> Color(0xFF0288D1)
+    BackupCategory.ENVIRONMENT_VARIABLES -> Color(0xFF8D6E63)
+    BackupCategory.VOICE_CORRECTIONS -> Color(0xFF7C4DFF)
 }
 
 /**

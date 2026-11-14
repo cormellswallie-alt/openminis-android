@@ -1849,4 +1849,21 @@
     <string name="sub_agent_builtin_name">범용 서브 에이전트</string>
     <string name="sub_agent_builtin_description">자체 도구 루프가 필요한 개방형 작업: 여러 차례에 걸쳐 코드베이스나 웹을 탐색하고, 방대한 출력을 결론으로 정리하거나, 독립적인 분기를 병렬로 실행합니다.</string>
     <string name="tool_pager_position">이 대화의 도구 호출 %2$d개 중 %1$d번째</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">모델 설문 (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">대화 루프를 중단하지 않고 모델이 객관식 또는 주관식 질문을 할 수 있도록 허용합니다.</string>
+    <string name="questionnaire_status_waiting">응답 대기 중</string>
+    <string name="questionnaire_status_answered">제출됨</string>
+    <string name="questionnaire_status_skipped">건너뜀</string>
+    <string name="questionnaire_status_cancelled">취소됨</string>
+    <string name="questionnaire_multi_hint">복수 선택 가능</string>
+    <string name="questionnaire_other_label">기타 (직접 입력)</string>
+    <string name="questionnaire_other_placeholder">직접 입력…</string>
+    <string name="questionnaire_text_placeholder">답변을 입력하세요…</string>
+    <string name="questionnaire_skip">건너뛰기</string>
+    <string name="questionnaire_submit">제출</string>
+    <string name="questionnaire_expand_sheet">크게 보기</string>
+    <string name="thinking_header_streaming">생각 중</string>
+    <string name="thinking_header_done">사고 과정</string>
 </resources>

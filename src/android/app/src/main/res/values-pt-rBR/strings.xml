@@ -1828,4 +1828,21 @@
     <string name="sub_agents_move_down">Mover para baixo</string>
     <string name="sub_agents_move_up">Mover para cima</string>
     <string name="tool_pager_position">Chamada de ferramenta %1$d de %2$d nesta conversa</string>
+
+    <!-- Model Questionnaire & Expressive Thinking -->
+    <string name="agent_tools_ask_user">Questionário do modelo (ask_user)</string>
+    <string name="agent_tools_ask_user_footer">Permite que o modelo faça perguntas interativas sem interromper o ciclo da conversa.</string>
+    <string name="questionnaire_status_waiting">Aguardando sua resposta</string>
+    <string name="questionnaire_status_answered">Enviado</string>
+    <string name="questionnaire_status_skipped">Pulado</string>
+    <string name="questionnaire_status_cancelled">Cancelado</string>
+    <string name="questionnaire_multi_hint">Selecione todas as aplicáveis</string>
+    <string name="questionnaire_other_label">Outro (personalizado)</string>
+    <string name="questionnaire_other_placeholder">Digite sua resposta…</string>
+    <string name="questionnaire_text_placeholder">Digite sua resposta…</string>
+    <string name="questionnaire_skip">Pular</string>
+    <string name="questionnaire_submit">Enviar</string>
+    <string name="questionnaire_expand_sheet">Expandir</string>
+    <string name="thinking_header_streaming">Pensando</string>
+    <string name="thinking_header_done">Processo de pensamento</string>
 </resources>

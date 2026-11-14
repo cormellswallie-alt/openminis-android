@@ -41,9 +41,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -636,6 +638,21 @@ fun SessionListScreen(
     // initial-load flag) so an existing user with providers but zero sessions
     // doesn't flash the "add a provider" onboarding before the real config emits.
     val configLoaded by providerRepository.configLoaded.collectAsState()
+    // Guard against permanent blank home screen when ProviderRepository's async
+    // loader finishes with an unreadable/empty store (`configLoadComplete` completes
+    // while `_configLoaded` stays false) or stalls on slow cold-start IO.
+    var configLoadSettled by remember { mutableStateOf(false) }
+    LaunchedEffect(configLoaded) {
+        if (configLoaded) {
+            configLoadSettled = true
+        } else {
+            kotlinx.coroutines.withTimeoutOrNull(2500L) {
+                providerRepository.awaitConfigLoaded()
+            }
+            configLoadSettled = true
+        }
+    }
+    val effectiveConfigReady = configLoaded || configLoadSettled
     val scope = rememberCoroutineScope()
     val isDark = ChatColors.isDark
 
@@ -978,10 +995,14 @@ fun SessionListScreen(
                                 }
                             }
 
-                            // Workspace overflow / multi-select & sandbox tools
-                            Box {
+                            // Top-bar Settings + Workspace overflow so Settings is always
+                            // 1-tap reachable even during loading or onboarding.
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
                                 IconButton(
-                                    onClick = { showOverflowMenu = true },
+                                    onClick = onSettingsClick,
                                     modifier = Modifier.size(40.dp),
                                     colors = IconButtonDefaults.iconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -989,71 +1010,88 @@ fun SessionListScreen(
                                     ),
                                 ) {
                                     Icon(
-                                        Icons.Default.MoreVert,
-                                        contentDescription = stringResource(R.string.sessionlist_shell),
+                                        Icons.Outlined.Settings,
+                                        contentDescription = stringResource(R.string.sessionlist_settings),
                                         modifier = Modifier.size(20.dp),
                                     )
                                 }
-                                MinisMenu(
-                                    expanded = showOverflowMenu,
-                                    onDismissRequest = { showOverflowMenu = false },
-                                    alignEnd = true,
-                                ) {
-                                    if (sessions.isNotEmpty()) {
+
+                                Box {
+                                    IconButton(
+                                        onClick = { showOverflowMenu = true },
+                                        modifier = Modifier.size(40.dp),
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            contentColor = MaterialTheme.colorScheme.onSurface,
+                                        ),
+                                    ) {
+                                        Icon(
+                                            Icons.Default.MoreVert,
+                                            contentDescription = stringResource(R.string.sessionlist_shell),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                    MinisMenu(
+                                        expanded = showOverflowMenu,
+                                        onDismissRequest = { showOverflowMenu = false },
+                                        alignEnd = true,
+                                    ) {
+                                        if (sessions.isNotEmpty()) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.sessionlist_select_action)) },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    viewModel.isSelecting.value = true
+                                                },
+                                                leadingIcon = {
+                                                    Icon(Icons.Outlined.ChecklistRtl, contentDescription = null)
+                                                },
+                                            )
+                                            MinisMenuDivider()
+                                        }
                                         DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.sessionlist_select_action)) },
+                                            text = { Text(stringResource(R.string.sessionlist_shell_terminal)) },
                                             onClick = {
                                                 showOverflowMenu = false
-                                                viewModel.isSelecting.value = true
+                                                onTerminalClick()
                                             },
                                             leadingIcon = {
-                                                Icon(Icons.Outlined.ChecklistRtl, contentDescription = null)
+                                                Icon(Icons.Outlined.Terminal, contentDescription = null)
+                                            },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.sessionlist_rootfs_management)) },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                onRootfsClick()
+                                            },
+                                            leadingIcon = {
+                                                Icon(Icons.Outlined.Dns, contentDescription = null)
                                             },
                                         )
                                         MinisMenuDivider()
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.sessionlist_open_browser)) },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                browserTabPool.ensureTabForUI()
+                                                showBrowserSheet = true
+                                            },
+                                            leadingIcon = {
+                                                Icon(Icons.Outlined.Language, contentDescription = null)
+                                            },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.sessionlist_browser_settings)) },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                showBrowserSettings = true
+                                            },
+                                            leadingIcon = {
+                                                Icon(Icons.Outlined.Settings, contentDescription = null)
+                                            },
+                                        )
                                     }
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.sessionlist_shell_terminal)) },
-                                        onClick = {
-                                            showOverflowMenu = false
-                                            onTerminalClick()
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Outlined.Terminal, contentDescription = null)
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.sessionlist_rootfs_management)) },
-                                        onClick = {
-                                            showOverflowMenu = false
-                                            onRootfsClick()
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Outlined.Dns, contentDescription = null)
-                                        },
-                                    )
-                                    MinisMenuDivider()
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.sessionlist_open_browser)) },
-                                        onClick = {
-                                            showOverflowMenu = false
-                                            browserTabPool.ensureTabForUI()
-                                            showBrowserSheet = true
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Outlined.Language, contentDescription = null)
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.sessionlist_browser_settings)) },
-                                        onClick = {
-                                            showOverflowMenu = false
-                                            showBrowserSettings = true
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Outlined.Settings, contentDescription = null)
-                                        },
-                                    )
                                 }
                             }
                         }
@@ -1150,7 +1188,30 @@ fun SessionListScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            if (isInitialLoadComplete) Column(modifier = Modifier.fillMaxSize()) {
+            val isWaitingInitialLoad = !isInitialLoadComplete ||
+                (sessions.isEmpty() && !effectiveConfigReady && !(isSearchActive && searchQuery.isNotBlank()))
+
+            if (isWaitingInitialLoad) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(84.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                                MaterialShapes.Cookie12Sided.toShape(),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        LoadingIndicator(
+                            modifier = Modifier.size(42.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            } else Column(modifier = Modifier.fillMaxSize()) {
                 if (sessions.isEmpty()) {
                     if (isSearchActive && searchQuery.isNotBlank()) {
                         Box(
@@ -1163,7 +1224,7 @@ fun SessionListScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                    } else if (configLoaded) {
+                    } else {
                         OnboardingLanding(
                             hasProviders = hasProviders,
                             hasGroups = hasGroups,
@@ -1436,14 +1497,19 @@ fun SessionListScreen(
                     onDelete = { showBulkDeleteDialog = true },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
-            } else if (hasProviders && (sessions.isNotEmpty() || isSearchActive)) {
+            } else if (isInitialLoadComplete) {
                 ExpressiveWorkspaceDock(
                     scheduledTaskCount = scheduledTaskCount,
                     modelGroups = providerConfig.modelGroups,
                     onNewChat = {
-                        scope.launch {
-                            val sessionId = viewModel.createNewSession()
-                            if (sessionId != null) onNewChatGuarded(sessionId)
+                        if (!hasProviders) {
+                            onAddProviderClick()
+                        } else {
+                            scope.launch {
+                                val sessionId = viewModel.createNewSession()
+                                if (sessionId != null) onNewChatGuarded(sessionId)
+                                else onSelectModelsClick()
+                            }
                         }
                     },
                     onNewChatWithGroup = { groupId ->
@@ -2914,8 +2980,9 @@ private fun OnboardingLanding(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(bottom = 32.dp),
+            .padding(top = 16.dp, bottom = 116.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

@@ -390,23 +390,22 @@ internal fun ModelPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        // Match the slim drag handle used by StandardChatSheet (6dp top / 4dp
-        // bottom) so the title sits flush with the indicator instead of the
-        // Material default's ~44dp whitespace gap above it.
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         dragHandle = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 6.dp, bottom = 4.dp),
+                    .padding(top = 10.dp, bottom = 4.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Box(
                     modifier = Modifier
-                        .width(32.dp)
+                        .width(36.dp)
                         .height(4.dp)
                         .background(
-                            color = ChatColors.secondaryText.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(2.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = CircleShape,
                         ),
                 )
             }
@@ -642,7 +641,7 @@ internal fun ModelPickerSheet(
                                     Icon(
                                         Icons.Default.Layers,
                                         contentDescription = null,
-                                        tint = Color(0xFF007AFF),
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp),
                                     )
                                     Spacer(Modifier.width(10.dp))
@@ -722,10 +721,10 @@ internal fun ModelPickerSheet(
                                             fontSize = 9.sp,
                                             lineHeight = 11.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF007AFF),
+                                            color = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier
                                                 .background(
-                                                    Color(0xFF007AFF).copy(alpha = 0.1f),
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                                                     RoundedCornerShape(50),
                                                 )
                                                 .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -817,7 +816,7 @@ internal fun ModelPickerSheet(
                                             if (memberIndex > 0) {
                                                 HorizontalDivider(
                                                     modifier = Modifier.padding(start = 72.dp, end = 16.dp),
-                                                    thickness = 0.5.dp,
+                                                    thickness = 1.dp,
                                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                                                 )
                                             }
@@ -833,7 +832,7 @@ internal fun ModelPickerSheet(
                                                 Icon(
                                                     if (isActive) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                     contentDescription = null,
-                                                    tint = if (isActive) Color(0xFF007AFF)
+                                                    tint = if (isActive) MaterialTheme.colorScheme.primary
                                                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
                                                     modifier = Modifier.size(17.dp),
                                                 )
@@ -876,7 +875,7 @@ internal fun ModelPickerSheet(
                                 if (index < filteredGroups.size - 1) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 48.dp, end = 16.dp),
-                                        thickness = 0.5.dp,
+                                        thickness = 1.dp,
                                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                                     )
                                 }
@@ -1015,7 +1014,7 @@ internal fun ModelPickerSheet(
                                 // between its own header and its members.
                                 HorizontalDivider(
                                     modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                    thickness = 0.5.dp,
+                                    thickness = 1.dp,
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                                 )
 
@@ -1040,7 +1039,7 @@ internal fun ModelPickerSheet(
                                             Icon(
                                                 if (selectedEntry != null) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                 contentDescription = null,
-                                                tint = if (selectedEntry != null) Color(0xFF007AFF)
+                                                tint = if (selectedEntry != null) MaterialTheme.colorScheme.primary
                                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                                 modifier = Modifier.size(20.dp),
                                             )
@@ -1093,19 +1092,9 @@ internal fun ModelPickerSheet(
                                         // the two read as one two-line entry.
                                         HorizontalDivider(
                                             modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                            thickness = 0.5.dp,
+                                            thickness = 1.dp,
                                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                                         )
-                                        // [T-android-model-picker-polish] Explicit
-                                        // "Show N models" affordance, as iOS has.
-                                        // The chevron in the header already
-                                        // expands, but it is a small target in the
-                                        // corner and reads as decoration — the
-                                        // collapsed row gave no hint that the
-                                        // other N-1 models were one tap away.
-                                        // Tapping the summary row itself SELECTS
-                                        // that model, so expanding needed its own
-                                        // control rather than sharing that one.
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -1115,18 +1104,11 @@ internal fun ModelPickerSheet(
                                                 .padding(horizontal = 16.dp, vertical = 6.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            // Chevron LEADS the label and the row
-                                            // starts at the card's own inset: the
-                                            // arrow is what signals "this expands",
-                                            // so it has to be the first thing read,
-                                            // and the earlier 30.dp indent left it
-                                            // floating under the model names above
-                                            // rather than aligned with the card.
                                             Icon(
                                                 Icons.Default.KeyboardArrowDown,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp),
-                                                tint = Color(0xFF007AFF),
+                                                tint = MaterialTheme.colorScheme.primary,
                                             )
                                             Spacer(Modifier.width(4.dp))
                                             Text(
@@ -1136,7 +1118,7 @@ internal fun ModelPickerSheet(
                                                     entries.size,
                                                 ),
                                                 style = MaterialTheme.typography.labelMedium,
-                                                color = Color(0xFF007AFF),
+                                                color = MaterialTheme.colorScheme.primary,
                                             )
                                         }
                                         }
@@ -1180,7 +1162,7 @@ internal fun ModelPickerSheet(
                                             Icon(
                                                 if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                                 contentDescription = null,
-                                                tint = if (isSelected) Color(0xFF007AFF)
+                                                tint = if (isSelected) MaterialTheme.colorScheme.primary
                                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                                                 modifier = Modifier.size(20.dp),
                                             )
@@ -1221,7 +1203,7 @@ internal fun ModelPickerSheet(
                                         if (index < entries.size - 1) {
                                             HorizontalDivider(
                                                 modifier = Modifier.padding(start = 52.dp, end = 16.dp),
-                                                thickness = 0.5.dp,
+                                                thickness = 1.dp,
                                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                                             )
                                         }
@@ -1366,26 +1348,22 @@ private fun QuickTestButton(onClick: () -> Unit) {
         Icon(
             Icons.Default.Bolt,
             contentDescription = stringResource(R.string.model_picker_quick_test),
-            tint = Color(0xFF007AFF),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(17.dp),
         )
     }
 }
 
-// iOS: provider color dot helper
 private fun providerDotColor(providerType: ProviderType?): Color = when (providerType) {
-    ProviderType.anthropic -> Color(0xFFAB47BC) // purple
-    ProviderType.gemini -> Color(0xFF42A5F5)    // blue
-    ProviderType.openAI -> Color(0xFF4CAF50)    // green
-    ProviderType.openRouter -> Color(0xFF00BCD4) // cyan
-    ProviderType.xAI -> Color(0xFFFF7043)        // orange — Grok brand
-    ProviderType.kimiCode -> Color(0xFF5C6BC0)   // indigo — Kimi accent
-    ProviderType.githubCopilot -> Color(0xFF6E5494) // purple — GitHub accent
-    // [T-android-provider-type-parity] Responses API instances are
-    // OpenAI under the hood — same green dot. Undrivable types share
-    // the neutral gray used for "no provider".
+    ProviderType.anthropic -> Color(0xFFAB47BC)
+    ProviderType.gemini -> Color(0xFF42A5F5)
+    ProviderType.openAI -> Color(0xFF4CAF50)
+    ProviderType.openRouter -> Color(0xFF00BCD4)
+    ProviderType.xAI -> Color(0xFFFF7043)
+    ProviderType.kimiCode -> Color(0xFF5C6BC0)
+    ProviderType.githubCopilot -> Color(0xFF6E5494)
     ProviderType.openAIResponses -> Color(0xFF4CAF50)
     ProviderType.antigravity,
-    ProviderType.unsupported -> Color(0xFF8E8E93)
-    null -> Color(0xFF8E8E93)                    // gray
+    ProviderType.unsupported -> Color(0xFF79747E)
+    null -> Color(0xFF79747E)
 }

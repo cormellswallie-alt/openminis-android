@@ -276,7 +276,7 @@ fun ProviderListScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(start = 38.dp, end = 14.dp)
-                                        .height(0.5.dp)
+                                        .height(1.dp)
                                         .background(divider),
                                 )
                             }
@@ -311,7 +311,7 @@ fun ProviderListScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 38.dp, end = 14.dp)
-                                .height(0.5.dp)
+                                .height(1.dp)
                                 .background(divider),
                         )
                     }

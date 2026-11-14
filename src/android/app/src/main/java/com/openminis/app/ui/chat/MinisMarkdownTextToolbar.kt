@@ -295,27 +295,19 @@ internal fun MinisMarkdownTextToolbarHost(toolbar: MinisMarkdownTextToolbar) {
         // shadow so the bar reads as a popped-out floating element.
         val barColor = MaterialTheme.colorScheme.surfaceContainerHigh
         Surface(
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(20.dp),
             color = barColor,
             tonalElevation = 3.dp,
             shadowElevation = 8.dp,
             border = androidx.compose.foundation.BorderStroke(
-                0.5.dp,
+                1.dp,
                 MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
             ),
         ) {
-            // [T-android-copy-full-reply-scope] Make the action row
-            // horizontally scrollable, matching the MinisTextKit selection bar.
-            // Buttons never wrap (ToolbarButton is maxLines=1/softWrap=false to
-            // avoid the truncation documented there), so without a scroll the
-            // trailing actions simply fall off the screen edge and become
-            // unreachable. With Copy + Add to Input + Read Aloud + three
-            // full-message copies + two table actions this row reaches eight
-            // items, and the "Copy Full …" labels are the longest yet.
             val toolbarScroll = rememberScrollState()
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(barColor)
                     .height(40.dp)
                     .horizontalScroll(toolbarScroll),
@@ -447,7 +439,7 @@ private fun ToolbarDivider() {
     Box(
         modifier = Modifier
             .padding(vertical = 8.dp)
-            .width(0.5.dp)
+            .width(1.dp)
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
     )

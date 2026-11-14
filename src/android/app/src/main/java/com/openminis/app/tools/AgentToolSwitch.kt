@@ -24,6 +24,9 @@ enum class AgentToolSwitch(val key: String, val defaultValue: Boolean) {
      *  (see [migrateLegacyIfNeeded]); flipping the default would silently
      *  disable a feature existing users have. */
     AGENTS("agent.tools.agents.enabled", true),
+
+    /** ask_user — interactive mid-turn model questionnaire, on by default. */
+    ASK_USER("agent.tools.ask_user.enabled", true),
     ;
 
     fun isEnabled(context: Context): Boolean =
@@ -46,6 +49,7 @@ enum class AgentToolSwitch(val key: String, val defaultValue: Boolean) {
             // shipped builds wrote, so the switch still governs a
             // replayed call from an older transcript.
             "subagent_task", "delegate_task", "agent_status" -> AGENTS
+            "ask_user" -> ASK_USER
             else -> null
         }
 
