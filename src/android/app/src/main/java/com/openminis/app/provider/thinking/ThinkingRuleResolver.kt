@@ -738,6 +738,8 @@ object ThinkingRuleResolver {
      * makes the model unusable outright. The asymmetry decides the default.
      */
     private fun rejectsMinimalLevel(lowerId: String): Boolean {
+        val major = Regex("""gemini-(\d+)""").find(lowerId)?.groupValues?.getOrNull(1)?.toIntOrNull()
+        if (major != null && major >= 4) return true
         val m = Regex("""gemini-3\.(\d+)""").find(lowerId) ?: return false
         val minor = m.groupValues[1].toIntOrNull() ?: return false
         return minor >= 7
@@ -763,7 +765,8 @@ object ThinkingRuleResolver {
             return null
         }
 
-        val isGemini3 = modelId.contains("gemini-3")
+        val majorGen = Regex("""gemini-(\d+)""").find(lowerId)?.groupValues?.getOrNull(1)?.toIntOrNull()
+        val isGemini3 = modelId.contains("gemini-3") || (majorGen != null && majorGen >= 3)
         val is25Pro = modelId.contains("gemini-2.5-pro")
         val is25Flash = modelId.contains("gemini-2.5-flash") && !modelId.contains("lite")
         val is25FlashLite = modelId.contains("gemini-2.5-flash-lite")

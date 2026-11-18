@@ -35,13 +35,9 @@ internal fun inferContextWindowTokens(model: LLMModel): Int {
         Regex("claude-sonnet-4-[567]"),
     )
     if (millionClassPatterns.any { it.containsMatchIn(idLower) }) return 1_000_000
-    if (idLower.contains("gemini-2.5-pro") ||
-        idLower.contains("gemini-2.0-pro") ||
-        idLower.contains("gemini-1.5-pro") ||
-        idLower.contains("gemini-2.5-flash") ||
-        idLower.contains("gemini-3-pro") ||
-        idLower.contains("gemini-3-flash")
-    ) return 1_000_000
+    if (idLower.contains("gemini")) {
+        return if (idLower.contains("1.0")) 32_000 else 1_000_000
+    }
 
     if (idLower.startsWith("claude-") || idLower.contains("/claude-")) return 200_000
 

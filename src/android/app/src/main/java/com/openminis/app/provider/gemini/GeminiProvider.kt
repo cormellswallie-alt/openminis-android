@@ -36,9 +36,15 @@ import com.openminis.app.provider.thinking.ThinkingRuleResolver
 class GeminiProvider(
     private val apiKey: String,
     override var model: LLMModel = LLMModel.gemini25Flash,
-    private val basePath: String = "https://generativelanguage.googleapis.com/v1beta",
+    private val basePath: String = OFFICIAL_BASE_PATH,
+    private val isOAuth: Boolean = false,
+    private val customUserAgent: String? = null,
 ) : LLMProvider {
     override val name = "Google"
+
+    private val resolvedBasePath: String = normalizeGeminiBasePath(basePath)
+    private val isCustomEndpoint: Boolean =
+        !resolvedBasePath.lowercase().contains("generativelanguage.googleapis.com")
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -59,14 +65,14 @@ class GeminiProvider(
         thinkingLevel: ThinkingLevel,
     ): LLMResponse = withContext(Dispatchers.IO) {
         val body = buildRequestBody(messages, systemPrompt, maxTokens, temperature, imageParts, tools, thinkingLevel)
-        val url = "$basePath/models/${model.id}:generateContent?key=$apiKey"
+        val url = buildGenerateUrl(stream = false)
         val request = Request.Builder()
             .url(url)
             .post(body.toString().toRequestBody("application/json".toMediaType()))
+            .applyGeminiAuth()
             // [T-android-default-ua] Brand the outbound UA so server logs
-            // can trace the request back to the Minis build. Gemini has no
-            // SDK-specific UA requirement, so the helper's default kicks in.
-            .applyUserAgentOverride(null)
+            // can trace the request back to the Minis build (or apply custom UA).
+            .applyUserAgentOverride(if (isCustomEndpoint) customUserAgent else null)
             .build()
 
         val response = client.newCall(request).execute()
@@ -123,13 +129,14 @@ class GeminiProvider(
         thinkingLevel: ThinkingLevel,
     ): Flow<LLMStreamChunk> = callbackFlow {
         val body = buildRequestBody(messages, systemPrompt, maxTokens, temperature, imageParts, tools, thinkingLevel)
-        val url = "$basePath/models/${model.id}:streamGenerateContent?alt=sse&key=$apiKey"
+        val url = buildGenerateUrl(stream = true)
         val request = Request.Builder()
             .url(url)
             .post(body.toString().toRequestBody("application/json".toMediaType()))
+            .applyGeminiAuth()
             // [T-android-default-ua] same intent as the non-streaming
             // branch above — brand outbound requests with Minis/<version>.
-            .applyUserAgentOverride(null)
+            .applyUserAgentOverride(if (isCustomEndpoint) customUserAgent else null)
             .build()
 
         val response = client.newCall(request).execute()
@@ -208,12 +215,11 @@ class GeminiProvider(
     ): JSONObject {
         val body = JSONObject()
 
-        // [T-android-gemini3-thoughtsig / #179] Gemini 3.x REQUIRES a
+        // [T-android-gemini3-thoughtsig / #179] Gemini 3.x+ (3.x, 4.x, …) REQUIRES a
         // thoughtSignature on every historical functionCall part; a bare
         // functionCall 400s ("Function call is missing a thought_signature").
-        // Only gemini-3.x enforces this, so gate the whole special-case on it
-        // to leave 1.x/2.x/flash behaviour byte-for-byte unchanged.
-        val requiresSig = model.id.lowercase().contains("gemini-3")
+        // Gate on major >= 3 to leave 1.x/2.x behaviour byte-for-byte unchanged.
+        val requiresSig = requiresThoughtSignature(model.id)
         // Tool-call ids we CANNOT safely replay as a functionCall because their
         // signature is missing (old sessions, non-3.x-origin history, dropped
         // field). For these, both the functionCall AND its paired functionResponse
@@ -575,7 +581,77 @@ class GeminiProvider(
         return parseUsageMetadata(usage)
     }
 
+    private fun buildGenerateUrl(stream: Boolean): String {
+        val cleanModelId = model.id.removePrefix("models/")
+        val action = if (stream) "streamGenerateContent" else "generateContent"
+        val baseUrl = "$resolvedBasePath/models/$cleanModelId:$action"
+        val params = mutableListOf<String>()
+        if (stream) params.add("alt=sse")
+        if (!isOAuth && apiKey.isNotBlank()) {
+            params.add("key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}")
+        }
+        return if (params.isEmpty()) baseUrl else "$baseUrl?${params.joinToString("&")}"
+    }
+
+    private fun Request.Builder.applyGeminiAuth(): Request.Builder {
+        if (isOAuth) {
+            if (apiKey.isNotBlank()) header("Authorization", "Bearer $apiKey")
+        } else if (isCustomEndpoint && apiKey.isNotBlank()) {
+            header("x-goog-api-key", apiKey)
+            header("Authorization", "Bearer $apiKey")
+        }
+        return this
+    }
+
     companion object {
+        const val OFFICIAL_BASE_PATH = "https://generativelanguage.googleapis.com/v1beta"
+        private val GEMINI_MAJOR_REGEX = Regex("""gemini-(\d+)""")
+        private val NO_THINKING_SUFFIXES = listOf("-tts", "-image", "-embedding", "-vision")
+
+        /**
+         * Normalize a configured Gemini base URL so both bare hosts
+         * (`https://gateway.example.com`) and explicit versioned roots
+         * (`https://gateway.example.com/v1beta` or `/gemini/v1beta`) route to
+         * `<versioned>/models/<id>:generateContent` without double-appending
+         * or hitting root 404s.
+         */
+        fun normalizeGeminiBasePath(rawBase: String?): String {
+            val trimmed = rawBase?.trim()?.trimEnd('/').orEmpty()
+            if (trimmed.isEmpty()) return OFFICIAL_BASE_PATH
+            val lower = trimmed.lowercase()
+            return when {
+                lower.endsWith("/v1beta") || lower.endsWith("/v1alpha") -> trimmed
+                lower.endsWith("/v1") -> trimmed.dropLast(3) + "/v1beta"
+                else -> "$trimmed/v1beta"
+            }
+        }
+
+        /** Extract the major generation number from a Gemini model id (e.g. `gemini-4-hydrogen` -> 4). */
+        fun geminiMajorVersion(modelId: String): Int? =
+            GEMINI_MAJOR_REGEX.find(modelId.lowercase())?.groupValues?.getOrNull(1)?.toIntOrNull()
+
+        /** Gemini 3.x and 4.x+ enforce `thoughtSignature` on replayed `functionCall` parts. */
+        fun requiresThoughtSignature(modelId: String): Boolean =
+            (geminiMajorVersion(modelId) ?: 0) >= 3
+
+        /**
+         * Whether [modelId] natively supports Gemini thinking (`thinkingLevel` on 3.x/4.x+
+         * or `thinkingBudget` on 2.5 Pro/Flash). Specialized non-reasoning modalities
+         * (`-tts`, `-image`, `-embedding`, `-vision`) and `2.5-flash-lite` are excluded.
+         */
+        fun supportsThinking(modelId: String): Boolean {
+            val lower = modelId.lowercase()
+            if (NO_THINKING_SUFFIXES.any { lower.endsWith(it) || lower.contains("$it-") }) {
+                return false
+            }
+            if (lower.contains("gemini-2.5-flash-lite")) return false
+            val major = geminiMajorVersion(lower)
+            if (major != null && major >= 3) return true
+            if (lower.contains("gemini-2.5-pro")) return true
+            if (lower.contains("gemini-2.5-flash") && !lower.contains("lite")) return true
+            return false
+        }
+
         /**
          * [T-gemini-unsigned-narration] How much of a downgraded tool result
          * to inline. Large outputs are offloaded upstream already, so this

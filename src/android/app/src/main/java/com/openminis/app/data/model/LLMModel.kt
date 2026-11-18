@@ -114,14 +114,28 @@ data class LLMModel(
         // Newest first, matching iOS's ordering (LLMTypes.swift `allAnthropic`).
         val allAnthropic = listOf(claudeFable51, claudeFable5, claudeOpus55, claudeOpus48, claudeOpus46, claudeSonnet55, claudeSonnet5, claudeSonnet46, claudeHaiku45)
 
-        // Gemini
-        val gemini3Pro = LLMModel("gemini-3-pro-preview", "Gemini 3 Pro (Preview)", "Google")
-        val gemini3Flash = LLMModel("gemini-3-flash-preview", "Gemini 3 Flash (Preview)", "Google")
-        val gemini25Pro = LLMModel("gemini-2.5-pro", "Gemini 2.5 Pro", "Google")
-        val gemini25Flash = LLMModel("gemini-2.5-flash", "Gemini 2.5 Flash", "Google")
-        val gemini25FlashLite = LLMModel("gemini-2.5-flash-lite", "Gemini 2.5 Flash Lite", "Google")
+        // Gemini — reasoning models explicitly stamped with `supportsReasoning = true`
+        // (mirrors Anthropic/OpenAI above) so the composer Thinking pill is immediately
+        // enabled even before models.dev enrichment runs.
+        val gemini4Hydrogen = LLMModel("gemini-4-hydrogen", "Gemini 4 Hydrogen", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini4He = LLMModel("gemini-4-he", "Gemini 4 Helium", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini31Pro = LLMModel("gemini-3.1-pro-preview", "Gemini 3.1 Pro (Preview)", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini3Pro = LLMModel("gemini-3-pro-preview", "Gemini 3 Pro (Preview)", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini3Flash = LLMModel("gemini-3-flash-preview", "Gemini 3 Flash (Preview)", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini25Pro = LLMModel("gemini-2.5-pro", "Gemini 2.5 Pro", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini25Flash = LLMModel("gemini-2.5-flash", "Gemini 2.5 Flash", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536, supportsReasoning = true)
+        val gemini25FlashLite = LLMModel("gemini-2.5-flash-lite", "Gemini 2.5 Flash Lite", "Google", contextWindow = 1_000_000, maxOutputTokens = 65_536)
 
-        val allGemini = listOf(gemini3Pro, gemini3Flash, gemini25Pro, gemini25Flash, gemini25FlashLite)
+        val allGemini = listOf(
+            gemini4Hydrogen,
+            gemini4He,
+            gemini31Pro,
+            gemini3Pro,
+            gemini3Flash,
+            gemini25Pro,
+            gemini25Flash,
+            gemini25FlashLite,
+        )
 
         // OpenAI — GPT-5.x and o-series ALWAYS support reasoning
         // (`reasoning_effort` field is required on Codex-OAuth and respected

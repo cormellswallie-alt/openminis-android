@@ -66,8 +66,23 @@ object ProviderFactory {
                 else AnthropicProvider(apiKey, model, isOAuth = isOAuth)
             }
             ProviderType.gemini -> {
-                if (basePath != null) GeminiProvider(apiKey, model, basePath)
-                else GeminiProvider(apiKey, model)
+                val isOAuth = instance.credentialType == ProviderCredential.oauth
+                // Use raw customBaseURL for Gemini so an accidentally-enabled
+                // appendV1Suffix cannot distort a native `/v1beta` base URL;
+                // GeminiProvider.normalizeGeminiBasePath handles both bare
+                // hosts (`https://gateway.example.com`) and explicit `/v1beta`.
+                val geminiBase = instance.customBaseURL?.trim()?.takeIf { it.isNotEmpty() }
+                if (geminiBase != null) {
+                    GeminiProvider(
+                        apiKey = apiKey,
+                        model = model,
+                        basePath = geminiBase,
+                        isOAuth = isOAuth,
+                        customUserAgent = instance.customUserAgent,
+                    )
+                } else {
+                    GeminiProvider(apiKey = apiKey, model = model, isOAuth = isOAuth)
+                }
             }
             // [T-android-provider-type-parity] openAIResponses shares this
             // branch: on iOS it is "OpenAI with forceResponsesAPI = true", and

@@ -751,7 +751,7 @@ class ProviderRepository(private val context: Context) {
         //     a customBase that points at the canonical host) keep the seed so
         //     UI isn't blank during the first refresh round-trip.
         val shouldSeed = instance.credentialType == ProviderCredential.oauth ||
-            !isThirdPartyOpenAICompat(instance)
+            (!isThirdPartyOpenAICompat(instance) && !isThirdPartyGeminiCompat(instance))
         if (shouldSeed) {
             val entries = instance.providerType.builtInModels.map { model ->
                 ModelEntry(providerInstanceId = instance.id, baseModel = model)
@@ -760,9 +760,9 @@ class ProviderRepository(private val context: Context) {
         } else {
             android.util.Log.i(
                 "ProviderRepo",
-                "[ModelList] addInstance: skip built-in seed for third-party OpenAI-compat base " +
-                    "(label=${instance.label} base=${instance.effectiveBaseURL}) — " +
-                    "models will populate from upstream /v1/models on refresh",
+                "[ModelList] addInstance: skip built-in seed for third-party compatible base " +
+                    "(type=${instance.providerType} label=${instance.label} base=${instance.customBaseURL}) — " +
+                    "models will populate from upstream /models on refresh",
             )
         }
         // [T-android-provider-voice] Seed voice-template mock models when the
@@ -867,6 +867,12 @@ class ProviderRepository(private val context: Context) {
         val custom = instance.customBaseURL?.lowercase() ?: return false
         val officialHosts = listOf("api.openai.com", "chatgpt.com")
         return officialHosts.none { custom.contains(it) }
+    }
+
+    private fun isThirdPartyGeminiCompat(instance: ProviderInstance): Boolean {
+        if (instance.providerType != ProviderType.gemini) return false
+        val custom = instance.customBaseURL?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return false
+        return !custom.contains("generativelanguage.googleapis.com")
     }
 
     fun updateInstance(instance: ProviderInstance): Unit = synchronized(configLock) {
@@ -2628,7 +2634,11 @@ class ProviderRepository(private val context: Context) {
         val customBase = instance.customBaseURL
         val isThirdParty = customBase != null
             && !customBase.lowercase().let {
-                it.contains("api.openai.com") || it.contains("chatgpt.com") || it.contains("openrouter.ai")
+                it.contains("api.openai.com") ||
+                    it.contains("chatgpt.com") ||
+                    it.contains("openrouter.ai") ||
+                    it.contains("generativelanguage.googleapis.com") ||
+                    it.contains("api.anthropic.com")
             }
 
         if (apiKey != null) {
@@ -2641,7 +2651,14 @@ class ProviderRepository(private val context: Context) {
                         // [T-provider-custom-user-agent] models-list UA override.
                         customUserAgent = instance.customUserAgent,
                     )
-                    ProviderType.gemini -> GeminiModelsApi.fetchModels(apiKey)
+                    ProviderType.gemini -> GeminiModelsApi.fetchModels(
+                        apiKey = apiKey,
+                        baseURL = instance.customBaseURL?.trim()?.takeIf { it.isNotEmpty() },
+                        isOAuth = instance.credentialType == com.openminis.app.data.model.ProviderCredential.oauth,
+                        context = context,
+                        forceRefresh = forceRefresh,
+                        customUserAgent = instance.customUserAgent,
+                    )
                     // [T-provider-custom-user-agent] models-list UA override.
                     // [T-android-provider-type-parity] openAIResponses lists
                     // models from the same /v1/models endpoint — only the

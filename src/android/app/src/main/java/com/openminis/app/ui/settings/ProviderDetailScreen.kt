@@ -296,33 +296,35 @@ fun ProviderDetailScreen(
                         fieldModifier = Modifier.bringIntoViewOnFocus(),
                     )
                 }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-                )
-                // Auto-append /v1 switch row — inline Row with heightIn=44dp
-                // so the row matches the URL-input row above and the save
-                // action below. SettingsSwitchRow's intrinsic 12dp padding
-                // around the 32dp Switch over-reported the height (~60dp),
-                // breaking the three-row rhythm in the Custom API base card
-                // (T231).
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 44.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.provider_detail_auto_append_v1),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f),
+                if (instance.providerType != ProviderType.gemini) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                     )
-                    SettingsSwitch(
-                        checked = appendV1Suffix,
-                        onCheckedChange = { appendV1Suffix = it },
-                    )
+                    // Auto-append /v1 switch row — inline Row with heightIn=44dp
+                    // so the row matches the URL-input row above and the save
+                    // action below. SettingsSwitchRow's intrinsic 12dp padding
+                    // around the 32dp Switch over-reported the height (~60dp),
+                    // breaking the three-row rhythm in the Custom API base card
+                    // (T231). Hidden for Gemini (uses /v1beta native path).
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 44.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.provider_detail_auto_append_v1),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        SettingsSwitch(
+                            checked = appendV1Suffix,
+                            onCheckedChange = { appendV1Suffix = it },
+                        )
+                    }
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -330,16 +332,12 @@ fun ProviderDetailScreen(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                 )
                 // [T-provider-custom-user-agent] Custom User-Agent input —
-                // only for OpenAI-/Anthropic-compat (relay) protocols. Some
+                // for OpenAI-/Anthropic-/Gemini-compat (relay) protocols. Some
                 // gateways reject Minis' default UA and only allow official
-                // clients (e.g. Claude Code). Blank → default UA. Official
-                // direct OpenAI/Anthropic instances still see the field because
-                // protocol == openAI/anthropic; it's harmless there (the value
-                // is only injected when this instance has a custom base, and on
-                // the official path customUserAgent stays at its default null
-                // unless the user typed one — applied verbatim if they do).
+                // clients. Blank → default UA.
                 val showUserAgentField = instance.providerType == ProviderType.openAI ||
-                    instance.providerType == ProviderType.anthropic
+                    instance.providerType == ProviderType.anthropic ||
+                    instance.providerType == ProviderType.gemini
                 if (showUserAgentField) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text(
@@ -367,7 +365,7 @@ fun ProviderDetailScreen(
                         providerRepository.updateInstance(
                             instance.copy(
                                 customBaseURL = customBaseURL.ifBlank { null },
-                                appendV1Suffix = appendV1Suffix,
+                                appendV1Suffix = if (instance.providerType == ProviderType.gemini) false else appendV1Suffix,
                                 // [T-provider-custom-user-agent] Blank → null →
                                 // default UA. Only the gated providers can edit
                                 // this; for others customUserAgent equals the

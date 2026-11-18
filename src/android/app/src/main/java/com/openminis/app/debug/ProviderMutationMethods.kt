@@ -217,7 +217,17 @@ internal object ProviderMutationMethods {
         }
         val probeURL = when (instance.providerType) {
             ProviderType.anthropic -> "$baseURL/v1/models"
-            ProviderType.gemini -> "$baseURL/v1beta/models?key=" + (repo.loadApiKey(id) ?: "")
+            ProviderType.gemini -> {
+                val gBase = com.openminis.app.provider.gemini.GeminiProvider.normalizeGeminiBasePath(
+                    instance.customBaseURL?.trim()?.takeIf { it.isNotEmpty() } ?: baseURL
+                )
+                val gKey = repo.loadApiKey(id) ?: ""
+                if (gKey.isNotEmpty() && instance.credentialType != com.openminis.app.data.model.ProviderCredential.oauth) {
+                    "$gBase/models?key=${java.net.URLEncoder.encode(gKey, "UTF-8")}"
+                } else {
+                    "$gBase/models"
+                }
+            }
             ProviderType.openAI, ProviderType.openAIResponses ->
                 if (baseURL.endsWith("/v1")) "$baseURL/models" else "$baseURL/v1/models"
             ProviderType.openRouter -> "$baseURL/models"
@@ -242,7 +252,15 @@ internal object ProviderMutationMethods {
             ProviderType.openAI, ProviderType.openAIResponses ->
                 if (!key.isNullOrEmpty()) builder.header("Authorization", "Bearer $key")
             ProviderType.openRouter -> if (!key.isNullOrEmpty()) builder.header("Authorization", "Bearer $key")
-            ProviderType.gemini -> { /* key in URL */ }
+            ProviderType.gemini -> {
+                if (!key.isNullOrEmpty()) {
+                    if (instance.credentialType == com.openminis.app.data.model.ProviderCredential.oauth) {
+                        builder.header("Authorization", "Bearer $key")
+                    } else if (!instance.customBaseURL.isNullOrBlank()) {
+                        builder.header("x-goog-api-key", key).header("Authorization", "Bearer $key")
+                    }
+                }
+            }
             // xAI: OpenAI-compat bearer header. Manual API key OR OAuth
             // access token can fill this slot.
             ProviderType.xAI -> if (!key.isNullOrEmpty()) builder.header("Authorization", "Bearer $key")
