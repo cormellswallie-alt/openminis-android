@@ -51,15 +51,23 @@ class ClaudeOAuthManager(context: Context, instanceId: String) : OAuthManager(co
          * it without a configured value throws — by design — the first time an
          * OAuth (Claude Code) request needs the prompt.
          */
+        /**
+         * Non-throwing read of the optional build-time Claude Code OAuth prefix.
+         * Callers that may run on non-OAuth providers (OpenAI, Gemini, or API-key
+         * Anthropic) MUST use this property when stripping a possible prefix so
+         * builds without `provider-customization.properties` never crash outside
+         * an actual Claude Code OAuth request.
+         */
+        val configuredOAuthIdentifierPrompt: String?
+            get() = BuildConfig.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT.takeIf { it.isNotEmpty() }
+
         val ANTHROPIC_OAUTH_IDENTIFIER_PROMPT: String
-            get() = BuildConfig.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT.ifEmpty {
-                throw IllegalStateException(
-                    "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT is not configured. Copy "
-                        + "app/provider-customization.properties.example to "
-                        + "app/provider-customization.properties and set "
-                        + "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT before using Claude Code OAuth."
-                )
-            }
+            get() = configuredOAuthIdentifierPrompt ?: throw IllegalStateException(
+                "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT is not configured. Copy "
+                    + "app/provider-customization.properties.example to "
+                    + "app/provider-customization.properties and set "
+                    + "ANTHROPIC_OAUTH_IDENTIFIER_PROMPT before using Claude Code OAuth."
+            )
 
         /**
          * How long before expiry we proactively refresh. Mirrors iOS

@@ -7239,11 +7239,22 @@ class ChatViewModel(
      * The rest of the prompt is not model-specific on Android.
      */
     private fun systemPromptFor(provider: LLMProvider, prompt: String?): String? {
-        val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
-        if (prompt == null || prefix.isEmpty()) return prompt
-        val bare = if (prompt.startsWith(prefix)) prompt.removePrefix(prefix).trimStart('\n') else prompt
+        if (prompt == null) return null
         val oauth = (provider as? com.openminis.app.provider.anthropic.AnthropicProvider)?.isOAuth == true
-        return if (oauth) "$prefix\n\n$bare" else bare
+        if (oauth) {
+            val prefix = com.openminis.app.auth.ClaudeOAuthManager.ANTHROPIC_OAUTH_IDENTIFIER_PROMPT
+            val bare = if (prompt.startsWith(prefix)) prompt.removePrefix(prefix).trimStart('\n') else prompt
+            return if (bare.isEmpty()) prefix else "$prefix\n\n$bare"
+        }
+        // Non-OAuth providers (OpenAI, Gemini, API-key Anthropic, etc.) must NEVER
+        // evaluate the throwing ANTHROPIC_OAUTH_IDENTIFIER_PROMPT getter — strip
+        // only when a build-time prefix was actually configured.
+        val configuredPrefix = com.openminis.app.auth.ClaudeOAuthManager.configuredOAuthIdentifierPrompt
+        return if (configuredPrefix != null && prompt.startsWith(configuredPrefix)) {
+            prompt.removePrefix(configuredPrefix).trimStart('\n')
+        } else {
+            prompt
+        }
     }
 
     private fun isBoundToAbandonedModel(): Boolean =
@@ -12084,6 +12095,7 @@ class ChatViewModel(
                         fallbackReasons.add("⚠️ ${currentProvider.model.displayName}: $reason")
                         Log.i(TAG, "🔀 $reason on ${currentProvider.model.displayName}, switching to ${next.model.displayName} (realModelChange=$isRealModelChange)")
                         currentProvider = next
+                        loopSystemPrompt = systemPromptFor(next, loopSystemPrompt)
                         // [T-fallback-5xx-status] Fresh same-model budget for the
                         // member we just switched to. The counter is per-turn, so
                         // without this reset every member after the first got
